@@ -5,7 +5,7 @@ local spawn = function()
   local stdout = vim.loop.new_pipe()
   local stderr = vim.loop.new_pipe()
 
-  -- log("spawn")
+  log("spawn")
 
   local handle, pid = vim.loop.spawn("ueberzug", {
     args = { "layer", "--silent" },
@@ -51,8 +51,15 @@ local spawn = function()
   }
 end
 
-local clear = function()
+local clear = function(id)
   if not child then spawn() end
+  if id then
+    child.write({
+      action = "remove",
+      identifier = id,
+    })
+    return
+  end
   child.write({
     action = "remove",
     identifier = "all",

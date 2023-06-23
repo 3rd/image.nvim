@@ -48,7 +48,7 @@ local get_windows = function()
   return windows
 end
 
-local render = function()
+local rerender_integrations = function()
   local renderer = state.renderer
   local windows = get_windows()
 
@@ -60,9 +60,11 @@ local render = function()
     x_offset = x_offset + width
   end
   if vim.opt.signcolumn ~= "no" then x_offset = x_offset + 2 end
+  x_offset = x_offset - vim.fn.col("w0")
 
   local y_offset = state.options.margin.top
   if vim.opt.showtabline == 2 then y_offset = y_offset + 1 end
+  y_offset = y_offset - vim.fn.line("w0") + 1
 
   for _, window in ipairs(windows) do
     for _, integration in ipairs(state.integrations) do
@@ -76,7 +78,6 @@ local render = function()
             window.width - state.options.margin.left - state.options.margin.right - x_offset,
           })
           local height = vim.fn.min({ image.height or 100, window.height - state.options.margin.bottom - y_offset })
-          log(width)
           local x = window.x + image.range.start_col + x_offset
           local y = window.y + image.range.start_row + 2 + y_offset
           renderer.render(id, image.url, x, y, width, height)
@@ -84,10 +85,6 @@ local render = function()
       end
     end
   end
-end
-
-local clear = function()
-  state.renderer.clear()
 end
 
 local setup_autocommands = function()
@@ -107,9 +104,9 @@ local setup_autocommands = function()
     group = group,
     callback = function(args)
       if args.event == "InsertEnter" then
-        clear()
+        state.renderer.clear()
       else
-        render()
+        rerender_integrations()
       end
     end,
   })
@@ -147,7 +144,24 @@ local setup = function(options)
   setup_autocommands()
 end
 
+local render = function(id, url, x, y, width, height)
+  if not state.renderer then
+    vim.api.nvim_err_writeln("render: could not resolve renderer")
+    return
+  end
+  state.renderer.render(id, url, x, y, width, height)
+end
+
+local clear = function(id)
+  if not state.renderer then
+    vim.api.nvim_err_writeln("render: could not resolve renderer")
+    return
+  end
+  state.renderer.clear(id)
+end
+
 return {
   setup = setup,
   render = render,
+  clear = clear,
 }
