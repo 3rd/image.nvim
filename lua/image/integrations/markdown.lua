@@ -44,10 +44,10 @@ local render = function(ctx)
       for _, image in ipairs(images) do
         -- local id = utils.random.id()
         local id = string.format("%d:%d:%d", window.id, window.buf, image.range.start_row)
-        utils.log("rendering", id)
+        -- utils.log("rendering", id)
 
-        local max_width = window.width
-        local max_height = window.height
+        local max_cols = window.width
+        local max_rows = window.height
 
         if ctx.options.sizing_strategy == "height-from-empty-lines" then
           local empty_lines = -1
@@ -58,7 +58,7 @@ local render = function(ctx)
               break
             end
           end
-          max_height = empty_lines
+          max_rows = empty_lines
         end
 
         ctx.render_relative_to_window(
@@ -67,8 +67,8 @@ local render = function(ctx)
           image.url,
           image.range.start_col,
           image.range.start_row + 1,
-          max_width,
-          max_height
+          max_cols,
+          max_rows
         )
       end
     end

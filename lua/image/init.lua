@@ -2,7 +2,7 @@ local utils = require("image/utils")
 
 ---@type Options
 local default_options = {
-  backend = "ueberzug",
+  backend = "kitty",
   integrations = {
     markdown = {
       enabled = true,
@@ -28,11 +28,11 @@ local state = {
 ---@param url string
 ---@param x number
 ---@param y number
----@param max_width number
----@param max_height number
-local render = function(image_id, url, x, y, max_width, max_height)
+---@param max_cols number
+---@param max_rows number
+local render = function(image_id, url, x, y, max_cols, max_rows)
   if not state.backend then utils.throw("render: could not resolve backend") end
-  state.backend.render(image_id, url, x, y, max_width, max_height)
+  state.backend.render(image_id, url, x, y, max_cols, max_rows)
 end
 
 ---@param win Window|number
@@ -40,14 +40,14 @@ end
 ---@param url string
 ---@param x number
 ---@param y number
----@param max_width number
----@param max_height number
+---@param max_cols number
+---@param max_rows number
 ---@return boolean
-local render_relative_to_window = function(win, image_id, url, x, y, max_width, max_height)
+local render_relative_to_window = function(win, image_id, url, x, y, max_cols, max_rows)
   if not state.backend then utils.throw("render: could not resolve backend") end
   if not utils.window.is_window_visible(win) then return false end
 
-  local relative_rect = utils.render.relate_rect_to_window(win, x, y, max_width, max_height)
+  local relative_rect = utils.render.relate_rect_to_window(win, x, y, max_cols, max_rows)
 
   if relative_rect.is_visible then
     state.backend.render(
@@ -55,8 +55,8 @@ local render_relative_to_window = function(win, image_id, url, x, y, max_width, 
       url,
       relative_rect.x,
       relative_rect.y,
-      relative_rect.max_width,
-      relative_rect.max_height
+      relative_rect.max_cols,
+      relative_rect.max_rows
     )
     return true
   else

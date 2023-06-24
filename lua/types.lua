@@ -6,7 +6,7 @@
 
 ---@class MarkdownIntegrationOptions
 ---@field enabled boolean
----@field sizing_strategy "none" | "height-from-empty-lines"
+---@field sizing_strategy "none"|"height-from-empty-lines"
 
 ---@alias IntegrationOptions MarkdownIntegrationOptions
 
@@ -51,3 +51,30 @@
 ---@field url string
 ---@field width? number
 ---@field height? number
+
+---@class KittyControlConfig
+---@field action "t"|"T"|"p"|"d"|"f"|"c"|"a"|"q"
+---@field image_id string|number
+---@field image_number number
+---@field placement_id string|number
+---@field quiet 0|1|2
+---@field transmit_format 32|24|100
+---@field transmit_medium "d"|"f"|"t"|"s"
+---@field transmit_more 0|1
+---@field transmit_width number
+---@field transmit_height number
+---@field transmit_file_size number
+---@field transmit_file_offset number
+---@field transmit_compression 0|1
+---@field display_x number
+---@field display_y number
+---@field display_width number
+---@field display_height number
+---@field display_x_offset number
+---@field display_y_offset number
+---@field display_columns number
+---@field display_rows number
+---@field display_cursor_policy 0|1
+---@field display_virtual_placeholder 0|1
+---@field display_zindex number
+---@field display_delete "a"|"i"|"p"

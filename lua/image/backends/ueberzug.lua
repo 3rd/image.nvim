@@ -60,15 +60,15 @@ local backend = {
   setup = function()
     if not child then spawn() end
   end,
-  render = function(image_id, url, x, y, width, height)
+  render = function(image_id, url, x, y, max_cols, max_rows)
     child.write({
       action = "add",
       identifier = image_id,
       path = url,
       x = x,
       y = y,
-      max_width = width,
-      max_height = height,
+      max_cols = max_cols,
+      max_rows = max_rows,
     })
   end,
   clear = function(image_id)

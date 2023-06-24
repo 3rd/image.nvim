@@ -1,4 +1,6 @@
+local base64 = require("image/utils/base64")
 local logger = require("image/utils/logger")
+local png = require("image/utils/png")
 local random = require("image/utils/random")
 local render = require("image/utils/render")
 local window = require("image/utils/window")
@@ -20,6 +22,8 @@ local throw = logger.create_logger({
 return {
   log = log,
   throw = throw,
+  base64 = base64,
+  png = png,
   random = random,
   render = render,
   window = window,
