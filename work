@@ -1,0 +1,49 @@
+= image.nvim
+
+*image.nvim* is a plugin that attempts to add image support to Neovim.
+
+[preview]
+
+Goals:
+- Provide a simple Lua API for rendering and clearing images.
+- Provide the complex window, buffer, and event management logic for common use cases.
+- Provide a set of integrations for popular technologies like Markdown, LaTeX, etc.
+- Support multiple rendering backends and sizing strategies.
+- Be easily extended with custom integrations and renderers.
+- Focus on supporting rendering inside *tmux*.
+
+* Installation
+  ** [lazy.nvim](https://github.com/folke/lazy.nvim)
+    @code lua
+      {
+        "3rd/image.nvim",
+        opts = { --[[ config ]] }
+      }
+    @end
+  ** [packer.nvim](https://github.com/wbthomason/packer.nvim)
+    @code lua
+      {
+        "3rd/image.nvim",
+        config = function()
+          require("image").setup({ --[[ config ]] })
+        end
+      }
+    @end
+
+* Configuration
+  @code lua
+    require("image").setup({
+      renderer = "ueberzug", -- "ueberzug" | "kitty"
+      integrations = {
+        markdown = {
+          enabled = true,
+        },
+      },
+      margin = {
+        top = 0,
+        right = 1,
+        bottom = 1,
+        left = 0,
+      },
+    })
+  @end

@@ -1,7 +1,7 @@
-local utils = require("render/utils")
+local utils = require("image/utils")
 
 local default_options = {
-  renderer = "ueberzug",
+  backend = "ueberzug",
   integrations = {
     markdown = {
       enabled = true,
@@ -13,12 +13,13 @@ local default_options = {
     bottom = 1,
     left = 0,
   },
+  -- sizing_strategy = "scale",
 }
 
 local state = {
   options = default_options,
   integrations = {},
-  renderer = nil,
+  backend = nil,
 }
 
 ---@class markdown_integration_options
@@ -26,7 +27,7 @@ local state = {
 ---@class integrations
 ---@field markdown markdown_integration_options
 ---@class options
----@field renderer "kitty"|"ueberzug"
+---@field backend "kitty"|"ueberzug"
 ---@field integrations integrations
 
 local get_windows = function()
@@ -49,10 +50,10 @@ local get_windows = function()
 end
 
 local rerender_integrations = function()
-  local renderer = state.renderer
+  local backend = state.backend
   local windows = get_windows()
 
-  -- renderer.clear()
+  -- backend.clear()
 
   local x_offset = state.options.margin.left
   if vim.opt.number then
@@ -80,7 +81,7 @@ local rerender_integrations = function()
           local height = vim.fn.min({ image.height or 100, window.height - state.options.margin.bottom - y_offset })
           local x = window.x + image.range.start_col + x_offset
           local y = window.y + image.range.start_row + 2 + y_offset
-          renderer.render(id, image.url, x, y, width, height)
+          backend.render(id, image.url, x, y, width, height)
         end
       end
     end
@@ -91,7 +92,6 @@ local setup_autocommands = function()
   local events = {
     "BufEnter",
     "BufLeave",
-    "BufWritePost",
     "TextChanged",
     "WinScrolled",
     "WinResized",
@@ -104,7 +104,7 @@ local setup_autocommands = function()
     group = group,
     callback = function(args)
       if args.event == "InsertEnter" then
-        state.renderer.clear()
+        state.backend.clear()
       else
         rerender_integrations()
       end
@@ -116,9 +116,9 @@ end
 local setup = function(options)
   local opts = vim.tbl_deep_extend("force", default_options, options or {})
 
-  local ok, renderer = pcall(require, "render/renderers/" .. opts.renderer)
+  local ok, backend = pcall(require, "image/backends/" .. opts.backend)
   if not ok then
-    vim.api.nvim_err_writeln("render: failed to load " .. opts.renderer .. " renderer")
+    vim.api.nvim_err_writeln("render: failed to load " .. opts.backend .. " backend")
     return
   end
 
@@ -126,7 +126,7 @@ local setup = function(options)
   for name, integration in pairs(opts.integrations) do
     if integration.enabled then
       ---@diagnostic disable-next-line: redefined-local
-      local ok, integration_module = pcall(require, "render.integrations." .. name)
+      local ok, integration_module = pcall(require, "image/integrations." .. name)
       if ok then
         table.insert(integrations, integration_module)
       else
@@ -138,26 +138,26 @@ local setup = function(options)
   state = {
     options = opts,
     integrations = integrations,
-    renderer = renderer,
+    backend = backend,
   }
 
   setup_autocommands()
 end
 
 local render = function(id, url, x, y, width, height)
-  if not state.renderer then
-    vim.api.nvim_err_writeln("render: could not resolve renderer")
+  if not state.backend then
+    vim.api.nvim_err_writeln("render: could not resolve backend")
     return
   end
-  state.renderer.render(id, url, x, y, width, height)
+  state.backend.render(id, url, x, y, width, height)
 end
 
 local clear = function(id)
-  if not state.renderer then
-    vim.api.nvim_err_writeln("render: could not resolve renderer")
+  if not state.backend then
+    vim.api.nvim_err_writeln("render: could not resolve backend")
     return
   end
-  state.renderer.clear(id)
+  state.backend.clear(id)
 end
 
 return {
