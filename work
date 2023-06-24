@@ -66,7 +66,10 @@
 
 * Development
   [x] core: rearchitect integrations to handle all events internally and only delegate rendering
-  [ ] markdown: add "height-from-empty-lines" strategy
+  [x] markdown: add "height-from-empty-lines" strategy
+  [ ] markdown: handle folding
+  [ ] ueberzug: throttle/batch calls
+  [ ] ueberzug: debug multiple images clearing eachother
   [ ] core: restructure global state
   [ ] log: add debug flag and options (level, file, etc)
   [ ] logic: window-image-buffer binding & event handling

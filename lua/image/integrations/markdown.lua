@@ -35,12 +35,41 @@ local render = function(ctx)
   local windows = utils.window.get_visible_windows()
   ctx.clear()
 
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+
   for _, window in ipairs(windows) do
     if vim.bo[window.buf].filetype == "markdown" then
       local images = get_buffer_images(window.buf)
+
       for _, image in ipairs(images) do
-        local id = utils.random.id()
-        ctx.render_relative_to_window(window, id, image.url, image.range.start_col, image.range.start_row + 1, 100, 100)
+        -- local id = utils.random.id()
+        local id = string.format("%d:%d:%d", window.id, window.buf, image.range.start_row)
+        utils.log("rendering", id)
+
+        local max_width = window.width
+        local max_height = window.height
+
+        if ctx.options.sizing_strategy == "height-from-empty-lines" then
+          local empty_lines = -1
+          for i = image.range.end_row + 2, #lines do
+            if lines[i] == "" then
+              empty_lines = empty_lines + 1
+            else
+              break
+            end
+          end
+          max_height = empty_lines
+        end
+
+        ctx.render_relative_to_window(
+          window,
+          id,
+          image.url,
+          image.range.start_col,
+          image.range.start_row + 1,
+          max_width,
+          max_height
+        )
       end
     end
   end

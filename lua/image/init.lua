@@ -6,6 +6,7 @@ local default_options = {
   integrations = {
     markdown = {
       enabled = true,
+      sizing_strategy = "height-from-empty-lines",
     },
   },
   margin = {
