@@ -65,6 +65,8 @@
     @end
 
 * Development
+  [x] core: rearchitect integrations to handle all events internally and only delegate rendering
+  [ ] markdown: add "height-from-empty-lines" strategy
   [ ] core: restructure global state
   [ ] log: add debug flag and options (level, file, etc)
   [ ] logic: window-image-buffer binding & event handling
@@ -73,4 +75,3 @@
   [ ] logic: winbar crop
   [ ] logic: apply global margin
   [ ] ops: setup clean test env
-  [ ] core: rearchitect integrations to handle all events internally and only delegate rendering

@@ -13,7 +13,7 @@ local get_global_offsets = function()
   return x, y
 end
 
----@param win number|Window
+---@param win Window|number
 ---@param x number
 ---@param y number
 ---@param max_width number

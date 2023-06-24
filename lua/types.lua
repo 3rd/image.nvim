@@ -2,14 +2,13 @@
 
 ---@class State
 ---@field backend Backend
----@field integrations Integration[]
 ---@field options Options
 
 ---@class MarkdownIntegrationOptions
 ---@field enabled boolean
+---@field sizing_strategy "none" | "height-from-empty-lines"
 
----@class IntegrationOptions
----@field markdown MarkdownIntegrationOptions
+---@alias IntegrationOptions MarkdownIntegrationOptions
 
 ---@class MarginOptions
 ---@field top number
@@ -19,18 +18,22 @@
 
 ---@class Options
 ---@field backend "kitty"|"ueberzug"
----@field integrations IntegrationOptions
+---@field integrations { markdown: IntegrationOptions }
 ---@field margin MarginOptions
 
 ---@class Backend
----@field setup fun()
+---@field setup? fun(options: Options)
 ---@field render fun(image_id: string, url: string, x: number, y: number, width: number, height: number)
 ---@field clear fun(image_id?: string)
 
+---@class IntegrationContext -- wish proper generics were a thing here
+---@field options IntegrationOptions
+---@field render fun(image_id: string, url: string, x: number, y: number, width: number, height: number)
+---@field render_relative_to_window fun(win: Window|number, image_id: string, url: string, x: number, y: number, width: number, height: number): boolean
+---@field clear fun(image_id?: string)
+
 ---@class Integration
----@field setup fun(options: Options)
----@field validate fun(buf: number): boolean
----@field get_buffer_images fun(buf: number): Image[] -- TODO remove
+---@field setup? fun(context: IntegrationContext<IntegrationOptions>)
 
 ---@class Window
 ---@field id number

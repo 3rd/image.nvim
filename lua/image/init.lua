@@ -20,7 +20,6 @@ local default_options = {
 local state = {
   ---@diagnostic disable-next-line: assign-type-mismatch
   backend = nil,
-  integrations = {},
   options = default_options,
 }
 
@@ -35,7 +34,7 @@ local render = function(image_id, url, x, y, max_width, max_height)
   state.backend.render(image_id, url, x, y, max_width, max_height)
 end
 
----@param win Window
+---@param win Window|number
 ---@param image_id string
 ---@param url string
 ---@param x number
@@ -69,47 +68,6 @@ local clear = function(id)
   state.backend.clear(id)
 end
 
-----------------------------------------------------------------------------------
-local rerender_integrations = function()
-  local backend = state.backend
-  local windows = utils.window.get_visible_windows()
-  backend.clear()
-  for _, window in ipairs(windows) do
-    for _, integration in ipairs(state.integrations) do
-      if integration.validate(window.buf) then
-        local images = integration.get_buffer_images(window.buf)
-        for _, image in ipairs(images) do
-          local id = utils.random.id()
-          render_relative_to_window(window, id, image.url, image.range.start_col, image.range.start_row + 1, 100, 100)
-        end
-      end
-    end
-  end
-end
-local setup_autocommands = function()
-  local events = {
-    "BufEnter",
-    "BufLeave",
-    "TextChanged",
-    "WinScrolled",
-    "WinResized",
-    "InsertEnter",
-    "InsertLeave",
-  }
-  local group = vim.api.nvim_create_augroup("render", { clear = true })
-  vim.api.nvim_create_autocmd(events, {
-    group = group,
-    callback = function(args)
-      if args.event == "InsertEnter" then
-        state.backend.clear()
-      else
-        rerender_integrations()
-      end
-    end,
-  })
-end
-----------------------------------------------------------------------------------
-
 ---@param options Options
 local setup = function(options)
   local opts = vim.tbl_deep_extend("force", default_options, options or {})
@@ -120,28 +78,29 @@ local setup = function(options)
     utils.throw("render: failed to load " .. opts.backend .. " backend")
     return
   end
-  if type(backend.setup) == "function" then backend.setup() end
+  if type(backend.setup) == "function" then backend.setup(options) end
+
+  -- set state
+  state = {
+    options = opts,
+    backend = backend,
+  }
 
   -- load integrations
-  local integrations = {}
-  for name, integration in pairs(opts.integrations) do
-    if integration.enabled then
-      local integration_ok, integration_module = pcall(require, "image/integrations." .. name)
-      if integration_ok then
-        table.insert(integrations, integration_module)
-      else
-        utils.throw("render: failed to load " .. name .. " integration")
+  for name, integration_options in pairs(opts.integrations) do
+    if integration_options.enabled then
+      local integration_ok, integration = pcall(require, "image/integrations." .. name)
+      if not integration_ok then utils.throw("render: failed to load " .. name .. " integration") end
+      if type(integration.setup) == "function" then
+        integration.setup({
+          options = integration_options,
+          render = render,
+          render_relative_to_window = render_relative_to_window,
+          clear = clear,
+        })
       end
     end
   end
-
-  -- setup
-  state = {
-    options = opts,
-    integrations = integrations,
-    backend = backend,
-  }
-  setup_autocommands()
 end
 
 return {

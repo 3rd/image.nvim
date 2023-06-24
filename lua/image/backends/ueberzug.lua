@@ -24,12 +24,12 @@ local spawn = function()
 
   vim.loop.read_start(stdout, function(err, data)
     assert(not err, err)
-    if data then log("stdout", data) end
+    if data then utils.log("ueberzug:stdout", data) end
   end)
 
   vim.loop.read_start(stderr, function(err, data)
     assert(not err, err)
-    if data then log("stderr", data) end
+    if data then utils.log("ueberzug:stderr", data) end
   end)
 
   local write = function(data)
