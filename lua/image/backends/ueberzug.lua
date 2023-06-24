@@ -1,18 +1,25 @@
+local utils = require("image/utils")
+
 local child = nil
+local should_be_alive = false
 
 local spawn = function()
   local stdin = vim.loop.new_pipe()
   local stdout = vim.loop.new_pipe()
   local stderr = vim.loop.new_pipe()
-
-  log("spawn")
+  should_be_alive = true
 
   local handle, pid = vim.loop.spawn("ueberzug", {
     args = { "layer", "--silent" },
     stdio = { stdin, stdout, stderr },
   }, function(code, signal)
     child = nil
-    print("code", code, "signal", signal)
+    if should_be_alive then
+      utils.throw("image: ueberzug died unexpectedly", {
+        code = code,
+        signal = signal,
+      })
+    end
   end)
 
   vim.loop.read_start(stdout, function(err, data)
@@ -27,16 +34,13 @@ local spawn = function()
 
   local write = function(data)
     local serialized = vim.fn.json_encode(data)
-    -- log("write", serialized)
     vim.loop.write(stdin, serialized .. "\n")
   end
 
   local shutdown = function()
+    should_be_alive = false
     vim.loop.shutdown(handle, function()
-      -- log("shutdown")
-      vim.loop.close(handle, function()
-        -- log("close")
-      end)
+      vim.loop.close(handle, function() end)
     end)
   end
 
@@ -51,35 +55,35 @@ local spawn = function()
   }
 end
 
-local clear = function(id)
-  if not child then spawn() end
-  if id then
+---@type Backend
+local backend = {
+  setup = function()
+    if not child then spawn() end
+  end,
+  render = function(image_id, url, x, y, width, height)
+    child.write({
+      action = "add",
+      identifier = image_id,
+      path = url,
+      x = x,
+      y = y,
+      max_width = width,
+      max_height = height,
+    })
+  end,
+  clear = function(image_id)
+    if image_id then
+      child.write({
+        action = "remove",
+        identifier = image_id,
+      })
+      return
+    end
     child.write({
       action = "remove",
-      identifier = id,
+      identifier = "all",
     })
-    return
-  end
-  child.write({
-    action = "remove",
-    identifier = "all",
-  })
-end
-
-local render = function(id, url, x, y, width, height)
-  if not child then spawn() end
-  child.write({
-    action = "add",
-    identifier = id,
-    path = url,
-    x = x,
-    y = y,
-    max_width = width,
-    max_height = height,
-  })
-end
-
-return {
-  clear = clear,
-  render = render,
+  end,
 }
+
+return backend

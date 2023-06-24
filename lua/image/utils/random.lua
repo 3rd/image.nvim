@@ -1,6 +1,7 @@
--- nanoid - https://gist.github.com/jrus/3197011
 math.randomseed(tonumber(tostring(os.time()):reverse():sub(1, 9)))
-local nanoid = function()
+
+-- https://gist.github.com/jrus/3197011
+local id = function()
   local template = "xxxxxxxx"
   return (
     string.gsub(template, "[x]", function(c)
@@ -11,5 +12,5 @@ local nanoid = function()
 end
 
 return {
-  nanoid = nanoid,
+  id = id,
 }
