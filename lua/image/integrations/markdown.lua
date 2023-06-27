@@ -101,7 +101,7 @@ end
 
 ---@type fun(ctx: IntegrationContext)
 local setup = function(ctx)
-  -- local options = ctx.options --[[@as MarkdownIntegrationOptions]]
+  local options = ctx.options --[[@as MarkdownIntegrationOptions]]
   setup_autocommands(ctx)
   render(ctx)
 end

@@ -19,9 +19,17 @@ local throw = logger.create_logger({
   output_file = "/tmp/nvim-image.txt",
 })
 
+local debug = logger.create_logger({
+  prefix = "[image.nvim]",
+  formatter = logger.default_log_formatter,
+  handler = nil,
+  output_file = "/tmp/nvim-image.txt",
+})
+
 return {
   log = log,
   throw = throw,
+  debug = debug,
   base64 = base64,
   png = png,
   random = random,
