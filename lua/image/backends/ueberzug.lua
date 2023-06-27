@@ -24,16 +24,17 @@ local spawn = function()
 
   vim.loop.read_start(stdout, function(err, data)
     assert(not err, err)
-    if data then utils.log("ueberzug:stdout", data) end
+    if data then utils.debug("ueberzug:stdout", data) end
   end)
 
   vim.loop.read_start(stderr, function(err, data)
     assert(not err, err)
-    if data then utils.log("ueberzug:stderr", data) end
+    if data then utils.debug("ueberzug:stderr", data) end
   end)
 
   local write = function(data)
     local serialized = vim.fn.json_encode(data)
+    utils.debug("ueberzug:stdin", serialized)
     vim.loop.write(stdin, serialized .. "\n")
   end
 
@@ -61,6 +62,7 @@ local backend = {
     if not child then spawn() end
   end,
   render = function(image_id, url, x, y, max_cols, max_rows)
+    if not child then return end
     child.write({
       action = "add",
       identifier = image_id,
@@ -72,6 +74,7 @@ local backend = {
     })
   end,
   clear = function(image_id)
+    if not child then return end
     if image_id then
       child.write({
         action = "remove",
