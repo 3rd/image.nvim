@@ -58,35 +58,43 @@ end
 
 ---@type Backend
 local backend = {
-  setup = function()
-    if not child then spawn() end
-  end,
-  render = function(image_id, url, x, y, max_cols, max_rows)
-    if not child then return end
-    child.write({
-      action = "add",
-      identifier = image_id,
-      path = url,
-      x = x,
-      y = y,
-      max_cols = max_cols,
-      max_rows = max_rows,
-    })
-  end,
-  clear = function(image_id)
-    if not child then return end
-    if image_id then
-      child.write({
-        action = "remove",
-        identifier = image_id,
-      })
-      return
-    end
+  ---@diagnostic disable-next-line: assign-type-mismatch
+  state = nil,
+}
+backend.setup = function(state)
+  backend.state = state
+  if not child then spawn() end
+end
+backend.render = function(image, x, y, width, height)
+  if not child then return end
+  child.write({
+    action = "add",
+    identifier = image.id,
+    path = image.path,
+    x = x,
+    y = y,
+    width = width,
+    height = height,
+  })
+  backend.state.images[image.id] = image
+end
+backend.clear = function(image_id)
+  if not child then return end
+  if image_id then
     child.write({
       action = "remove",
-      identifier = "all",
+      identifier = image_id,
     })
-  end,
-}
+    backend.state.images[image_id] = nil
+    return
+  end
+  for id, _ in pairs(backend.state.images) do
+    child.write({
+      action = "remove",
+      identifier = id,
+    })
+    backend.state.images[id] = nil
+  end
+end
 
 return backend

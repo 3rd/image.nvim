@@ -1,6 +1,7 @@
 local utils = require("image/utils")
 
-local get_buffer_images = function(buffer)
+---@return { node: any, range: { start_row: number, start_col: number, end_row: number, end_col: number }, url: string }[]
+local query_buffer_images = function(buffer)
   local buf = buffer or vim.api.nvim_get_current_buf()
 
   local parser = vim.treesitter.get_parser(buf, "markdown_inline")
@@ -33,43 +34,55 @@ end
 ---@type fun(ctx: IntegrationContext)
 local render = function(ctx)
   local windows = utils.window.get_visible_windows()
-  ctx.clear()
-
-  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
 
   for _, window in ipairs(windows) do
-    if vim.bo[window.buf].filetype == "markdown" then
-      local images = get_buffer_images(window.buf)
+    if vim.bo[window.buffer].filetype == "markdown" then
+      local matches = query_buffer_images(window.buffer)
+      local lines = vim.api.nvim_buf_get_lines(window.buffer, 0, -1, false)
 
-      for _, image in ipairs(images) do
-        -- local id = utils.random.id()
-        local id = string.format("%d:%d:%d", window.id, window.buf, image.range.start_row)
-        -- utils.log("rendering", id)
+      local previous_images = ctx.api.get_images({
+        window = window.id,
+        buffer = window.buffer,
+      })
+      local new_image_ids = {}
 
-        local max_cols = window.width
-        local max_rows = window.height
+      for _, match in ipairs(matches) do
+        if vim.loop.fs_stat(match.url) then
+          local id = string.format("%d:%d:%d", window.id, window.buffer, match.range.start_row)
+          local height = nil
 
-        if ctx.options.sizing_strategy == "height-from-empty-lines" then
-          local empty_lines = -1
-          for i = image.range.end_row + 2, #lines do
-            if lines[i] == "" then
-              empty_lines = empty_lines + 1
-            else
-              break
+          if ctx.options.sizing_strategy == "height-from-empty-lines" then
+            local empty_line_count = -1
+            for i = match.range.end_row + 2, #lines do
+              if lines[i] == "" then
+                empty_line_count = empty_line_count + 1
+              else
+                break
+              end
             end
+            height = math.max(1, empty_line_count)
           end
-          max_rows = empty_lines
+
+          local image = ctx.api.from_file(match.url, {
+            id = id,
+            height = height,
+            x = match.range.start_col,
+            y = match.range.start_row + 1,
+            window = window.id,
+            buffer = window.buffer,
+            with_virtual_padding = true,
+          })
+          image.render()
+
+          table.insert(new_image_ids, id)
         end
 
-        ctx.render_relative_to_window(
-          window,
-          id,
-          image.url,
-          image.range.start_col,
-          image.range.start_row + 1,
-          max_cols,
-          max_rows
-        )
+        for _, image in ipairs(previous_images) do
+          if not vim.tbl_contains(new_image_ids, image.id) then
+            -- utils.debug("md clear", image.id)
+            image.clear()
+          end
+        end
       end
     end
   end
@@ -78,8 +91,8 @@ end
 ---@type fun(ctx: IntegrationContext)
 local setup_autocommands = function(ctx)
   local events = {
-    "BufEnter",
-    "BufLeave",
+    "WinNew",
+    "BufWinEnter",
     "TextChanged",
     "WinScrolled",
     "WinResized",
@@ -91,7 +104,11 @@ local setup_autocommands = function(ctx)
     group = group,
     callback = function(args)
       if args.event == "InsertEnter" then
-        ctx.clear()
+        local current_window = vim.api.nvim_get_current_win()
+        local images = ctx.api.get_images({ window = current_window })
+        for _, image in ipairs(images) do
+          image.clear()
+        end
       else
         render(ctx)
       end
@@ -99,11 +116,18 @@ local setup_autocommands = function(ctx)
   })
 end
 
----@type fun(ctx: IntegrationContext)
-local setup = function(ctx)
-  local options = ctx.options --[[@as MarkdownIntegrationOptions]]
-  setup_autocommands(ctx)
-  render(ctx)
+---@type fun(api: API, options: MarkdownIntegrationOptions)
+local setup = function(api, options)
+  local opts = options or {} --[[@as MarkdownIntegrationOptions]]
+  local context = {
+    api = api,
+    options = opts,
+  }
+
+  vim.defer_fn(function()
+    setup_autocommands(context)
+    render(context)
+  end, 0)
 end
 
 ---@class MarkdownIntegration: Integration

@@ -14,41 +14,6 @@ local get_chunked = function(str)
   return chunks
 end
 
--- https://github.com/edluffy/hologram.nvim/blob/main/lua/hologram/state.lua#L15
-local get_term_size = function()
-  local ffi = require("ffi")
-  ffi.cdef([[
-        typedef struct {
-            unsigned short row;
-            unsigned short col;
-            unsigned short xpixel;
-            unsigned short ypixel;
-        } winsize;
-        int ioctl(int, int, ...);
-    ]])
-
-  local TIOCGWINSZ = nil
-  if vim.fn.has("linux") == 1 then
-    TIOCGWINSZ = 0x5413
-  elseif vim.fn.has("mac") == 1 then
-    TIOCGWINSZ = 0x40087468
-  elseif vim.fn.has("bsd") == 1 then
-    TIOCGWINSZ = 0x40087468
-  end
-
-  local sz = ffi.new("winsize")
-  assert(ffi.C.ioctl(1, TIOCGWINSZ, sz) == 0, "Hologram failed to get screen size: detected OS is not supported.")
-
-  return {
-    screen_x = sz.xpixel,
-    screen_y = sz.ypixel,
-    screen_cols = sz.col,
-    screen_rows = sz.row,
-    cell_width = sz.xpixel / sz.col,
-    cell_height = sz.ypixel / sz.row,
-  }
-end
-
 local encode = function(data)
   if is_tmux then return "\x1bPtmux;" .. data:gsub("\x1b", "\x1b\x1b") .. "\x1b\\" end
   return data
@@ -56,7 +21,7 @@ end
 
 local write = vim.schedule_wrap(function(data)
   if data == "" then return end
-  utils.debug("write:", vim.inspect(data))
+  -- utils.debug("write:", vim.inspect(data))
   stdout:write(data)
   -- vim.fn.chansend(vim.v.stderr, data)
 end)
@@ -96,22 +61,19 @@ local write_graphics = function(config, data)
       end
     end
   else
-    utils.debug("control:", control_payload)
+    -- utils.debug("control:", control_payload)
     write(encode("\x1b_G" .. control_payload .. "\x1b\\"))
   end
 end
 
--- local rshift = function(x, by)
---   return math.floor(x / 2 ^ by)
--- end
-local write_placeholder = function(image_id, x, y, rows, columns)
+local write_placeholder = function(image_id, x, y, width, height)
   local foreground = "\x1b[38;5;" .. image_id .. "m"
   local restore = "\x1b[39m"
 
   write(foreground)
-  for i = 0, rows - 1 do
+  for i = 0, height - 1 do
     move_cursor(x, y + i + 1)
-    for j = 0, columns - 1 do
+    for j = 0, width - 1 do
       write(codes.placeholder .. codes.diacritics[i + 1] .. codes.diacritics[j + 1])
     end
   end
@@ -119,7 +81,6 @@ local write_placeholder = function(image_id, x, y, rows, columns)
 end
 
 return {
-  get_term_size = get_term_size,
   move_cursor = move_cursor,
   restore_cursor = restore_cursor,
   write = write,

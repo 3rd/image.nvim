@@ -1,56 +1,77 @@
 ---@meta
 
+---@class API
+---@field setup fun(options?: Options)
+---@field from_file fun(path: string, options?: ImageOptions): Image
+---@field clear fun(id?: string)
+---@field get_images fun(opts?: { window?: number, buffer?: number }): Image[]
+
 ---@class State
 ---@field backend Backend
 ---@field options Options
+---@field images { [string]: Image }
+---@field extmarks_namespace any
 
 ---@class MarkdownIntegrationOptions
 ---@field enabled boolean
----@field sizing_strategy "none"|"height-from-empty-lines"
+---@field sizing_strategy "auto"|"height-from-empty-lines"
 
 ---@alias IntegrationOptions MarkdownIntegrationOptions
-
----@class MarginOptions
----@field top number
----@field right number
----@field bottom number
----@field left number
 
 ---@class Options
 ---@field backend "kitty"|"ueberzug"
 ---@field integrations { markdown: IntegrationOptions }
----@field margin MarginOptions
+---@field max_width? number
+---@field max_height? number
+---@field max_width_window_percentage? number
+---@field max_height_window_percentage? number
 
 ---@class Backend
----@field setup? fun(options: Options)
----@field render fun(image_id: string, url: string, x: number, y: number, width: number, height: number)
----@field clear fun(image_id?: string)
+---@field state State
+---@field setup fun(state: State)
+---@field render fun(image: Image, x: number, y: number, width?: number, height?: number)
+---@field clear fun(id?: string)
+
+---@class ImageGeometry
+---@field x? number
+---@field y? number
+---@field width? number
+---@field height? number
+
+---@class ImageOptions: ImageGeometry
+---@field id? string
+---@field window? number
+---@field buffer? number
+---@field with_virtual_padding? boolean
+
+---@class Image
+---@field id? string
+---@field path string
+---@field window? number
+---@field buffer? number
+---@field geometry ImageGeometry
+---@field rendered_geometry ImageGeometry
+---@field get_dimensions fun(): { width: number, height: number }
+---@field render fun(geometry?: ImageGeometry)
+---@field clear fun()
 
 ---@class IntegrationContext -- wish proper generics were a thing here
 ---@field options IntegrationOptions
----@field render fun(image_id: string, url: string, x: number, y: number, width: number, height: number)
----@field render_relative_to_window fun(win: Window|number, image_id: string, url: string, x: number, y: number, width: number, height: number): boolean
----@field clear fun(image_id?: string)
+---@field api API
 
 ---@class Integration
----@field setup? fun(context: IntegrationContext<IntegrationOptions>)
+---@field setup? fun(api: API, options: IntegrationOptions)
 
 ---@class Window
 ---@field id number
----@field buf number
+---@field buffer number
 ---@field x number
 ---@field y number
 ---@field width number
 ---@field height number
 ---@field scroll_x number
 ---@field scroll_y number
-
----@class Image
----@field node any
----@field range {start_row: number, start_col: number, end_row: number, end_col: number}
----@field url string
----@field width? number
----@field height? number
+---@field is_visible boolean
 
 ---@class KittyControlConfig
 ---@field action "t"|"T"|"p"|"d"|"f"|"c"|"a"|"q"

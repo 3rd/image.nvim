@@ -29,7 +29,7 @@ local default_log_formatter = function(opts, ...)
 end
 
 local create_logger = function(options)
-  local opts = vim.tbl_extend("force", defaults, options or {})
+  local opts = vim.tbl_deep_extend("force", defaults, options or {})
 
   return function(...)
     local output = opts.formatter and opts.formatter(opts, ...) or { ... }

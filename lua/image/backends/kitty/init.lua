@@ -2,8 +2,6 @@ local utils = require("image/utils")
 local codes = require("image/backends/kitty/codes")
 local helpers = require("image/backends/kitty/helpers")
 
-local term_size = helpers.get_term_size()
-
 local images = {}
 local last_kitty_id = 0
 
@@ -26,42 +24,18 @@ backend.setup = function(options)
     utils.throw("tmux does not have allow-passthrough enabled")
     return
   end
-
-  vim.defer_fn(function()
-    -- log(get_term_size())
-  end, 1000)
 end
 
 -- extend from empty line strategy to use extmarks
-backend.render = function(image_id, url, x, y, max_cols, max_rows)
-  if not images[image_id] then
+backend.render = function(image, x, y, width, height)
+  if not images[image.id] then
     last_kitty_id = last_kitty_id + 1
-    images[image_id] = last_kitty_id
+    images[image.id] = last_kitty_id
   end
-  local kitty_id = images[image_id]
-
-  local image_width, image_height = utils.png.get_dimensions(url)
-  local rows = math.floor(image_height / term_size.cell_height)
-  local columns = math.floor(image_width / term_size.cell_width)
-  -- local rows = max_rows
-  -- local pixel_height = math.floor(max_rows * term_size.cell_height)
-  -- local pixel_width = math.floor(image_width * pixel_height / image_height)
-  -- local columns = math.floor(pixel_width / term_size.cell_width)
-  -- log({
-  --   image_width = image_width,
-  --   image_height = image_height,
-  --   columns = columns,
-  --   rows = rows,
-  -- })
-
-  -- if true then
-  --   helpers.move_cursor(10, 10)
-  --   return
-  -- end
-
-  helpers.move_cursor(x, y, true)
+  local kitty_id = images[image.id]
 
   -- transmit image
+  helpers.move_cursor(x, y, true)
   helpers.write_graphics({
     action = codes.control.action.transmit,
     image_id = kitty_id,
@@ -70,36 +44,37 @@ backend.render = function(image_id, url, x, y, max_cols, max_rows)
     display_cursor_policy = codes.control.display_cursor_policy.do_not_move,
     display_virtual_placeholder = is_tmux and 1 or 0,
     quiet = 2,
-  }, url)
+  }, image.path)
 
   -- unicode placeholders
   if is_tmux then
-    -- create virtual image placement
     helpers.write_graphics({
       action = codes.control.action.display,
       quiet = 2,
       image_id = kitty_id,
-      display_rows = rows,
-      display_columns = columns,
+      display_rows = height,
+      display_columns = width,
       display_cursor_policy = codes.control.display_cursor_policy.do_not_move,
       display_virtual_placeholder = 1,
     })
-
-    -- write placeholder
-    helpers.write_placeholder(kitty_id, x, y, rows, columns)
+    helpers.write_placeholder(kitty_id, x, y, width, height)
     helpers.restore_cursor()
     return
   end
 
   -- default display
+  local term_size = utils.term.get_size()
+  local pixel_width = math.ceil(width * term_size.cell_width)
+  local pixel_height = math.ceil(height * term_size.cell_height)
+
   helpers.move_cursor(x + 1, y + 1)
   helpers.write_graphics({
     action = codes.control.action.display,
     quiet = 2,
     image_id = kitty_id,
     placement_id = 1,
-    display_rows = rows,
-    display_columns = columns,
+    display_width = pixel_width,
+    display_height = pixel_height,
     display_zindex = -1,
     display_cursor_policy = codes.control.display_cursor_policy.do_not_move,
   })
@@ -108,13 +83,16 @@ end
 
 backend.clear = function(image_id)
   if image_id then
+    utils.log("kitty: clear", image_id)
     helpers.write_graphics({
       action = codes.control.action.delete,
       display_delete = "i",
       image_id = 1,
       quiet = 2,
     })
+    return
   end
+  utils.log("kitty: clear all")
   helpers.write_graphics({
     action = codes.control.action.delete,
     display_delete = "a",

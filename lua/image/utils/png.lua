@@ -9,6 +9,7 @@ local bytes2int = function(bufp)
   return bor(lsh(bufp[0], 24), lsh(bufp[1], 16), lsh(bufp[2], 8), bufp[3])
 end
 
+---@return { width: number, height: number }
 local get_dimensions = function(path)
   local fd = assert(vim.loop.fs_open(path, "r", 438))
   local buf = ffi.new("const unsigned char[?]", 25, assert(vim.loop.fs_read(fd, 24, 0)))
@@ -16,7 +17,7 @@ local get_dimensions = function(path)
 
   local width = bytes2int(buf + 16)
   local height = bytes2int(buf + 20)
-  return width, height
+  return { width = width, height = height }
 end
 
 local is_png = function(path)

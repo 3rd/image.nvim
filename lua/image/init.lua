@@ -1,20 +1,20 @@
 local utils = require("image/utils")
+local image = require("image/image")
 
 ---@type Options
 local default_options = {
-  backend = "kitty",
+  backend = "ueberzug",
+  -- backend = "kitty",
   integrations = {
     markdown = {
       enabled = true,
-      sizing_strategy = "height-from-empty-lines",
+      sizing_strategy = "auto",
     },
   },
-  margin = {
-    top = 0,
-    right = 1,
-    bottom = 1,
-    left = 0,
-  },
+  max_width = nil,
+  max_height = nil,
+  max_width_window_percentage = nil,
+  max_height_window_percentage = 50,
 }
 
 ---@type State
@@ -22,90 +22,119 @@ local state = {
   ---@diagnostic disable-next-line: assign-type-mismatch
   backend = nil,
   options = default_options,
+  images = {},
+  extmarks_namespace = nil,
 }
 
----@param image_id string
----@param url string
----@param x number
----@param y number
----@param max_cols number
----@param max_rows number
-local render = function(image_id, url, x, y, max_cols, max_rows)
-  if not state.backend then utils.throw("render: could not resolve backend") end
-  state.backend.render(image_id, url, x, y, max_cols, max_rows)
-end
-
----@param win Window|number
----@param image_id string
----@param url string
----@param x number
----@param y number
----@param max_cols number
----@param max_rows number
----@return boolean
-local render_relative_to_window = function(win, image_id, url, x, y, max_cols, max_rows)
-  if not state.backend then utils.throw("render: could not resolve backend") end
-  if not utils.window.is_window_visible(win) then return false end
-
-  local relative_rect = utils.render.relate_rect_to_window(win, x, y, max_cols, max_rows)
-
-  if relative_rect.is_visible then
-    state.backend.render(
-      image_id,
-      url,
-      relative_rect.x,
-      relative_rect.y,
-      relative_rect.max_cols,
-      relative_rect.max_rows
-    )
-    return true
-  else
-    return false
-  end
-end
-
-local clear = function(id)
-  if not state.backend then utils.throw("render: could not resolve backend") end
-  state.backend.clear(id)
-end
+---@type API
+local api = {}
 
 ---@param options Options
-local setup = function(options)
+api.setup = function(options)
   local opts = vim.tbl_deep_extend("force", default_options, options or {})
+  state.options = opts
 
   -- load backend
-  local backend_ok, backend = pcall(require, "image/backends/" .. opts.backend)
-  if not backend_ok then
+  local ok, backend = pcall(require, "image/backends/" .. opts.backend)
+  if not ok then
     utils.throw("render: failed to load " .. opts.backend .. " backend")
     return
   end
-  if type(backend.setup) == "function" then backend.setup(options) end
-
-  -- set state
-  state = {
-    options = opts,
-    backend = backend,
-  }
+  if type(backend.setup) == "function" then backend.setup(state) end
+  state.backend = backend
 
   -- load integrations
   for name, integration_options in pairs(opts.integrations) do
     if integration_options.enabled then
       local integration_ok, integration = pcall(require, "image/integrations." .. name)
       if not integration_ok then utils.throw("render: failed to load " .. name .. " integration") end
-      if type(integration.setup) == "function" then
-        integration.setup({
-          options = integration_options,
-          render = render,
-          render_relative_to_window = render_relative_to_window,
-          clear = clear,
-        })
-      end
+      if type(integration.setup) == "function" then integration.setup(api, integration_options) end
     end
+  end
+
+  -- setup namespaces
+  state.extmarks_namespace = vim.api.nvim_create_namespace("image.nvim")
+  vim.api.nvim_set_decoration_provider(state.extmarks_namespace, {
+    -- on_win = function(_, _, buf, top, bot)
+    --   vim.schedule(function()
+    --     hologram.buf_render_images(buf, top, bot)
+    --   end)
+    -- end,
+  })
+
+  -- setup autocommands
+  local group = vim.api.nvim_create_augroup("image.nvim", { clear = true })
+
+  -- auto-clear on buffer change
+  vim.api.nvim_create_autocmd("BufWinEnter", {
+    group = group,
+    callback = function()
+      local windows = utils.window.get_visible_windows()
+      local win_buf_map = {}
+      for _, window in ipairs(windows) do
+        win_buf_map[window.id] = window.buffer
+      end
+
+      local images = api.get_images()
+      for _, current_image in ipairs(images) do
+        local is_window_bound = type(current_image.window) == "number"
+        local is_window_binding_valid = win_buf_map[current_image.window] ~= nil
+        local is_buffer_bound = type(current_image.buffer) == "number"
+        local is_buffer_binding_valid = win_buf_map[current_image.window] == current_image.buffer
+
+        local should_clear = false
+        if is_window_bound and not is_window_binding_valid then
+          should_clear = true
+        elseif is_buffer_bound and not is_buffer_binding_valid then
+          should_clear = true
+        end
+        if should_clear then current_image.clear() end
+      end
+    end,
+  })
+
+  -- auto-clear on window close
+  vim.api.nvim_create_autocmd("WinClosed", {
+    group = group,
+    callback = function(au) -- auto-clear images when windows and buffers change
+      local images = api.get_images({ window = tonumber(au.file) })
+      for _, current_image in ipairs(images) do
+        current_image.clear()
+      end
+    end,
+  })
+end
+
+---@param path string
+---@param options? ImageOptions
+api.from_file = function(path, options)
+  return image.from_file(path, options, state)
+end
+
+---@param id? string
+api.clear = function(id)
+  local target = state.images[id]
+  if target then
+    target.clear()
+  else
+    state.backend.clear(id)
   end
 end
 
-return {
-  setup = setup,
-  render = render,
-  clear = clear,
-}
+---@param opts? { window?: number, buffer?: number }
+---@return Image[]
+api.get_images = function(opts)
+  local images = {}
+  for _, current_image in pairs(state.images) do
+    if
+      (opts and opts.window and opts.window == current_image.window and not opts.buffer)
+      or (opts and opts.window and opts.window == current_image.window and opts.buffer and opts.buffer == current_image.buffer)
+      or not opts
+    then
+      table.insert(images, current_image)
+    end
+  end
+  return images
+end
+
+return api

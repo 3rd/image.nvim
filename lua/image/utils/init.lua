@@ -2,8 +2,8 @@ local base64 = require("image/utils/base64")
 local logger = require("image/utils/logger")
 local png = require("image/utils/png")
 local random = require("image/utils/random")
-local render = require("image/utils/render")
 local window = require("image/utils/window")
+local term = require("image/utils/term")
 
 local log = logger.create_logger({
   prefix = "[image.nvim]",
@@ -33,6 +33,6 @@ return {
   base64 = base64,
   png = png,
   random = random,
-  render = render,
   window = window,
+  term = term,
 }
