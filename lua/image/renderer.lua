@@ -116,7 +116,7 @@ local render = function(image, state)
       ("render(3): x=%d y=%d w=%d h=%d x_offset=%d y_offset=%d"):format(x, y, width, height, x_offset, y_offset)
     )
 
-    -- global max window width/height percentage (ex. 50 -> 50%)
+    -- global max window width/height percentage
     if type(state.options.max_width_window_percentage) == "number" then
       width = math.min(width, math.floor(window.width * state.options.max_width_window_percentage / 100))
     end

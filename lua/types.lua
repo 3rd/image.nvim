@@ -45,7 +45,8 @@
 ---@field with_virtual_padding? boolean
 
 ---@class Image
----@field id? string
+---@field id string
+---@field internal_id number
 ---@field path string
 ---@field window? number
 ---@field buffer? number

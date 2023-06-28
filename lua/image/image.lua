@@ -19,6 +19,7 @@ local create_image = function(path, options, state)
   ---@type Image
   local instance = {
     id = opts.id or utils.random.id(),
+    internal_id = numerical_id,
     path = path,
     window = opts.window or nil,
     buffer = opts.buffer or nil,

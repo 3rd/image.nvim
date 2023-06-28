@@ -2,9 +2,6 @@ local utils = require("image/utils")
 local codes = require("image/backends/kitty/codes")
 local helpers = require("image/backends/kitty/helpers")
 
-local images = {}
-local last_kitty_id = 0
-
 local is_tmux = vim.env.TMUX ~= nil
 local tmux_has_passthrough = false
 
@@ -14,12 +11,14 @@ if is_tmux then
 end
 
 ---@type Backend
-local backend = {}
+local backend = {
+  ---@diagnostic disable-next-line: assign-type-mismatch
+  state = nil,
+}
 
 -- TODO: check for kitty
-backend.setup = function(options)
-  backend.options = options
-
+backend.setup = function(state)
+  backend.state = state
   if is_tmux and not tmux_has_passthrough then
     utils.throw("tmux does not have allow-passthrough enabled")
     return
@@ -28,17 +27,11 @@ end
 
 -- extend from empty line strategy to use extmarks
 backend.render = function(image, x, y, width, height)
-  if not images[image.id] then
-    last_kitty_id = last_kitty_id + 1
-    images[image.id] = last_kitty_id
-  end
-  local kitty_id = images[image.id]
-
   -- transmit image
   helpers.move_cursor(x, y, true)
   helpers.write_graphics({
     action = codes.control.action.transmit,
-    image_id = kitty_id,
+    image_id = image.internal_id,
     transmit_format = codes.control.transmit_format.png,
     transmit_medium = codes.control.transmit_medium.file,
     display_cursor_policy = codes.control.display_cursor_policy.do_not_move,
@@ -51,13 +44,15 @@ backend.render = function(image, x, y, width, height)
     helpers.write_graphics({
       action = codes.control.action.display,
       quiet = 2,
-      image_id = kitty_id,
+      image_id = image.internal_id,
       display_rows = height,
       display_columns = width,
       display_cursor_policy = codes.control.display_cursor_policy.do_not_move,
       display_virtual_placeholder = 1,
     })
-    helpers.write_placeholder(kitty_id, x, y, width, height)
+    helpers.write_placeholder(image.internal_id, x, y, width, height)
+
+    backend.state.images[image.id] = image
     helpers.restore_cursor()
     return
   end
@@ -71,13 +66,14 @@ backend.render = function(image, x, y, width, height)
   helpers.write_graphics({
     action = codes.control.action.display,
     quiet = 2,
-    image_id = kitty_id,
+    image_id = image.internal_id,
     placement_id = 1,
     display_width = pixel_width,
     display_height = pixel_height,
     display_zindex = -1,
     display_cursor_policy = codes.control.display_cursor_policy.do_not_move,
   })
+  backend.state.images[image.id] = image
   helpers.restore_cursor()
 end
 
@@ -90,6 +86,7 @@ backend.clear = function(image_id)
       image_id = 1,
       quiet = 2,
     })
+    backend.state.images[image_id] = nil
     return
   end
   utils.log("kitty: clear all")
@@ -98,6 +95,9 @@ backend.clear = function(image_id)
     display_delete = "a",
     quiet = 2,
   })
+  for id, _ in pairs(backend.state.images) do
+    backend.state.images[id] = nil
+  end
 end
 
 return backend
