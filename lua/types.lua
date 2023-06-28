@@ -50,6 +50,7 @@
 ---@field path string
 ---@field window? number
 ---@field buffer? number
+---@field with_virtual_padding? boolean
 ---@field geometry ImageGeometry
 ---@field rendered_geometry ImageGeometry
 ---@field get_dimensions fun(): { width: number, height: number }

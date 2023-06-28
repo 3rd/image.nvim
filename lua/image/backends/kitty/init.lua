@@ -79,17 +79,17 @@ end
 
 backend.clear = function(image_id)
   if image_id then
-    utils.log("kitty: clear", image_id)
+    local image = backend.state.images[image_id]
+    if not image then return end
     helpers.write_graphics({
       action = codes.control.action.delete,
       display_delete = "i",
-      image_id = 1,
+      image_id = image.internal_id,
       quiet = 2,
     })
     backend.state.images[image_id] = nil
     return
   end
-  utils.log("kitty: clear all")
   helpers.write_graphics({
     action = codes.control.action.delete,
     display_delete = "a",

@@ -21,11 +21,9 @@ local adjust_to_aspect_ratio = function(term_size, dimensions, width, height)
   local pixel_height = height * term_size.cell_height
   if width > height then
     local new_height = math.ceil(pixel_width / aspect_ratio / term_size.cell_height)
-    utils.debug("adjust_to_aspect_ratio() landscape", { new_height = new_height })
     return width, new_height
   else
     local new_width = math.ceil(pixel_height * aspect_ratio / term_size.cell_width)
-    utils.debug("adjust_to_aspect_ratio() portrait", { new_width = new_width })
     return new_width, height
   end
 end
@@ -57,10 +55,6 @@ local render = function(image, state)
     height = image_rows
   end
 
-  utils.debug(
-    ("render(1): x=%d y=%d w=%d h=%d x_offset=%d y_offset=%d"):format(x, y, width, height, x_offset, y_offset)
-  )
-
   -- rendered size cannot be larger than the image itself
   width = math.min(width, image_columns)
   height = math.min(height, image_rows)
@@ -68,10 +62,6 @@ local render = function(image, state)
   -- screen max width/height
   width = math.min(width, term_size.screen_cols)
   height = math.min(width, term_size.screen_rows)
-
-  utils.debug(
-    ("render(2): x=%d y=%d w=%d h=%d x_offset=%d y_offset=%d"):format(x, y, width, height, x_offset, y_offset)
-  )
 
   if image.window ~= nil then
     -- window is valid
@@ -88,33 +78,14 @@ local render = function(image, state)
     local global_offsets = get_global_offsets()
     x_offset = global_offsets.x - window.scroll_x
     y_offset = global_offsets.y + 1 - window.scroll_y
-    utils.debug("scroll_y", { window.scroll_y, y_offset })
 
     -- window offsets
     window_offset_x = window.x
     window_offset_y = window.y
 
-    -- extmark offsets
-    if image.buffer then
-      -- local win_info = vim.fn.getwininfo(image.window)[1]
-      local extmark_offset_y = 0
-      local extmarks = vim.api.nvim_buf_get_extmarks(image.buffer, -1, 0, -1, { details = true })
-      for _, extmark in ipairs(extmarks) do
-        local mark_id, mark_row, mark_col, mark_opts = unpack(extmark)
-        local virt_height = #(mark_opts.virt_lines or {})
-        utils.debug(("render() mark_id=%d mark_row=%d virt_height=%d"):format(mark_id, mark_row, virt_height))
-        if mark_row + 1 >= y then break end
-        y_offset = y_offset - virt_height
-        utils.debug(("render() extmark_offset_y=%d"):format(extmark_offset_y))
-      end
-    end
-
     -- w/h can take at most 100% of the window
     width = math.min(width, window.width - x - x_offset)
     height = math.min(height, window.height - y - y_offset)
-    utils.debug(
-      ("render(3): x=%d y=%d w=%d h=%d x_offset=%d y_offset=%d"):format(x, y, width, height, x_offset, y_offset)
-    )
 
     -- global max window width/height percentage
     if type(state.options.max_width_window_percentage) == "number" then
@@ -123,33 +94,73 @@ local render = function(image, state)
     if type(state.options.max_height_window_percentage) == "number" then
       height = math.min(height, math.floor(window.height * state.options.max_height_window_percentage / 100))
     end
-
-    utils.debug(
-      ("render(4): x=%d y=%d w=%d h=%d x_offset=%d y_offset=%d"):format(x, y, width, height, x_offset, y_offset)
-    )
   end
 
   -- global max width/height
   if type(state.options.max_width) == "number" then width = math.min(width, state.options.max_width) end
   if type(state.options.max_height) == "number" then height = math.min(height, state.options.max_height) end
-  utils.debug(
-    ("render(5): x=%d y=%d w=%d h=%d x_offset=%d y_offset=%d"):format(x, y, width, height, x_offset, y_offset)
-  )
 
   width, height = adjust_to_aspect_ratio(term_size, image_dimensions, width, height)
-  utils.debug(
-    ("render(6): x=%d y=%d w=%d h=%d x_offset=%d y_offset=%d"):format(x, y, width, height, x_offset, y_offset)
-  )
 
   if width <= 0 or height <= 0 then return false end
 
   local absolute_x = x + x_offset + window_offset_x
   local absolute_y = y + y_offset + window_offset_y
+  local prevent_rendering = false
+
+  -- extmark offsets
+  if image.with_virtual_padding and image.window then
+    local win_info = vim.fn.getwininfo(image.window)[1]
+    local topline = win_info.topline
+    local botline = win_info.botline
+    local topfill = vim.fn.winsaveview().topfill
+
+    -- bail if the image is above the top of the window and there's no topfill
+    if topfill == 0 and image.geometry.y < topline then prevent_rendering = true end
+
+    -- bail if the image + its height is above the top of the window + topfill
+    if image.geometry.y + height + 1 < topline + topfill then prevent_rendering = true end
+
+    -- bail if the image is below the bottom of the window
+    if image.geometry.y > botline then prevent_rendering = true end
+
+    -- offset by topfill if the image started above the top of the window
+    if not prevent_rendering then
+      if topfill > 0 and image.geometry.y < topline then
+        --
+        absolute_y = absolute_y - (height - topfill)
+      elseif image.buffer then
+        -- offset by any pre-y virtual lines
+        local extmarks = vim.tbl_map(
+          function(mark)
+            local mark_id, mark_row, mark_col, mark_opts = unpack(mark)
+            local virt_height = #(mark_opts.virt_lines or {})
+            return { id = mark_id, row = mark_row + 1, col = mark_col, height = virt_height }
+          end,
+          vim.api.nvim_buf_get_extmarks(
+            image.buffer,
+            -1,
+            { topline - 1, 0 },
+            { image.geometry.y, 0 },
+            { details = true }
+          )
+        )
+
+        local offset = topfill
+        for _, mark in ipairs(extmarks) do
+          if mark.row ~= image.geometry.y then offset = offset + mark.height end
+        end
+
+        absolute_y = absolute_y + offset
+      end
+    end
+  end
+
+  if prevent_rendering then absolute_y = -999999 end
 
   state.backend.render(image, absolute_x, absolute_y, width, height)
   image.rendered_geometry = { x = absolute_x, y = absolute_y, width = width, height = height }
 
-  -- utils.debug(state.images)
   return true
 end
 

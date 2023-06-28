@@ -50,28 +50,17 @@ local create_image = function(path, options, state)
 
     -- virtual padding
     if ok and instance.buffer and instance.with_virtual_padding then
-      local row = instance.geometry.y - 1
+      local row = instance.geometry.y
       local width = instance.rendered_geometry.width or 1
       local height = instance.rendered_geometry.height or 1
-
-      -- remove same-row extmarks
-      -- local extmarks =
-      --   vim.api.nvim_buf_get_extmarks(instance.buffer, state.extmarks_namespace, 0, -1, { details = true })
-      -- for _, extmark in ipairs(extmarks) do
-      --   local mark_id, mark_row, mark_col, mark_opts = unpack(extmark)
-      --   local virt_height = #(mark_opts.virt_lines or {})
-      --   if mark_row == row then
-      --     if virt_height == height then return end
-      --     vim.api.nvim_buf_del_extmark(instance.buffer, state.extmarks_namespace, mark_id)
-      --   end
-      -- end
 
       local text = string.rep(" ", width)
       local filler = {}
       for _ = 0, height - 1 do
         filler[#filler + 1] = { { text, "" } }
       end
-      vim.api.nvim_buf_set_extmark(instance.buffer, state.extmarks_namespace, row, 0, {
+      utils.debug("extmark create", { id = numerical_id, buf = instance.buffer })
+      vim.api.nvim_buf_set_extmark(instance.buffer, state.extmarks_namespace, row - 1, 0, {
         id = numerical_id,
         virt_lines = filler,
       })

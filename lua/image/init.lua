@@ -54,13 +54,6 @@ api.setup = function(options)
 
   -- setup namespaces
   state.extmarks_namespace = vim.api.nvim_create_namespace("image.nvim")
-  vim.api.nvim_set_decoration_provider(state.extmarks_namespace, {
-    -- on_win = function(_, _, buf, top, bot)
-    --   vim.schedule(function()
-    --     hologram.buf_render_images(buf, top, bot)
-    --   end)
-    -- end,
-  })
 
   -- setup autocommands
   local group = vim.api.nvim_create_augroup("image.nvim", { clear = true })

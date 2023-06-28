@@ -47,7 +47,8 @@ local render = function(ctx)
       local new_image_ids = {}
 
       for _, match in ipairs(matches) do
-        if vim.loop.fs_stat(match.url) then
+        local ok = pcall(utils.png.get_dimensions, match.url)
+        if ok then
           local id = string.format("%d:%d:%d", window.id, window.buffer, match.range.start_row)
           local height = nil
 
@@ -76,13 +77,10 @@ local render = function(ctx)
 
           table.insert(new_image_ids, id)
         end
+      end
 
-        for _, image in ipairs(previous_images) do
-          if not vim.tbl_contains(new_image_ids, image.id) then
-            -- utils.debug("md clear", image.id)
-            image.clear()
-          end
-        end
+      for _, image in ipairs(previous_images) do
+        if not vim.tbl_contains(new_image_ids, image.id) then image.clear() end
       end
     end
   end
@@ -90,28 +88,32 @@ end
 
 ---@type fun(ctx: IntegrationContext)
 local setup_autocommands = function(ctx)
-  local events = {
+  local group = vim.api.nvim_create_augroup("image.nvim:markdown", { clear = true })
+
+  vim.api.nvim_create_autocmd({
     "WinNew",
     "BufWinEnter",
-    "TextChanged",
     "WinScrolled",
     "WinResized",
-    "InsertEnter",
-    "InsertLeave",
-  }
-  local group = vim.api.nvim_create_augroup("image.nvim:markdown", { clear = true })
-  vim.api.nvim_create_autocmd(events, {
+  }, {
     group = group,
-    callback = function(args)
-      if args.event == "InsertEnter" then
-        local current_window = vim.api.nvim_get_current_win()
-        local images = ctx.api.get_images({ window = current_window })
-        for _, image in ipairs(images) do
-          image.clear()
-        end
-      else
-        render(ctx)
+    callback = function()
+      render(ctx)
+    end,
+  })
+
+  vim.api.nvim_create_autocmd({
+    "TextChanged",
+    "TextChangedI",
+  }, {
+    group = group,
+    callback = function()
+      local current_window = vim.api.nvim_get_current_win()
+      local images = ctx.api.get_images({ window = current_window })
+      for _, image in ipairs(images) do
+        image.clear()
       end
+      render(ctx)
     end,
   })
 end
