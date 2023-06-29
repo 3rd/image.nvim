@@ -97,7 +97,8 @@ local setup_autocommands = function(ctx)
     "WinResized",
   }, {
     group = group,
-    callback = function()
+    callback = function(args)
+      if vim.bo[args.buf].filetype ~= "markdown" then return end
       render(ctx)
     end,
   })
@@ -107,7 +108,8 @@ local setup_autocommands = function(ctx)
     "TextChangedI",
   }, {
     group = group,
-    callback = function()
+    callback = function(args)
+      if vim.bo[args.buf].filetype ~= "markdown" then return end
       local current_window = vim.api.nvim_get_current_win()
       local images = ctx.api.get_images({ window = current_window })
       for _, image in ipairs(images) do
