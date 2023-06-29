@@ -76,23 +76,26 @@ backend.render = function(image, x, y, width, height)
   })
   backend.state.images[image.id] = image
 end
-backend.clear = function(image_id)
+backend.clear = function(image_id, shallow)
   if not child then return end
   if image_id then
-    if not backend.state.images[image_id] then return end
+    local image = backend.state.images[image_id]
+    if not image then return end
     child.write({
       action = "remove",
       identifier = image_id,
     })
-    backend.state.images[image_id] = nil
+    image.is_rendered = false
+    if not shallow then backend.state.images[image_id] = nil end
     return
   end
-  for id, _ in pairs(backend.state.images) do
+  for id, image in pairs(backend.state.images) do
     child.write({
       action = "remove",
       identifier = id,
     })
-    backend.state.images[id] = nil
+    image.is_rendered = false
+    if not shallow then backend.state.images[id] = nil end
   end
 end
 

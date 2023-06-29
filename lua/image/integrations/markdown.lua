@@ -93,7 +93,6 @@ local setup_autocommands = function(ctx)
   vim.api.nvim_create_autocmd({
     "WinNew",
     "BufWinEnter",
-    "WinScrolled",
     "WinResized",
   }, {
     group = group,
@@ -102,7 +101,6 @@ local setup_autocommands = function(ctx)
       render(ctx)
     end,
   })
-
   vim.api.nvim_create_autocmd({
     "TextChanged",
     "TextChangedI",

@@ -54,6 +54,8 @@ backend.render = function(image, x, y, width, height)
       image_id = image.internal_id,
       quiet = 2,
     })
+    image.is_rendered = false
+    backend.state.images[image.id] = image
     helpers.restore_cursor()
     return
   end
@@ -113,7 +115,6 @@ backend.render = function(image, x, y, width, height)
     action = codes.control.action.display,
     quiet = 2,
     image_id = image.internal_id,
-    placement_id = 1,
     display_width = pixel_width,
     display_height = pixel_height,
     display_y = pixel_top,
@@ -124,7 +125,7 @@ backend.render = function(image, x, y, width, height)
   helpers.restore_cursor()
 end
 
-backend.clear = function(image_id)
+backend.clear = function(image_id, shallow)
   if image_id then
     local image = backend.state.images[image_id]
     if not image then return end
@@ -134,7 +135,8 @@ backend.clear = function(image_id)
       image_id = image.internal_id,
       quiet = 2,
     })
-    backend.state.images[image_id] = nil
+    image.is_rendered = false
+    if not shallow then backend.state.images[image_id] = nil end
     return
   end
   helpers.write_graphics({
@@ -142,8 +144,9 @@ backend.clear = function(image_id)
     display_delete = "a",
     quiet = 2,
   })
-  for id, _ in pairs(backend.state.images) do
-    backend.state.images[id] = nil
+  for id, image in pairs(backend.state.images) do
+    image.is_rendered = false
+    if not shallow then backend.state.images[id] = nil end
   end
 end
 

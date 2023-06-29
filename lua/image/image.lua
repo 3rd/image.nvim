@@ -39,6 +39,7 @@ local create_image = function(path, options, state)
       height = nil,
     },
     with_virtual_padding = opts.with_virtual_padding or false,
+    is_rendered = false,
   }
 
   instance.get_dimensions = function()
@@ -52,7 +53,7 @@ local create_image = function(path, options, state)
     local ok = renderer.render(instance, state)
 
     -- virtual padding
-    if ok and instance.buffer and instance.with_virtual_padding then
+    if instance.buffer and instance.with_virtual_padding then
       local row = instance.geometry.y
       local width = instance.rendered_geometry.width or 1
       local height = instance.rendered_geometry.height or 1
@@ -95,21 +96,31 @@ local create_image = function(path, options, state)
       -- end
 
       local previous_extmark = buf_extmark_map[instance.buffer .. ":" .. row]
+
+      if not ok and previous_extmark then
+        state.backend.clear(instance.id, true)
+        vim.api.nvim_buf_del_extmark(instance.buffer, state.extmarks_namespace, previous_extmark.id)
+        buf_extmark_map[instance.buffer .. ":" .. row] = nil
+        return
+      end
+
       if previous_extmark then
         if previous_extmark.height == height then return end
         vim.api.nvim_buf_del_extmark(instance.buffer, state.extmarks_namespace, previous_extmark.id)
       end
 
-      local text = string.rep(" ", width)
-      local filler = {}
-      for _ = 0, height - 1 do
-        filler[#filler + 1] = { { text, "" } }
+      if ok then
+        local text = string.rep(" ", width)
+        local filler = {}
+        for _ = 0, height - 1 do
+          filler[#filler + 1] = { { text, "" } }
+        end
+        vim.api.nvim_buf_set_extmark(instance.buffer, state.extmarks_namespace, row - 1, 0, {
+          id = numerical_id,
+          virt_lines = filler,
+        })
+        buf_extmark_map[instance.buffer .. ":" .. row] = { id = numerical_id, height = height }
       end
-      vim.api.nvim_buf_set_extmark(instance.buffer, state.extmarks_namespace, row - 1, 0, {
-        id = numerical_id,
-        virt_lines = filler,
-      })
-      buf_extmark_map[instance.buffer .. ":" .. row] = { id = numerical_id, height = height }
     end
   end
 

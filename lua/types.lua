@@ -32,7 +32,7 @@
 ---@field state State
 ---@field setup fun(state: State)
 ---@field render fun(image: Image, x: number, y: number, width?: number, height?: number)
----@field clear fun(id?: string)
+---@field clear fun(id?: string, shallow?: boolean)
 
 ---@class ImageGeometry
 ---@field x? number
@@ -62,6 +62,7 @@
 ---@field geometry ImageGeometry
 ---@field rendered_geometry ImageGeometry
 ---@field bounds ImageBounds
+---@field is_rendered boolean
 ---@field get_dimensions fun(): { width: number, height: number }
 ---@field render fun(geometry?: ImageGeometry)
 ---@field clear fun()

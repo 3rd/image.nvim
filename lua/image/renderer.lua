@@ -50,6 +50,7 @@ local render = function(image, state)
     bottom = term_size.screen_rows,
     left = 0,
   }
+  local topfill = 0
 
   -- infer missing w/h component
   if width == 0 and height ~= 0 then width = math.ceil(height * image_dimensions.width / image_dimensions.height) end
@@ -69,18 +70,31 @@ local render = function(image, state)
   width = math.min(width, term_size.screen_cols)
   height = math.min(width, term_size.screen_rows)
 
-  -- utils.debug(("(1) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
+  utils.debug(("(1) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
 
   if image.window ~= nil then
-    -- window is valid
+    -- bail if the window is invalid
     local window = utils.window.get_window(image.window)
     if window == nil then return false end
 
-    -- window is visibile
+    -- bail if the window is not visible
     if not window.is_visible then return false end
 
     -- if the image is tied to a buffer the window must be displaying that buffer
     if image.buffer ~= nil and window.buffer ~= image.buffer then return false end
+
+    -- get topfill and check fold status
+    local current_win = vim.api.nvim_get_current_win()
+    vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. image.window .. ")")
+    topfill = vim.fn.winsaveview().topfill
+    local is_folded = vim.fn.foldclosed(image.geometry.y) ~= -1
+    vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. current_win .. ")")
+
+    -- bail if the image is inside a fold
+    if image.buffer and is_folded then
+      utils.debug("inside fold", image.id)
+      return false
+    end
 
     -- global offsets
     local global_offsets = get_global_offsets()
@@ -132,55 +146,80 @@ local render = function(image, state)
 
   -- extmark offsets
   if image.with_virtual_padding and image.window and image.buffer then
+
+  if image.window and image.buffer then
     local win_info = vim.fn.getwininfo(image.window)[1]
     local topline = win_info.topline
     local botline = win_info.botline
 
-    local current_win = vim.api.nvim_get_current_win()
-    vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. image.window .. ")")
-    local topfill = vim.fn.winsaveview().topfill
-    vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. current_win .. ")")
+    -- bail if out of bounds
+    if image.geometry.y + 1 < topline or image.geometry.y > botline then prevent_rendering = true end
 
-    -- bail if the image is above the top of the window and there's no topfill
-    if topfill == 0 and image.geometry.y < topline then prevent_rendering = true end
+    -- extmark offsets
+    if image.with_virtual_padding then
+      -- bail if the image is above the top of the window and there's no topfill
+      if topfill == 0 and image.geometry.y < topline then prevent_rendering = true end
 
-    -- bail if the image + its height is above the top of the window + topfill
-    if image.geometry.y + height + 1 < topline + topfill then prevent_rendering = true end
+      -- bail if the image + its height is above the top of the window + topfill
+      if image.geometry.y + height + 1 < topline + topfill then prevent_rendering = true end
 
-    -- bail if the image is below the bottom of the window
-    if image.geometry.y > botline then prevent_rendering = true end
+      -- bail if the image is below the bottom of the window
+      if image.geometry.y > botline then prevent_rendering = true end
 
-    -- offset by topfill if the image started above the top of the window
-    if not prevent_rendering then
-      if topfill > 0 and image.geometry.y < topline then
-        --
-        absolute_y = absolute_y - (height - topfill)
-      else
-        -- offset by any pre-y virtual lines
-        local extmarks = vim.tbl_map(
-          function(mark)
-            ---@diagnostic disable-next-line: deprecated
-            local mark_id, mark_row, mark_col, mark_opts = unpack(mark)
-            local virt_height = #(mark_opts.virt_lines or {})
-            return { id = mark_id, row = mark_row + 1, col = mark_col, height = virt_height }
-          end,
-          vim.api.nvim_buf_get_extmarks(
-            image.buffer,
-            -1,
-            { topline - 1, 0 },
-            { image.geometry.y, 0 },
-            { details = true }
+      -- offset by topfill if the image started above the top of the window
+      if not prevent_rendering then
+        if topfill > 0 and image.geometry.y < topline then
+          --
+          absolute_y = absolute_y - (height - topfill)
+        else
+          -- offset by any pre-y virtual lines
+          local extmarks = vim.tbl_map(
+            function(mark)
+              ---@diagnostic disable-next-line: deprecated
+              local mark_id, mark_row, mark_col, mark_opts = unpack(mark)
+              local virt_height = #(mark_opts.virt_lines or {})
+              return { id = mark_id, row = mark_row + 1, col = mark_col, height = virt_height }
+            end,
+            vim.api.nvim_buf_get_extmarks(
+              image.buffer,
+              -1,
+              { topline - 1, 0 },
+              { image.geometry.y, 0 },
+              { details = true }
+            )
           )
-        )
 
-        local offset = topfill
-        for _, mark in ipairs(extmarks) do
-          if mark.row ~= image.geometry.y then offset = offset + mark.height end
+          local offset = topfill
+          for _, mark in ipairs(extmarks) do
+            if mark.row ~= image.geometry.y then offset = offset + mark.height end
+          end
+
+          absolute_y = absolute_y + offset
         end
-
-        absolute_y = absolute_y + offset
       end
     end
+
+    -- folds
+    local offset = 0
+    local current_win = vim.api.nvim_get_current_win()
+    vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. image.window .. ")")
+
+    if vim.wo.foldenable then
+      local i = topline
+      while i <= image.geometry.y do
+        local fold_start, fold_end = vim.fn.foldclosed(i), vim.fn.foldclosedend(i)
+        if fold_start ~= -1 and fold_end ~= -1 then
+          utils.debug(("i: %d fold start: %d, fold end: %d"):format(i, fold_start, fold_end))
+          offset = offset + (fold_end - fold_start)
+          i = fold_end + 1
+        else
+          i = i + 1
+        end
+      end
+    end
+    vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. current_win .. ")")
+    utils.debug(("fold offset: %d"):format(offset))
+    absolute_y = absolute_y - offset
   end
 
   if prevent_rendering then absolute_y = -999999 end
@@ -190,12 +229,13 @@ local render = function(image, state)
 
   -- prevent useless rerendering
   if
-    image.rendered_geometry.x == rendered_geometry.x
+    image.is_rendered
+    and image.rendered_geometry.x == rendered_geometry.x
     and image.rendered_geometry.y == rendered_geometry.y
     and image.rendered_geometry.width == rendered_geometry.width
     and image.rendered_geometry.height == rendered_geometry.height
   then
-    return false
+    return true
   end
 
   state.backend.render(image, absolute_x, absolute_y, width, height)
