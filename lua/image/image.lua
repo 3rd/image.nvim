@@ -50,7 +50,9 @@ local create_image = function(path, options, state)
   instance.render = function(geometry)
     if geometry then instance.geometry = vim.tbl_deep_extend("force", instance.geometry, geometry) end
 
+    -- utils.debug(("\n\n---------------- %s ----------------"):format(instance.id))
     local ok = renderer.render(instance, state)
+    -- utils.debug("render result", instance.id, ok)
 
     -- virtual padding
     if instance.buffer and instance.with_virtual_padding then

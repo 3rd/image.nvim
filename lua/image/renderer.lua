@@ -70,7 +70,7 @@ local render = function(image, state)
   width = math.min(width, term_size.screen_cols)
   height = math.min(width, term_size.screen_rows)
 
-  utils.debug(("(1) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
+  -- utils.debug(("(1) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
 
   if image.window ~= nil then
     -- bail if the window is invalid
@@ -92,7 +92,7 @@ local render = function(image, state)
 
     -- bail if the image is inside a fold
     if image.buffer and is_folded then
-      utils.debug("inside fold", image.id)
+      -- utils.debug("inside fold", image.id)
       return false
     end
 
@@ -143,9 +143,6 @@ local render = function(image, state)
   local prevent_rendering = false
 
   -- utils.debug(("(4) x: %d, y: %d, width: %d, height: %d y_offset: %d absolute_x: %d absolute_y: %d"):format( x, y, width, height, y_offset, absolute_x, absolute_y))
-
-  -- extmark offsets
-  if image.with_virtual_padding and image.window and image.buffer then
 
   if image.window and image.buffer then
     local win_info = vim.fn.getwininfo(image.window)[1]
@@ -209,7 +206,7 @@ local render = function(image, state)
       while i <= image.geometry.y do
         local fold_start, fold_end = vim.fn.foldclosed(i), vim.fn.foldclosedend(i)
         if fold_start ~= -1 and fold_end ~= -1 then
-          utils.debug(("i: %d fold start: %d, fold end: %d"):format(i, fold_start, fold_end))
+          -- utils.debug(("i: %d fold start: %d, fold end: %d"):format(i, fold_start, fold_end))
           offset = offset + (fold_end - fold_start)
           i = fold_end + 1
         else
@@ -218,7 +215,7 @@ local render = function(image, state)
       end
     end
     vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. current_win .. ")")
-    utils.debug(("fold offset: %d"):format(offset))
+    -- utils.debug(("fold offset: %d"):format(offset))
     absolute_y = absolute_y - offset
   end
 
@@ -237,6 +234,8 @@ local render = function(image, state)
   then
     return true
   end
+
+  -- utils.debug(("(5) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
 
   state.backend.render(image, absolute_x, absolute_y, width, height)
   image.rendered_geometry = rendered_geometry

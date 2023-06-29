@@ -61,7 +61,7 @@ api.setup = function(options)
   local window_history = {}
   vim.api.nvim_set_decoration_provider(state.extmarks_namespace, {
     on_win = function(_, winid, bufnr, topline, botline)
-      utils.debug("on_win", { winid = winid })
+      -- utils.debug("on_win", { winid = winid })
 
       local prev = window_history[winid]
       if not prev then
