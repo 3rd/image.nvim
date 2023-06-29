@@ -57,7 +57,7 @@ api.setup = function(options)
   -- setup namespaces
   state.extmarks_namespace = vim.api.nvim_create_namespace("image.nvim")
 
-  ---@type table<number, { topline: number, botline: number, bufnr: number, height: number }>
+  ---@type table<number, { topline: number, botline: number, bufnr: number, height: number; folded_lines: number }>
   local window_history = {}
   vim.api.nvim_set_decoration_provider(state.extmarks_namespace, {
     on_win = function(_, winid, bufnr, topline, botline)
@@ -72,7 +72,23 @@ api.setup = function(options)
       local height = vim.api.nvim_win_get_height(winid)
       local needs_clear = prev.bufnr ~= bufnr
       local needs_rerender = prev.topline ~= topline or prev.botline ~= botline or prev.height ~= height
-      window_history[winid] = { topline = topline, botline = botline, bufnr = bufnr, height = height }
+
+      -- compute folded lines
+      local folded_lines = 0
+      local i = 1
+      while i < botline do
+        local fold_start, fold_end = vim.fn.foldclosed(i), vim.fn.foldclosedend(i)
+        if fold_start ~= -1 and fold_end ~= -1 then
+          folded_lines = folded_lines + (fold_end - fold_start)
+          i = fold_end + 1
+        else
+          i = i + 1
+        end
+      end
+      if prev.folded_lines ~= folded_lines then needs_rerender = true end
+
+      window_history[winid] =
+        { topline = topline, botline = botline, bufnr = bufnr, height = height, folded_lines = folded_lines }
 
       if needs_clear or needs_rerender then
         vim.defer_fn(function()
