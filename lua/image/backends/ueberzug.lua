@@ -79,6 +79,7 @@ end
 backend.clear = function(image_id)
   if not child then return end
   if image_id then
+    if not backend.state.images[image_id] then return end
     child.write({
       action = "remove",
       identifier = image_id,
