@@ -5,6 +5,9 @@
 
 🖼️ **image.nvim** is an attempt to add image support to Neovim.
 
+https://github.com/3rd/image.nvim/assets/59587503/56a814d9-0bfa-436a-b0ca-fa8b9ef4d92b
+
+
 ## Configuration
 
 > **Warning**
