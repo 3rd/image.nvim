@@ -64,6 +64,13 @@ api.setup = function(options)
   vim.api.nvim_create_autocmd("BufWinEnter", {
     group = group,
     callback = function()
+      local has_images = false
+      for _ in pairs(state.images) do
+        has_images = true
+        break
+      end
+      if not has_images then return end
+
       local windows = utils.window.get_visible_windows()
       local win_buf_map = {}
       for _, window in ipairs(windows) do
