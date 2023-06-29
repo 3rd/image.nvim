@@ -1,5 +1,13 @@
 local utils = require("image/utils")
 
+local resolve = function(markdown_file_path, image_path)
+  if string.sub(image_path, 1, 1) == "/" then return image_path end
+  local markdown_dir = vim.fn.fnamemodify(markdown_file_path, ":h")
+  local absolute_image_path = markdown_dir .. "/" .. image_path
+  absolute_image_path = vim.fn.fnamemodify(absolute_image_path, ":p")
+  return absolute_image_path
+end
+
 ---@return { node: any, range: { start_row: number, start_col: number, end_row: number, end_col: number }, url: string }[]
 local query_buffer_images = function(buffer)
   local buf = buffer or vim.api.nvim_get_current_buf()
@@ -46,8 +54,12 @@ local render = function(ctx)
       })
       local new_image_ids = {}
 
+      local file_path = vim.api.nvim_buf_get_name(window.buffer)
+
       for _, match in ipairs(matches) do
-        local ok = pcall(utils.png.get_dimensions, match.url)
+        local url = resolve(file_path, match.url)
+
+        local ok = pcall(utils.png.get_dimensions, url)
         if ok then
           local id = string.format("%d:%d:%d", window.id, window.buffer, match.range.start_row)
           local height = nil
@@ -64,7 +76,7 @@ local render = function(ctx)
             height = math.max(1, empty_line_count)
           end
 
-          local image = ctx.api.from_file(match.url, {
+          local image = ctx.api.from_file(url, {
             id = id,
             height = height,
             x = match.range.start_col,
