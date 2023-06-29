@@ -156,16 +156,16 @@ api.setup = function(options)
   })
 
   -- rerender on scroll/fold
-  -- vim.api.nvim_create_autocmd("WinScrolled", {
-  --   group = group,
-  --   callback = function(au)
-  --     utils.debug("WinScrolled", au)
-  --     local images = api.get_images({ window = tonumber(au.file) })
-  --     for _, current_image in ipairs(images) do
-  --       current_image.render()
-  --     end
-  --   end,
-  -- })
+  vim.api.nvim_create_autocmd("WinScrolled", {
+    group = group,
+    callback = function(au)
+      utils.debug("WinScrolled", au)
+      local images = api.get_images({ window = tonumber(au.file) })
+      for _, current_image in ipairs(images) do
+        current_image.render()
+      end
+    end,
+  })
 end
 
 ---@param path string
