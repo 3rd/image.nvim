@@ -122,6 +122,7 @@ local create_image = function(path, options, state)
       height = nil,
     }
     vim.api.nvim_buf_del_extmark(instance.buffer, state.extmarks_namespace, numerical_id)
+    buf_extmark_map[instance.buffer .. ":" .. instance.geometry.y] = nil
   end
 
   return instance
