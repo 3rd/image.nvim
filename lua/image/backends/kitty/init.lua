@@ -39,10 +39,7 @@ backend.render = function(image, x, y, width, height)
     or x + width < image.bounds.left
     or x > image.bounds.right
   then
-    utils.debug(
-      "deleting out of bounds image",
-      { id = image.id, x = x, y = y, width = width, height = height, bounds = image.bounds }
-    )
+    -- utils.debug( "deleting out of bounds image", { id = image.id, x = x, y = y, width = width, height = height, bounds = image.bounds })
     helpers.write_graphics({
       action = codes.control.action.delete,
       display_delete = "i",
@@ -52,10 +49,7 @@ backend.render = function(image, x, y, width, height)
     helpers.restore_cursor()
     return
   end
-  utils.debug(
-    "kitty: rendering image" .. image.path,
-    { id = image.id, x = x, y = y, width = width, height = height, bounds = image.bounds }
-  )
+  -- utils.debug("kitty: rendering image" .. image.path, { id = image.id, x = x, y = y, width = width, height = height, bounds = image.bounds })
 
   -- transmit image
   helpers.write_graphics({
@@ -105,15 +99,7 @@ backend.render = function(image, x, y, width, height)
     pixel_height = (image.bounds.bottom - y + 1) * term_size.cell_height
   end
 
-  utils.debug("kitty: final", {
-    x = x,
-    y = y,
-    width = width,
-    height = height,
-    pixel_width = pixel_width,
-    pixel_height = pixel_height,
-    pixel_top = pixel_top,
-  })
+  -- utils.debug("kitty: final image props", { x = x, y = y, width = width, height = height, pixel_width = pixel_width, pixel_height = pixel_height, pixel_top = pixel_top, })
 
   helpers.move_cursor(x + 1, y + 1)
   helpers.write_graphics({

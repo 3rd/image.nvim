@@ -36,9 +36,6 @@ local render = function(image, state)
   local image_rows = math.floor(image_dimensions.height / term_size.cell_height)
   local image_columns = math.floor(image_dimensions.width / term_size.cell_width)
 
-  utils.debug("-------------------------------------------------")
-  utils.debug("-->", image.id, image.path)
-
   local x = image.geometry.x or 0
   local y = image.geometry.y or 0
   local x_offset = 0
@@ -72,7 +69,7 @@ local render = function(image, state)
   width = math.min(width, term_size.screen_cols)
   height = math.min(width, term_size.screen_rows)
 
-  utils.debug(("(1) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
+  -- utils.debug(("(1) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
 
   if image.window ~= nil then
     -- window is valid
@@ -115,7 +112,7 @@ local render = function(image, state)
     end
   end
 
-  utils.debug(("(2) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
+  -- utils.debug(("(2) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
 
   -- global max width/height
   if type(state.options.max_width) == "number" then width = math.min(width, state.options.max_width) end
@@ -125,23 +122,13 @@ local render = function(image, state)
 
   if width <= 0 or height <= 0 then return false end
 
-  utils.debug(("(3) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
+  -- utils.debug(("(3) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
 
   local absolute_x = x + x_offset + window_offset_x
   local absolute_y = y + y_offset + window_offset_y
   local prevent_rendering = false
 
-  utils.debug(
-    ("(4) x: %d, y: %d, width: %d, height: %d y_offset: %d absolute_x: %d absolute_y: %d"):format(
-      x,
-      y,
-      width,
-      height,
-      y_offset,
-      absolute_x,
-      absolute_y
-    )
-  )
+  -- utils.debug(("(4) x: %d, y: %d, width: %d, height: %d y_offset: %d absolute_x: %d absolute_y: %d"):format( x, y, width, height, y_offset, absolute_x, absolute_y))
 
   -- extmark offsets
   if image.with_virtual_padding and image.window and image.buffer then
@@ -168,7 +155,6 @@ local render = function(image, state)
       if topfill > 0 and image.geometry.y < topline then
         --
         absolute_y = absolute_y - (height - topfill)
-        utils.debug(("topfill changes absolute_y: %d"):format(absolute_y))
       else
         -- offset by any pre-y virtual lines
         local extmarks = vim.tbl_map(
@@ -189,23 +175,10 @@ local render = function(image, state)
 
         local offset = topfill
         for _, mark in ipairs(extmarks) do
-          utils.debug(
-            ("mark: %d, row: %d, col: %d, height: %d, y: %d"):format(
-              mark.id,
-              mark.row,
-              mark.col,
-              mark.height,
-              image.geometry.y
-            )
-          )
-          if mark.row ~= image.geometry.y then
-            offset = offset + mark.height
-            utils.debug(("offset = offset + %d = %d"):format(mark.height, offset))
-          end
+          if mark.row ~= image.geometry.y then offset = offset + mark.height end
         end
 
         absolute_y = absolute_y + offset
-        utils.debug(("added offset: %d, absolute_y: %d"):format(offset, absolute_y))
       end
     end
   end
@@ -213,8 +186,20 @@ local render = function(image, state)
   if prevent_rendering then absolute_y = -999999 end
 
   image.bounds = bounds
+  local rendered_geometry = { x = absolute_x, y = absolute_y, width = width, height = height }
+
+  -- prevent useless rerendering
+  if
+    image.rendered_geometry.x == rendered_geometry.x
+    and image.rendered_geometry.y == rendered_geometry.y
+    and image.rendered_geometry.width == rendered_geometry.width
+    and image.rendered_geometry.height == rendered_geometry.height
+  then
+    return false
+  end
+
   state.backend.render(image, absolute_x, absolute_y, width, height)
-  image.rendered_geometry = { x = absolute_x, y = absolute_y, width = width, height = height }
+  image.rendered_geometry = rendered_geometry
 
   return true
 end

@@ -22,19 +22,17 @@ local spawn = function()
     end
   end)
 
-  vim.loop.read_start(stdout, function(err, data)
+  vim.loop.read_start(stdout, function(err, _)
     assert(not err, err)
-    if data then utils.debug("ueberzug:stdout", data) end
   end)
 
-  vim.loop.read_start(stderr, function(err, data)
+  vim.loop.read_start(stderr, function(err, _)
     assert(not err, err)
-    if data then utils.debug("ueberzug:stderr", data) end
   end)
 
   local write = function(data)
     local serialized = vim.fn.json_encode(data)
-    utils.debug("ueberzug:stdin", serialized)
+    -- utils.debug("ueberzug:stdin", serialized)
     vim.loop.write(stdin, serialized .. "\n")
   end
 
