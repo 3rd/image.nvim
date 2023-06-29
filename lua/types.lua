@@ -25,6 +25,8 @@
 ---@field max_height? number
 ---@field max_width_window_percentage? number
 ---@field max_height_window_percentage? number
+---@field kitty_method "normal"|"unicode-placeholders"
+---@field kitty_tmux_write_delay? number
 
 ---@class Backend
 ---@field state State

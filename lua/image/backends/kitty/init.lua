@@ -28,9 +28,10 @@ end
 -- extend from empty line strategy to use extmarks
 backend.render = function(image, x, y, width, height)
   local term_size = utils.term.get_size()
+  local with_virtual_placeholders = backend.state.options.kitty_method == "unicode-placeholders"
 
-  -- move and save cursor
-  helpers.move_cursor(x, y, true)
+  -- save cursor
+  helpers.move_cursor(x + 1, y + 1, true)
 
   -- clear out of bounds images
   if
@@ -58,12 +59,13 @@ backend.render = function(image, x, y, width, height)
     transmit_format = codes.control.transmit_format.png,
     transmit_medium = codes.control.transmit_medium.file,
     display_cursor_policy = codes.control.display_cursor_policy.do_not_move,
-    display_virtual_placeholder = is_tmux and 1 or 0,
+    display_virtual_placeholder = with_virtual_placeholders and 1 or 0,
     quiet = 2,
   }, image.path)
 
   -- unicode placeholders
-  if is_tmux then
+  if with_virtual_placeholders then
+    helpers.move_cursor(x + 1, y + 1, false, backend.state.options.kitty_tmux_write_delay)
     helpers.write_graphics({
       action = codes.control.action.display,
       quiet = 2,
@@ -99,9 +101,7 @@ backend.render = function(image, x, y, width, height)
     pixel_height = (image.bounds.bottom - y + 1) * term_size.cell_height
   end
 
-  -- utils.debug("kitty: final image props", { x = x, y = y, width = width, height = height, pixel_width = pixel_width, pixel_height = pixel_height, pixel_top = pixel_top, })
-
-  helpers.move_cursor(x + 1, y + 1)
+  helpers.move_cursor(x + 1, y + 1, false, backend.state.options.kitty_tmux_write_delay)
   helpers.write_graphics({
     action = codes.control.action.display,
     quiet = 2,

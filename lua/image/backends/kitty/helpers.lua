@@ -19,16 +19,17 @@ local encode = function(data)
   return data
 end
 
-local write = vim.schedule_wrap(function(data)
+local write = function(data)
   if data == "" then return end
   -- utils.debug("write:", vim.inspect(data))
   stdout:write(data)
   -- vim.fn.chansend(vim.v.stderr, data)
-end)
+end
 
-local move_cursor = function(x, y, save)
+local move_cursor = function(x, y, save, tmux_delay)
   if save then write("\x1b[s") end
-  write(("\x1b[" .. y .. ";" .. x .. "H"))
+  write("\x1b[" .. y .. ";" .. x .. "H")
+  if is_tmux and tmux_delay then vim.loop.sleep(tmux_delay) end
 end
 
 local restore_cursor = function()
@@ -61,7 +62,7 @@ local write_graphics = function(config, data)
       end
     end
   else
-    -- utils.debug("control:", control_payload)
+    -- utils.debug("kitty control payload:", control_payload)
     write(encode("\x1b_G" .. control_payload .. "\x1b\\"))
   end
 end
