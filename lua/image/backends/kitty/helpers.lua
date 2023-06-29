@@ -40,7 +40,7 @@ end
 -- https://github.com/edluffy/hologram.nvim/blob/main/lua/hologram/terminal.lua#L52
 local write_graphics = function(config, data)
   local control_payload = ""
-  -- log(config)
+  -- utils.debug("kitty.write_graphics()", config)
   for k, v in pairs(config) do
     if v ~= nil then
       local key = codes.control.keys[k]

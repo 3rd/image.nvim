@@ -36,6 +36,9 @@ local render = function(image, state)
   local image_rows = math.ceil(image_dimensions.height / term_size.cell_height)
   local image_columns = math.ceil(image_dimensions.width / term_size.cell_width)
 
+  utils.debug("-------------------------------------------------")
+  utils.debug("-->", image.id, image.path)
+
   local x = image.geometry.x or 0
   local y = image.geometry.y or 0
   local x_offset = 0
@@ -44,6 +47,12 @@ local render = function(image, state)
   local height = image.geometry.height or 0
   local window_offset_x = 0
   local window_offset_y = 0
+  local bounds = {
+    top = 0,
+    right = term_size.screen_cols,
+    bottom = term_size.screen_rows,
+    left = 0,
+  }
 
   -- infer missing w/h component
   if width == 0 and height ~= 0 then width = math.ceil(height * image_dimensions.width / image_dimensions.height) end
@@ -62,6 +71,8 @@ local render = function(image, state)
   -- screen max width/height
   width = math.min(width, term_size.screen_cols)
   height = math.min(width, term_size.screen_rows)
+
+  utils.debug(("(1) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
 
   if image.window ~= nil then
     -- window is valid
@@ -83,6 +94,14 @@ local render = function(image, state)
     window_offset_x = window.x
     window_offset_y = window.y
 
+    -- window bounds
+    bounds = {
+      top = window.y + global_offsets.y,
+      right = window.x + window.width - global_offsets.x,
+      bottom = window.y + window.height - global_offsets.y,
+      left = window.x + global_offsets.x,
+    }
+
     -- w/h can take at most 100% of the window
     width = math.min(width, window.width - x - x_offset)
     height = math.min(height, window.height - y - y_offset)
@@ -96,6 +115,8 @@ local render = function(image, state)
     end
   end
 
+  utils.debug(("(2) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
+
   -- global max width/height
   if type(state.options.max_width) == "number" then width = math.min(width, state.options.max_width) end
   if type(state.options.max_height) == "number" then height = math.min(height, state.options.max_height) end
@@ -104,16 +125,34 @@ local render = function(image, state)
 
   if width <= 0 or height <= 0 then return false end
 
+  utils.debug(("(3) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
+
   local absolute_x = x + x_offset + window_offset_x
   local absolute_y = y + y_offset + window_offset_y
   local prevent_rendering = false
 
+  utils.debug(
+    ("(4) x: %d, y: %d, width: %d, height: %d y_offset: %d absolute_x: %d absolute_y: %d"):format(
+      x,
+      y,
+      width,
+      height,
+      y_offset,
+      absolute_x,
+      absolute_y
+    )
+  )
+
   -- extmark offsets
-  if image.with_virtual_padding and image.window then
+  if image.with_virtual_padding and image.window and image.buffer then
     local win_info = vim.fn.getwininfo(image.window)[1]
     local topline = win_info.topline
     local botline = win_info.botline
+
+    local current_win = vim.api.nvim_get_current_win()
+    vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. image.window .. ")")
     local topfill = vim.fn.winsaveview().topfill
+    vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. current_win .. ")")
 
     -- bail if the image is above the top of the window and there's no topfill
     if topfill == 0 and image.geometry.y < topline then prevent_rendering = true end
@@ -129,10 +168,12 @@ local render = function(image, state)
       if topfill > 0 and image.geometry.y < topline then
         --
         absolute_y = absolute_y - (height - topfill)
-      elseif image.buffer then
+        utils.debug(("topfill changes absolute_y: %d"):format(absolute_y))
+      else
         -- offset by any pre-y virtual lines
         local extmarks = vim.tbl_map(
           function(mark)
+            ---@diagnostic disable-next-line: deprecated
             local mark_id, mark_row, mark_col, mark_opts = unpack(mark)
             local virt_height = #(mark_opts.virt_lines or {})
             return { id = mark_id, row = mark_row + 1, col = mark_col, height = virt_height }
@@ -148,16 +189,30 @@ local render = function(image, state)
 
         local offset = topfill
         for _, mark in ipairs(extmarks) do
-          if mark.row ~= image.geometry.y then offset = offset + mark.height end
+          utils.debug(
+            ("mark: %d, row: %d, col: %d, height: %d, y: %d"):format(
+              mark.id,
+              mark.row,
+              mark.col,
+              mark.height,
+              image.geometry.y
+            )
+          )
+          if mark.row ~= image.geometry.y then
+            offset = offset + mark.height
+            utils.debug(("offset = offset + %d = %d"):format(mark.height, offset))
+          end
         end
 
         absolute_y = absolute_y + offset
+        utils.debug(("added offset: %d, absolute_y: %d"):format(offset, absolute_y))
       end
     end
   end
 
   if prevent_rendering then absolute_y = -999999 end
 
+  image.bounds = bounds
   state.backend.render(image, absolute_x, absolute_y, width, height)
   image.rendered_geometry = { x = absolute_x, y = absolute_y, width = width, height = height }
 

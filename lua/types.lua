@@ -44,6 +44,12 @@
 ---@field buffer? number
 ---@field with_virtual_padding? boolean
 
+---@class ImageBounds
+---@field top number
+---@field right number
+---@field bottom number
+---@field left number
+
 ---@class Image
 ---@field id string
 ---@field internal_id number
@@ -53,6 +59,7 @@
 ---@field with_virtual_padding? boolean
 ---@field geometry ImageGeometry
 ---@field rendered_geometry ImageGeometry
+---@field bounds ImageBounds
 ---@field get_dimensions fun(): { width: number, height: number }
 ---@field render fun(geometry?: ImageGeometry)
 ---@field clear fun()

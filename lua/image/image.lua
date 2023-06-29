@@ -54,12 +54,32 @@ local create_image = function(path, options, state)
       local width = instance.rendered_geometry.width or 1
       local height = instance.rendered_geometry.height or 1
 
+      local previous_extmark = vim.api.nvim_buf_get_extmarks(
+        instance.buffer,
+        state.extmarks_namespace,
+        { row - 1, 0 },
+        { row, 0 },
+        { details = true }
+      )
+
+      if #previous_extmark > 0 then
+        local mark = previous_extmark[1]
+        -- utils.debug("prev extmark", mark)
+        local virt_height = #(mark[4].virt_lines or {})
+        if virt_height == height then
+          -- utils.debug("extmark already exists", { id = numerical_id, buf = instance.buffer })
+          return
+        end
+        -- utils.debug("deleting extmark", { id = numerical_id, buf = instance.buffer })
+        vim.api.nvim_buf_del_extmark(instance.buffer, state.extmarks_namespace, mark[1])
+      end
+
       local text = string.rep(" ", width)
       local filler = {}
       for _ = 0, height - 1 do
         filler[#filler + 1] = { { text, "" } }
       end
-      utils.debug("extmark create", { id = numerical_id, buf = instance.buffer })
+      utils.debug("extmark create", { image = instance.id, buf = instance.buffer })
       vim.api.nvim_buf_set_extmark(instance.buffer, state.extmarks_namespace, row - 1, 0, {
         id = numerical_id,
         virt_lines = filler,

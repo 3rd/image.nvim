@@ -3,8 +3,8 @@ local image = require("image/image")
 
 ---@type Options
 local default_options = {
-  backend = "ueberzug",
-  -- backend = "kitty",
+  -- backend = "ueberzug",
+  backend = "kitty",
   integrations = {
     markdown = {
       enabled = true,

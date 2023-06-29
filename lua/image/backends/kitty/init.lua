@@ -27,8 +27,37 @@ end
 
 -- extend from empty line strategy to use extmarks
 backend.render = function(image, x, y, width, height)
-  -- transmit image
+  local term_size = utils.term.get_size()
+
+  -- move and save cursor
   helpers.move_cursor(x, y, true)
+
+  -- clear out of bounds images
+  if
+    y + height < image.bounds.top
+    or y > image.bounds.bottom
+    or x + width < image.bounds.left
+    or x > image.bounds.right
+  then
+    utils.debug(
+      "deleting out of bounds image",
+      { id = image.id, x = x, y = y, width = width, height = height, bounds = image.bounds }
+    )
+    helpers.write_graphics({
+      action = codes.control.action.delete,
+      display_delete = "i",
+      image_id = image.internal_id,
+      quiet = 2,
+    })
+    helpers.restore_cursor()
+    return
+  end
+  utils.debug(
+    "kitty: rendering image" .. image.path,
+    { id = image.id, x = x, y = y, width = width, height = height, bounds = image.bounds }
+  )
+
+  -- transmit image
   helpers.write_graphics({
     action = codes.control.action.transmit,
     image_id = image.internal_id,
@@ -58,9 +87,14 @@ backend.render = function(image, x, y, width, height)
   end
 
   -- default display
-  local term_size = utils.term.get_size()
   local pixel_width = math.ceil(width * term_size.cell_width)
   local pixel_height = math.ceil(height * term_size.cell_height)
+  local pixel_top = 0
+  if y <= image.bounds.top then
+    pixel_height = pixel_height + y * term_size.cell_height
+    pixel_top = (-y + 1) * term_size.cell_height
+    y = image.bounds.top
+  end
 
   helpers.move_cursor(x + 1, y + 1)
   helpers.write_graphics({
@@ -70,6 +104,7 @@ backend.render = function(image, x, y, width, height)
     placement_id = 1,
     display_width = pixel_width,
     display_height = pixel_height,
+    display_y = pixel_top,
     display_zindex = -1,
     display_cursor_policy = codes.control.display_cursor_policy.do_not_move,
   })
