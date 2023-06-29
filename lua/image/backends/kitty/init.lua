@@ -23,6 +23,13 @@ backend.setup = function(state)
     utils.throw("tmux does not have allow-passthrough enabled")
     return
   end
+
+  vim.api.nvim_create_autocmd("VimLeavePre", {
+    pattern = "*",
+    callback = function()
+      backend.clear()
+    end,
+  })
 end
 
 -- extend from empty line strategy to use extmarks
