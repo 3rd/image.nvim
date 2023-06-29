@@ -33,8 +33,8 @@ end
 local render = function(image, state)
   local term_size = utils.term.get_size()
   local image_dimensions = image.get_dimensions()
-  local image_rows = math.ceil(image_dimensions.height / term_size.cell_height)
-  local image_columns = math.ceil(image_dimensions.width / term_size.cell_width)
+  local image_rows = math.floor(image_dimensions.height / term_size.cell_height)
+  local image_columns = math.floor(image_dimensions.width / term_size.cell_width)
 
   utils.debug("-------------------------------------------------")
   utils.debug("-->", image.id, image.path)

@@ -1,6 +1,9 @@
 local utils = require("image/utils")
 local renderer = require("image/renderer")
 
+-- { ["buf:row"]: { id, height } }
+---@type table<string, { id: number, height: number }>
+local buf_extmark_map = {}
 local next_numerical_id = 1
 
 ---@param path string
@@ -54,24 +57,54 @@ local create_image = function(path, options, state)
       local width = instance.rendered_geometry.width or 1
       local height = instance.rendered_geometry.height or 1
 
-      local previous_extmark = vim.api.nvim_buf_get_extmarks(
-        instance.buffer,
-        state.extmarks_namespace,
-        { row - 1, 0 },
-        { row, 0 },
-        { details = true }
-      )
+      -- for some reason this doesn't work, we set an extmark with 23 filler lines
+      -- and when retrieving it, it has 25 lines
+      -- local previous_extmark = vim.api.nvim_buf_get_extmarks(
+      --   instance.buffer,
+      --   state.extmarks_namespace,
+      --   { row - 1, 0 },
+      --   { row - 1, 0 },
+      --   { details = true }
+      -- )
+      -- if #previous_extmark > 0 then
+      --   local mark = previous_extmark[1]
+      --   utils.debug("prev extmark", previous_extmark)
+      --   local virt_height = #(mark[4].virt_lines or {})
+      --   utils.debug("coaie", mark[4].virt_lines)
+      --   for i, line in ipairs(mark[4].virt_lines or {}) do
+      --     utils.debug(i, line)
+      --   end
+      --   if virt_height == height then
+      --     utils.debug("extmark already exists", { id = numerical_id, buf = instance.buffer, height = height })
+      --     return
+      --   end
+      --   utils.debug("deleting extmark", { id = numerical_id, buf = instance.buffer, height = virt_height })
+      -- end
 
-      if #previous_extmark > 0 then
-        local mark = previous_extmark[1]
-        -- utils.debug("prev extmark", mark)
-        local virt_height = #(mark[4].virt_lines or {})
-        if virt_height == height then
-          -- utils.debug("extmark already exists", { id = numerical_id, buf = instance.buffer })
+      --   vim.api.nvim_buf_get_extmark_by_id(instance.buffer, state.extmarks_namespace, numerical_id, {})
+      -- if #previous_extmark > 0 then
+      --   utils.debug("prev extmark", previous_extmark)
+      --   if previous_extmark[1] == row - 1 then
+      --     utils.debug(
+      --       "extmark already exists",
+      --       { id = numerical_id, buf = instance.buffer, height = height, row = previous_extmark[1] }
+      --     )
+      --     return
+      --   end
+      --   utils.debug("deleting extmark", { id = numerical_id, buf = instance.buffer, row = previous_extmark[1] })
+      -- end
+
+      local previous_extmark = buf_extmark_map[instance.buffer .. ":" .. row]
+      if previous_extmark then
+        if previous_extmark.height == height then
+          utils.debug(
+            "extmark already exists",
+            { id = numerical_id, buf = instance.buffer, height = height, row = row - 1 }
+          )
           return
         end
-        -- utils.debug("deleting extmark", { id = numerical_id, buf = instance.buffer })
-        vim.api.nvim_buf_del_extmark(instance.buffer, state.extmarks_namespace, mark[1])
+        utils.debug("deleting extmark", { id = numerical_id, buf = instance.buffer, row = row - 1 })
+        vim.api.nvim_buf_del_extmark(instance.buffer, state.extmarks_namespace, previous_extmark.id)
       end
 
       local text = string.rep(" ", width)
@@ -79,17 +112,21 @@ local create_image = function(path, options, state)
       for _ = 0, height - 1 do
         filler[#filler + 1] = { { text, "" } }
       end
-      utils.debug("extmark create", { image = instance.id, buf = instance.buffer })
+      utils.debug(
+        "extmark create",
+        { image = instance.id, buf = instance.buffer, height = height, line_count = #filler, row = row - 1 }
+      )
       vim.api.nvim_buf_set_extmark(instance.buffer, state.extmarks_namespace, row - 1, 0, {
         id = numerical_id,
         virt_lines = filler,
       })
+      buf_extmark_map[instance.buffer .. ":" .. row] = { id = numerical_id, height = height }
     end
   end
 
   instance.clear = function()
     state.backend.clear(instance.id)
-    utils.debug("extmark del", { id = numerical_id, buf = instance.buffer })
+    utils.debug("clear() extmark del", { id = numerical_id, buf = instance.buffer })
     vim.api.nvim_buf_del_extmark(instance.buffer, state.extmarks_namespace, numerical_id)
   end
 

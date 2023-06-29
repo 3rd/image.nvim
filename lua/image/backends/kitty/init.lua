@@ -87,14 +87,33 @@ backend.render = function(image, x, y, width, height)
   end
 
   -- default display
-  local pixel_width = math.ceil(width * term_size.cell_width)
-  local pixel_height = math.ceil(height * term_size.cell_height)
+  local pixel_width = width * term_size.cell_width
+  local pixel_height = height * term_size.cell_height
   local pixel_top = 0
-  if y <= image.bounds.top then
-    pixel_height = pixel_height + y * term_size.cell_height
-    pixel_top = (-y + 1) * term_size.cell_height
+
+  -- top crop
+  if y < image.bounds.top then
+    local visible_rows = height - (image.bounds.top - y)
+    pixel_height = visible_rows * term_size.cell_height
+    pixel_top = (image.bounds.top - y) * term_size.cell_height
     y = image.bounds.top
   end
+
+  -- bottom crop
+  if y + height > image.bounds.bottom then
+    --
+    pixel_height = (image.bounds.bottom - y + 1) * term_size.cell_height
+  end
+
+  utils.debug("kitty: final", {
+    x = x,
+    y = y,
+    width = width,
+    height = height,
+    pixel_width = pixel_width,
+    pixel_height = pixel_height,
+    pixel_top = pixel_top,
+  })
 
   helpers.move_cursor(x + 1, y + 1)
   helpers.write_graphics({
