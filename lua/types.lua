@@ -17,6 +17,7 @@
 ---@class MarkdownIntegrationOptions
 ---@field enabled boolean
 ---@field sizing_strategy "auto"|"height-from-empty-lines"
+---@field download_remote_images boolean
 
 ---@alias IntegrationOptions MarkdownIntegrationOptions
 

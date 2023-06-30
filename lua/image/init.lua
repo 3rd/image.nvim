@@ -9,6 +9,7 @@ local default_options = {
     markdown = {
       enabled = true,
       sizing_strategy = "auto",
+      download_remote_images = true,
     },
   },
   max_width = nil,

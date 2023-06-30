@@ -87,6 +87,8 @@ local render = function(ctx)
 
         -- remote
         if is_remote_url(match.url) then
+          if not ctx.options.download_remote_images then return end
+
           ctx.api.from_url(
             match.url,
             { id = id, window = window.id, buffer = window.buffer, with_virtual_padding = true },
