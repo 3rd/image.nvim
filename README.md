@@ -33,6 +33,15 @@ require("image").setup({
 })
 ```
 
+### Try it out with a minimal setup
+
+Download [minimal-setup.lua](./minimal-setup.lua) from the root of this repository and run the demo with:
+
+```sh
+nvim --clean -c ":luafile minimal-setup.lua"
+```
+
+
 ### Backends
 
 - `kitty` (default and with Unicode placeholders, both work inside Tmux)
