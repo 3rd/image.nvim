@@ -148,6 +148,51 @@ local from_file = function(path, options, state)
   return create_image(path, options, state)
 end
 
+---@param url string
+---@param options? ImageOptions
+---@param callback fun(image: Image|nil)
+---@param state State
+local from_url = function(url, options, callback, state)
+  if state.remote_cache[url] then
+    callback(state.remote_cache[url])
+    return
+  end
+
+  local tmp_path = os.tmpname() .. ".png"
+  local stdout = vim.loop.new_pipe()
+
+  vim.loop.spawn("curl", {
+    args = { "-s", "-o", tmp_path, url },
+    stdio = { nil, stdout, nil },
+    hide = true,
+  }, function(code, signal)
+    if code ~= 0 then
+      utils.throw("image: curl errored while downloading " .. url, {
+        code = code,
+        signal = signal,
+      })
+    end
+  end)
+
+  vim.loop.read_start(stdout, function(err, data)
+    assert(not err, err)
+    if not data then utils.debug("image: downloaded " .. url .. " to " .. tmp_path) end
+    local ok = pcall(utils.png.get_dimensions, tmp_path)
+    if not ok then
+      utils.debug("image: invalid png file", tmp_path)
+      callback(nil)
+      return
+    end
+
+    vim.defer_fn(function()
+      local image = create_image(tmp_path, options, state)
+      state.remote_cache[url] = image
+      callback(image)
+    end, 0)
+  end)
+end
+
 return {
   from_file = from_file,
+  from_url = from_url,
 }

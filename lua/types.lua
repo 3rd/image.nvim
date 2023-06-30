@@ -3,6 +3,7 @@
 ---@class API
 ---@field setup fun(options?: Options)
 ---@field from_file fun(path: string, options?: ImageOptions): Image
+---@field from_url fun(url: string, options?: ImageOptions, callback: fun(image: Image| nil))
 ---@field clear fun(id?: string)
 ---@field get_images fun(opts?: { window?: number, buffer?: number }): Image[]
 
@@ -11,6 +12,7 @@
 ---@field options Options
 ---@field images { [string]: Image }
 ---@field extmarks_namespace any
+---@field remote_cache { [string]: Image }
 
 ---@class MarkdownIntegrationOptions
 ---@field enabled boolean

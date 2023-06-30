@@ -26,6 +26,7 @@ local state = {
   options = default_options,
   images = {},
   extmarks_namespace = nil,
+  remote_cache = {},
 }
 
 ---@type API
@@ -61,7 +62,7 @@ api.setup = function(options)
   local window_history = {}
   vim.api.nvim_set_decoration_provider(state.extmarks_namespace, {
     on_win = function(_, winid, bufnr, topline, botline)
-      -- utils.debug("on_win", { winid = winid })
+      utils.debug("on_win", { winid = winid })
 
       local prev = window_history[winid]
       if not prev then
@@ -172,6 +173,13 @@ end
 ---@param options? ImageOptions
 api.from_file = function(path, options)
   return image.from_file(path, options, state)
+end
+
+---@param url string
+---@param options? ImageOptions
+---@param callback fun(image: Image|nil)
+api.from_url = function(url, options, callback)
+  image.from_url(url, options, callback, state)
 end
 
 ---@param id? string

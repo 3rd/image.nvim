@@ -1,11 +1,15 @@
 local utils = require("image/utils")
 
-local resolve = function(markdown_file_path, image_path)
+local resolve_absolute_path = function(markdown_file_path, image_path)
   if string.sub(image_path, 1, 1) == "/" then return image_path end
   local markdown_dir = vim.fn.fnamemodify(markdown_file_path, ":h")
   local absolute_image_path = markdown_dir .. "/" .. image_path
   absolute_image_path = vim.fn.fnamemodify(absolute_image_path, ":p")
   return absolute_image_path
+end
+
+local is_remote_url = function(url)
+  return string.sub(url, 1, 7) == "http://" or string.sub(url, 1, 8) == "https://"
 end
 
 ---@return { node: any, range: { start_row: number, start_col: number, end_row: number, end_col: number }, url: string }[]
@@ -57,13 +61,11 @@ local render = function(ctx)
       local file_path = vim.api.nvim_buf_get_name(window.buffer)
 
       for _, match in ipairs(matches) do
-        local url = resolve(file_path, match.url)
+        local id = string.format("%d:%d:%d", window.id, window.buffer, match.range.start_row)
+        local height = nil
 
-        local ok = pcall(utils.png.get_dimensions, url)
-        if ok then
-          local id = string.format("%d:%d:%d", window.id, window.buffer, match.range.start_row)
-          local height = nil
-
+        ---@param image Image
+        local render_image = function(image)
           if ctx.options.sizing_strategy == "height-from-empty-lines" then
             local empty_line_count = -1
             for i = match.range.end_row + 2, #lines do
@@ -75,19 +77,37 @@ local render = function(ctx)
             end
             height = math.max(1, empty_line_count)
           end
-
-          local image = ctx.api.from_file(url, {
-            id = id,
+          image.render({
             height = height,
             x = match.range.start_col,
             y = match.range.start_row + 1,
+          })
+          table.insert(new_image_ids, id)
+        end
+
+        -- remote
+        if is_remote_url(match.url) then
+          ctx.api.from_url(
+            match.url,
+            { id = id, window = window.id, buffer = window.buffer, with_virtual_padding = true },
+            function(image)
+              if not image then return end
+              render_image(image)
+            end
+          )
+        else
+          -- local
+          local url = resolve_absolute_path(file_path, match.url)
+
+          local ok = pcall(utils.png.get_dimensions, url)
+          if not ok then return end
+          local image = ctx.api.from_file(url, {
+            id = id,
             window = window.id,
             buffer = window.buffer,
             with_virtual_padding = true,
           })
-          image.render()
-
-          table.insert(new_image_ids, id)
+          render_image(image)
         end
       end
 
