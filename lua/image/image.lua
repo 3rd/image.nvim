@@ -154,7 +154,8 @@ end
 ---@param state State
 local from_url = function(url, options, callback, state)
   if state.remote_cache[url] then
-    callback(state.remote_cache[url])
+    local image = create_image(state.remote_cache[url], options, state)
+    callback(image)
     return
   end
 
@@ -184,9 +185,10 @@ local from_url = function(url, options, callback, state)
       return
     end
 
+    state.remote_cache[url] = tmp_path
+
     vim.defer_fn(function()
       local image = create_image(tmp_path, options, state)
-      state.remote_cache[url] = image
       callback(image)
     end, 0)
   end)

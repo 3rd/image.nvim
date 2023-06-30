@@ -76,8 +76,8 @@ local api = require("image")
 
 local image = api.from_file("path/to/image.png", {
   id = "my_image_id", -- optional, defaults to a random string
-  window = 1000, -- optional, binds image to the window and its bounds
-  buffer = 1000, -- optional, binds image to buffer
+  window = 1000, -- optional, binds image to a window and its bounds
+  buffer = 1000, -- optional, binds image to a buffer (paired with window binding)
   with_virtual_padding = true, -- optional, pads vertically with extmarks
   ...geometry, -- optional, { x, y, width, height }
 })

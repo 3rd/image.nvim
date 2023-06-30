@@ -12,7 +12,7 @@
 ---@field options Options
 ---@field images { [string]: Image }
 ---@field extmarks_namespace any
----@field remote_cache { [string]: Image }
+---@field remote_cache { [string]: string }
 
 ---@class MarkdownIntegrationOptions
 ---@field enabled boolean
