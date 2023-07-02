@@ -1,9 +1,10 @@
-# image.nvim
+# 🖼️ image.nvim
 
 > **Warning**
+>\
 > This is very much a **work in progress**, **there are many bugs**, and there's lots to improve, but... we're getting there!
 
-🖼️ **image.nvim** is an attempt to add image support to Neovim.
+**image.nvim** is an attempt to add image support to Neovim.
 
 https://github.com/3rd/image.nvim/assets/59587503/56a814d9-0bfa-436a-b0ca-fa8b9ef4d92b
 
@@ -11,6 +12,7 @@ https://github.com/3rd/image.nvim/assets/59587503/56a814d9-0bfa-436a-b0ca-fa8b9e
 ## Configuration
 
 > **Warning**
+>\
 > Again, this plugin is not prepared for having users, but this is how you'd configure it if you wanted to try it out.
 
 ```lua
@@ -22,6 +24,7 @@ require("image").setup({
       enabled = true,
       sizing_strategy = "auto",
       download_remote_images = true,
+      clear_in_insert_mode = false,
     },
   },
   max_width = nil,

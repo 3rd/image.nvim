@@ -135,6 +135,7 @@ local setup_autocommands = function(ctx)
       render(ctx)
     end,
   })
+
   vim.api.nvim_create_autocmd({
     "TextChanged",
     "TextChangedI",
@@ -150,6 +151,32 @@ local setup_autocommands = function(ctx)
       render(ctx)
     end,
   })
+
+  if ctx.options.clear_in_insert_mode then
+    vim.api.nvim_create_autocmd({
+      "InsertEnter",
+    }, {
+      group = group,
+      callback = function(args)
+        if vim.bo[args.buf].filetype ~= "markdown" then return end
+        local current_window = vim.api.nvim_get_current_win()
+        local images = ctx.api.get_images({ window = current_window })
+        for _, image in ipairs(images) do
+          image.clear()
+        end
+      end,
+    })
+
+    vim.api.nvim_create_autocmd({
+      "InsertLeave",
+    }, {
+      group = group,
+      callback = function(args)
+        if vim.bo[args.buf].filetype ~= "markdown" then return end
+        render(ctx)
+      end,
+    })
+  end
 end
 
 ---@type fun(api: API, options: MarkdownIntegrationOptions)
