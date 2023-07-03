@@ -8,15 +8,32 @@
 
 https://github.com/3rd/image.nvim/assets/59587503/56a814d9-0bfa-436a-b0ca-fa8b9ef4d92b
 
+## Requirements
+
+These are things you have to setup on your own:
+- [ImageMagick](https://github.com/ImageMagick/ImageMagick) - mandatory
+- [magick LuaRock](https://github.com/leafo/magick) - mandatory (`luarocks --local install magick`)
+- [Kitty](https://sw.kovidgoyal.net/kitty/) - for the `kitty` backend
+- [ueberzugpp](https://github.com/jstkdng/ueberzugpp) - for the `ueberzug` backend
+- [curl](https://github.com/curl/curl) - for remote images
+
+On some distros, like NixOS, you will find that the `magick` LuaRock cannot find `libMagickWand.so`.
+
+One way to fix it is to patch `~/.luarocks/share/lua/5.1/magick/wand/lib.lua` and change the first argument of the `try_to_load`
+function to your `"/nix/store/xxxxxxxxxxxxxxxx-imagemagick-7.*.*-**/lib/libMagickWand-7.****.so"`.
+
+After installing the `magick` LuaRock, you need to change your Neovim config to load it.
+
+```lua
+-- make sure that this happens before `image.nvim` is loaded:
+package.path = package.path .. ";/home/you/.luarocks/share/lua/5.1/?/init.lua;"
+package.path = package.path .. ";/home/you/.luarocks/share/lua/5.1/?.lua;"
+```
 
 ## Configuration
 
-> **Warning**
->\
-> Again, this plugin is not prepared for having users, but this is how you'd configure it if you wanted to try it out.
-
 ```lua
--- default config:
+-- default config
 require("image").setup({
   backend = "kitty",
   integrations = {
@@ -32,7 +49,7 @@ require("image").setup({
   max_width_window_percentage = nil,
   max_height_window_percentage = 50,
   kitty_method = "normal",
-  kitty_tmux_write_delay = 5,
+  kitty_tmux_write_delay = 10, -- makes rendering more reliable with Kitty+Tmux
 })
 ```
 
@@ -52,8 +69,8 @@ nvim --clean -c ":luafile minimal-setup.lua"
     - Works great, is snappy and has very few artifacts (on my machine, at least).
 - `ueberzug` - backed by [ueberzugpp](https://github.com/jstkdng/ueberzugpp)
     - It's more general but a bit slower.
-    - Now supports multiple images thanks to [@jstkdng](https://github.com/jstkdng/ueberzugpp/issues/74).
-    - No cropping yet, so images will get out of bounds or stretched.
+    - Supports multiple images thanks to [@jstkdng](https://github.com/jstkdng/ueberzugpp/issues/74).
+    - On-par with Kitty in terms of features, but slower.
 - `sixels` - not implemented yet
 
 ### Integrations
