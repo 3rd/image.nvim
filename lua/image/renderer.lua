@@ -288,6 +288,7 @@ local render = function(image, state)
     cropped_image:crop(pixel_width, pixel_height, 0, crop_offset_top)
     local tmp_path = state.tmp_dir .. "/" .. utils.random.id() .. ".png"
     cropped_image:write(tmp_path)
+    cropped_image:destroy()
     image.path = tmp_path
     image.is_cropped = true
   end
