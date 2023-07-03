@@ -58,6 +58,9 @@ end
 local backend = {
   ---@diagnostic disable-next-line: assign-type-mismatch
   state = nil,
+  features = {
+    crop = false,
+  },
 }
 
 backend.setup = function(state)

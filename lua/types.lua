@@ -33,8 +33,12 @@
 ---@field kitty_method "normal"|"unicode-placeholders"
 ---@field kitty_tmux_write_delay? number
 
+---@class BackendFeatures
+---@field crop boolean
+
 ---@class Backend
 ---@field state State
+---@field features BackendFeatures
 ---@field setup fun(state: State)
 ---@field render fun(image: Image, x: number, y: number, width?: number, height?: number)
 ---@field clear fun(id?: string, shallow?: boolean)

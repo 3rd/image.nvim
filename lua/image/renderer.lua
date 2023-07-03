@@ -252,49 +252,51 @@ local render = function(image, state)
   end
 
   -- crop
-  local pixel_width = width * term_size.cell_width
-  local pixel_height = height * term_size.cell_height
-  local crop_offset_top = 0
-  local needs_crop = false
+  if not state.backend.features.crop then
+    local pixel_width = width * term_size.cell_width
+    local pixel_height = height * term_size.cell_height
+    local crop_offset_top = 0
+    local needs_crop = false
 
-  -- crop top
-  if absolute_y < bounds.top then
-    local visible_rows = height - (bounds.top - absolute_y)
-    pixel_height = visible_rows * term_size.cell_height
-    crop_offset_top = (bounds.top - absolute_y) * term_size.cell_height
-    absolute_y = bounds.top
-    needs_crop = true
-  end
+    -- crop top
+    if absolute_y < bounds.top then
+      local visible_rows = height - (bounds.top - absolute_y)
+      pixel_height = visible_rows * term_size.cell_height
+      crop_offset_top = (bounds.top - absolute_y) * term_size.cell_height
+      absolute_y = bounds.top
+      needs_crop = true
+    end
 
-  -- crop bottom
-  if absolute_y + height > bounds.bottom then
-    pixel_height = (bounds.bottom - absolute_y + 1) * term_size.cell_height
-    needs_crop = true
-  end
+    -- crop bottom
+    if absolute_y + height > bounds.bottom then
+      pixel_height = (bounds.bottom - absolute_y + 1) * term_size.cell_height
+      needs_crop = true
+    end
 
-  -- crop right
-  if absolute_x + width > bounds.right then
-    pixel_width = (bounds.right - absolute_x) * term_size.cell_width
-    needs_crop = true
-  end
+    -- crop right
+    if absolute_x + width > bounds.right then
+      pixel_width = (bounds.right - absolute_x) * term_size.cell_width
+      needs_crop = true
+    end
 
-  -- perform crop
-  local crop_hash = needs_crop and ("%d-%d-%d-%d"):format(pixel_width, pixel_height, 0, crop_offset_top) or nil
-  if crop_hash or (image.crop_hash ~= crop_hash) then
-    local cropped_image = magick.load_image(image.original_path)
-    cropped_image:set_format("png")
-    cropped_image:crop(pixel_width, pixel_height, 0, crop_offset_top)
-    local tmp_path = state.tmp_dir .. "/" .. utils.random.id() .. ".png"
-    cropped_image:write(tmp_path)
-    cropped_image:destroy()
-    image.path = tmp_path
-    image.crop_hash = crop_hash
+    -- perform crop
+    local crop_hash = needs_crop and ("%d-%d-%d-%d"):format(pixel_width, pixel_height, 0, crop_offset_top) or nil
+    if crop_hash or (image.crop_hash ~= crop_hash) then
+      local cropped_image = magick.load_image(image.original_path)
+      cropped_image:set_format("png")
+      cropped_image:crop(pixel_width, pixel_height, 0, crop_offset_top)
+      local tmp_path = state.tmp_dir .. "/" .. utils.random.id() .. ".png"
+      cropped_image:write(tmp_path)
+      cropped_image:destroy()
+      image.path = tmp_path
+      image.crop_hash = crop_hash
+    end
   end
 
   -- utils.debug(("(5) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
+  image.bounds = bounds
   state.backend.render(image, absolute_x, absolute_y, width, height)
   image.rendered_geometry = rendered_geometry
-  image.bounds = bounds
 
   return true
 end
