@@ -59,10 +59,12 @@ local backend = {
   ---@diagnostic disable-next-line: assign-type-mismatch
   state = nil,
 }
+
 backend.setup = function(state)
   backend.state = state
   if not child then spawn() end
 end
+
 backend.render = function(image, x, y, width, height)
   if not child then return end
   child.write({
@@ -77,8 +79,11 @@ backend.render = function(image, x, y, width, height)
   image.is_rendered = true
   backend.state.images[image.id] = image
 end
+
 backend.clear = function(image_id, shallow)
   if not child then return end
+
+  -- one
   if image_id then
     local image = backend.state.images[image_id]
     if not image then return end
@@ -90,6 +95,8 @@ backend.clear = function(image_id, shallow)
     if not shallow then backend.state.images[image_id] = nil end
     return
   end
+
+  -- all
   for id, image in pairs(backend.state.images) do
     child.write({
       action = "remove",

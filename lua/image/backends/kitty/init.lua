@@ -34,32 +34,10 @@ end
 
 -- extend from empty line strategy to use extmarks
 backend.render = function(image, x, y, width, height)
-  local term_size = utils.term.get_size()
   local with_virtual_placeholders = backend.state.options.kitty_method == "unicode-placeholders"
 
   -- save cursor
   helpers.move_cursor(x + 1, y + 1, true)
-
-  -- clear out of bounds images
-  if
-    y + height < image.bounds.top
-    or y > image.bounds.bottom
-    or x + width < image.bounds.left
-    or x > image.bounds.right
-  then
-    -- utils.debug( "deleting out of bounds image", { id = image.id, x = x, y = y, width = width, height = height, bounds = image.bounds })
-    helpers.write_graphics({
-      action = codes.control.action.delete,
-      display_delete = "i",
-      image_id = image.internal_id,
-      quiet = 2,
-    })
-    image.is_rendered = false
-    backend.state.images[image.id] = image
-    helpers.restore_cursor()
-    return
-  end
-  -- utils.debug("kitty: rendering image" .. image.path, { id = image.id, x = x, y = y, width = width, height = height, bounds = image.bounds })
 
   -- transmit image
   helpers.write_graphics({
@@ -93,33 +71,11 @@ backend.render = function(image, x, y, width, height)
     return
   end
 
-  -- default display
-  local pixel_width = width * term_size.cell_width
-  local pixel_height = height * term_size.cell_height
-  local pixel_top = 0
-
-  -- top crop
-  if y < image.bounds.top then
-    local visible_rows = height - (image.bounds.top - y)
-    pixel_height = visible_rows * term_size.cell_height
-    pixel_top = (image.bounds.top - y) * term_size.cell_height
-    y = image.bounds.top
-  end
-
-  -- bottom crop
-  if y + height > image.bounds.bottom then
-    --
-    pixel_height = (image.bounds.bottom - y + 1) * term_size.cell_height
-  end
-
   helpers.move_cursor(x + 1, y + 1, false, backend.state.options.kitty_tmux_write_delay)
   helpers.write_graphics({
     action = codes.control.action.display,
     quiet = 2,
     image_id = image.internal_id,
-    display_width = pixel_width,
-    display_height = pixel_height,
-    display_y = pixel_top,
     display_zindex = -1,
     display_cursor_policy = codes.control.display_cursor_policy.do_not_move,
     placement_id = image.internal_id,
@@ -130,6 +86,9 @@ backend.render = function(image, x, y, width, height)
 end
 
 backend.clear = function(image_id, shallow)
+  helpers.move_cursor(0, 0, true)
+
+  -- one
   if image_id then
     local image = backend.state.images[image_id]
     if not image then return end
@@ -141,8 +100,11 @@ backend.clear = function(image_id, shallow)
     })
     image.is_rendered = false
     if not shallow then backend.state.images[image_id] = nil end
+    helpers.restore_cursor()
     return
   end
+
+  --all
   helpers.write_graphics({
     action = codes.control.action.delete,
     display_delete = "a",
@@ -152,6 +114,7 @@ backend.clear = function(image_id, shallow)
     image.is_rendered = false
     if not shallow then backend.state.images[id] = nil end
   end
+  helpers.restore_cursor()
 end
 
 return backend

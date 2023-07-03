@@ -1,4 +1,5 @@
 local utils = require("image/utils")
+local magick = require("image.magick")
 
 ---@return { x: number, y: number }
 local get_global_offsets = function()
@@ -222,6 +223,50 @@ local render = function(image, state)
   if prevent_rendering then absolute_y = -999999 end
 
   image.bounds = bounds
+
+  -- clear out of bounds images
+  if
+    absolute_y + height < image.bounds.top
+    or absolute_y > image.bounds.bottom
+    or absolute_x + width < image.bounds.left
+    or absolute_x > image.bounds.right
+  then
+    if image.is_rendered then
+      -- utils.debug("deleting out of bounds image", { id = image.id, x = x, y = y, width = width, height = height, bounds = image.bounds })
+      state.backend.clear(image.id, true)
+    else
+      state.images[image.id] = image
+    end
+    return true
+  end
+
+  -- crop
+  local pixel_width = width * term_size.cell_width
+  local pixel_height = height * term_size.cell_height
+  local crop_offset_top = 0
+  local needs_crop = false
+
+  -- crop top
+  if absolute_y < image.bounds.top then
+    local visible_rows = height - (image.bounds.top - absolute_y)
+    pixel_height = visible_rows * term_size.cell_height
+    crop_offset_top = (image.bounds.top - absolute_y) * term_size.cell_height
+    absolute_y = image.bounds.top
+    needs_crop = true
+  end
+
+  -- crop bottom
+  if absolute_y > image.bounds.bottom then
+    pixel_height = (image.bounds.bottom - absolute_y + 1) * term_size.cell_height
+    needs_crop = true
+  end
+
+  -- crop right
+  if absolute_x + pixel_width > image.bounds.right then
+    pixel_width = (image.bounds.right - absolute_x) * term_size.cell_width
+    needs_crop = true
+  end
+
   local rendered_geometry = { x = absolute_x, y = absolute_y, width = width, height = height }
 
   -- prevent useless rerendering
@@ -235,8 +280,18 @@ local render = function(image, state)
     return true
   end
 
-  -- utils.debug(("(5) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
+  -- perform crop
+  if needs_crop then
+    local cropped_image = magick.load_image(image.original_path)
+    cropped_image:set_format("png")
+    utils.debug(("cropping image: %d, %d, %d, %d"):format(pixel_width, pixel_height, 0, crop_offset_top))
+    cropped_image:crop(pixel_width, pixel_height, 0, crop_offset_top)
+    local tmp_path = os.tmpname() .. ".png"
+    cropped_image:write(tmp_path)
+    image.path = tmp_path
+  end
 
+  -- utils.debug(("(5) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
   state.backend.render(image, absolute_x, absolute_y, width, height)
   image.rendered_geometry = rendered_geometry
 
