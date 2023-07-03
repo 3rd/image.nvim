@@ -100,13 +100,13 @@ local render = function(ctx)
         else
           -- local
           local path = resolve_absolute_path(file_path, match.url)
-          local image = ctx.api.from_file(path, {
+          local ok, image = pcall(ctx.api.from_file, path, {
             id = id,
             window = window.id,
             buffer = window.buffer,
             with_virtual_padding = true,
           })
-          if image then render_image(image) end
+          if ok then render_image(image) end
         end
       end
 
