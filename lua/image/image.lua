@@ -63,7 +63,7 @@ local from_file = function(path, options, state)
     if geometry then instance.geometry = vim.tbl_deep_extend("force", instance.geometry, geometry) end
 
     -- utils.debug(("\n\n---------------- %s ----------------"):format(instance.id))
-    local ok = renderer.render(instance, state)
+    local was_rendered = renderer.render(instance, state)
     -- utils.debug("render result", instance.id, ok)
 
     -- virtual padding
@@ -74,7 +74,7 @@ local from_file = function(path, options, state)
 
       local previous_extmark = buf_extmark_map[instance.buffer .. ":" .. row]
 
-      if not ok and previous_extmark then
+      if not was_rendered and previous_extmark then
         state.backend.clear(instance.id, true)
         vim.api.nvim_buf_del_extmark(instance.buffer, state.extmarks_namespace, previous_extmark.id)
         buf_extmark_map[instance.buffer .. ":" .. row] = nil
@@ -86,7 +86,7 @@ local from_file = function(path, options, state)
         vim.api.nvim_buf_del_extmark(instance.buffer, state.extmarks_namespace, previous_extmark.id)
       end
 
-      if ok then
+      if was_rendered then
         local text = string.rep(" ", width)
         local filler = {}
         for _ = 0, height - 1 do
@@ -97,6 +97,11 @@ local from_file = function(path, options, state)
           virt_lines = filler,
         })
         buf_extmark_map[instance.buffer .. ":" .. row] = { id = numerical_id, height = height }
+
+        -- rerender any images that are below this one
+        for _, image in pairs(state.images) do
+          if image.buffer == instance.buffer and image.geometry.y > instance.geometry.y then image.render() end
+        end
       end
     end
   end

@@ -60,6 +60,7 @@ api.setup = function(options)
   -- setup namespaces
   state.extmarks_namespace = vim.api.nvim_create_namespace("image.nvim")
 
+  -- handle folds / scroll extra
   ---@type table<number, { topline: number, botline: number, bufnr: number, height: number; folded_lines: number }>
   local window_history = {}
   vim.api.nvim_set_decoration_provider(state.extmarks_namespace, {
@@ -158,7 +159,7 @@ api.setup = function(options)
     end,
   })
 
-  -- rerender on scroll/fold
+  -- rerender on scroll
   vim.api.nvim_create_autocmd("WinScrolled", {
     group = group,
     callback = function(au)
