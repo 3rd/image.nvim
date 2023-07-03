@@ -41,7 +41,6 @@ backend.render = function(image, x, y, width, height)
 
   -- transmit image
   if transmitted_images[image.id] ~= image.crop_hash then
-    action = codes.control.action.transmit,
     helpers.write_graphics({
       action = codes.control.action.transmit,
       image_id = image.internal_id,
