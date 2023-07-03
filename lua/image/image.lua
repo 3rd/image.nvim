@@ -24,7 +24,7 @@ local from_file = function(path, options, state)
   if not magick_image then error(("image.nvim: magick failed to load image: %s"):format(path)) end
   if magick_image:get_format():lower() ~= "png" then
     magick_image:set_format("png")
-    actual_path = vim.fn.tempname()
+    actual_path = state.tmp_dir .. "/" .. utils.random.id()
     magick_image:write(actual_path)
   end
   local image_width = magick_image:get_width()
@@ -135,7 +135,7 @@ local from_url = function(url, options, callback, state)
     return
   end
 
-  local tmp_path = os.tmpname() .. ".png"
+  local tmp_path = state.tmp_dir .. "/" .. utils.random.id() .. ".png"
   local stdout = vim.loop.new_pipe()
 
   vim.loop.spawn("curl", {

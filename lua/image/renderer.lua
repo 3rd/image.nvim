@@ -1,5 +1,5 @@
 local utils = require("image/utils")
-local magick = require("image.magick")
+local magick = require("image/magick")
 
 ---@return { x: number, y: number }
 local get_global_offsets = function()
@@ -286,7 +286,7 @@ local render = function(image, state)
     cropped_image:set_format("png")
     utils.debug(("cropping image: %d, %d, %d, %d"):format(pixel_width, pixel_height, 0, crop_offset_top))
     cropped_image:crop(pixel_width, pixel_height, 0, crop_offset_top)
-    local tmp_path = os.tmpname() .. ".png"
+    local tmp_path = state.tmp_dir .. "/" .. utils.random.id() .. ".png"
     cropped_image:write(tmp_path)
     image.path = tmp_path
   end

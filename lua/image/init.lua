@@ -10,7 +10,7 @@ local default_options = {
       enabled = true,
       sizing_strategy = "auto",
       download_remote_images = true,
-      clear_in_insert_mode = false,
+      clear_in_insert_mode = true,
     },
   },
   max_width = nil,
@@ -29,6 +29,7 @@ local state = {
   images = {},
   extmarks_namespace = nil,
   remote_cache = {},
+  tmp_dir = vim.fn.tempname(),
 }
 
 ---@type API
@@ -56,6 +57,9 @@ api.setup = function(options)
       if type(integration.setup) == "function" then integration.setup(api, integration_options) end
     end
   end
+
+  -- create tmp dir
+  vim.fn.mkdir(state.tmp_dir, "p")
 
   -- setup namespaces
   state.extmarks_namespace = vim.api.nvim_create_namespace("image.nvim")

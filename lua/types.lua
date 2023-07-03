@@ -13,6 +13,7 @@
 ---@field images { [string]: Image }
 ---@field extmarks_namespace any
 ---@field remote_cache { [string]: string }
+---@field tmp_dir string
 
 ---@class MarkdownIntegrationOptions
 ---@field enabled boolean
