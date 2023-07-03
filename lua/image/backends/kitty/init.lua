@@ -36,9 +36,6 @@ local transmitted_images = {}
 backend.render = function(image, x, y, width, height)
   local with_virtual_placeholders = backend.state.options.kitty_method == "unicode-placeholders"
 
-  -- save cursor
-  helpers.move_cursor(x + 1, y + 1, true)
-
   -- transmit image
   if transmitted_images[image.id] ~= image.crop_hash then
     helpers.write_graphics({
@@ -55,7 +52,6 @@ backend.render = function(image, x, y, width, height)
 
   -- unicode placeholders
   if with_virtual_placeholders then
-    helpers.move_cursor(x + 1, y + 1, false, backend.state.options.kitty_tmux_write_delay)
     helpers.write_graphics({
       action = codes.control.action.display,
       quiet = 2,
@@ -74,7 +70,7 @@ backend.render = function(image, x, y, width, height)
     return
   end
 
-  helpers.move_cursor(x + 1, y + 1, false, backend.state.options.kitty_tmux_write_delay)
+  helpers.move_cursor(x + 1, y + 1, true, backend.state.options.kitty_tmux_write_delay)
   helpers.write_graphics({
     action = codes.control.action.display,
     quiet = 2,
@@ -89,8 +85,6 @@ backend.render = function(image, x, y, width, height)
 end
 
 backend.clear = function(image_id, shallow)
-  helpers.move_cursor(0, 0, true)
-
   -- one
   if image_id then
     local image = backend.state.images[image_id]
@@ -103,7 +97,6 @@ backend.clear = function(image_id, shallow)
     })
     image.is_rendered = false
     if not shallow then backend.state.images[image_id] = nil end
-    helpers.restore_cursor()
     return
   end
 
@@ -117,7 +110,6 @@ backend.clear = function(image_id, shallow)
     image.is_rendered = false
     if not shallow then backend.state.images[id] = nil end
   end
-  helpers.restore_cursor()
 end
 
 return backend
