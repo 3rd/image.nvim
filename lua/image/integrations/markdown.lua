@@ -140,6 +140,7 @@ local setup_autocommands = function(ctx)
     group = group,
     callback = function(args)
       if vim.bo[args.buf].filetype ~= "markdown" then return end
+      if args.event == "TextChangedI" and ctx.options.clear_in_insert_mode then return end
       render(ctx)
     end,
   })
