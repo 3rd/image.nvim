@@ -259,7 +259,6 @@ local render = function(image, state)
 
   -- crop top
   if absolute_y < bounds.top then
-    utils.debug("cropping top", { absolute_y = absolute_y, bounds_top = bounds.top })
     local visible_rows = height - (bounds.top - absolute_y)
     pixel_height = visible_rows * term_size.cell_height
     crop_offset_top = (bounds.top - absolute_y) * term_size.cell_height
@@ -268,15 +267,13 @@ local render = function(image, state)
   end
 
   -- crop bottom
-  if absolute_y > bounds.bottom then
-    utils.debug("cropping bot")
+  if absolute_y + height > bounds.bottom then
     pixel_height = (bounds.bottom - absolute_y + 1) * term_size.cell_height
     needs_crop = true
   end
 
   -- crop right
   if absolute_x + width > bounds.right then
-    utils.debug("cropping right")
     pixel_width = (bounds.right - absolute_x) * term_size.cell_width
     needs_crop = true
   end
@@ -286,7 +283,6 @@ local render = function(image, state)
   if crop_hash or (image.crop_hash ~= crop_hash) then
     local cropped_image = magick.load_image(image.original_path)
     cropped_image:set_format("png")
-    utils.debug(("cropping image: %d, %d, %d, %d"):format(pixel_width, pixel_height, 0, crop_offset_top))
     cropped_image:crop(pixel_width, pixel_height, 0, crop_offset_top)
     local tmp_path = state.tmp_dir .. "/" .. utils.random.id() .. ".png"
     cropped_image:write(tmp_path)
