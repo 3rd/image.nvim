@@ -61,7 +61,7 @@ local render = function(ctx)
       local file_path = vim.api.nvim_buf_get_name(window.buffer)
 
       for _, match in ipairs(matches) do
-        local id = string.format("%d:%d:%d", window.id, window.buffer, match.range.start_row)
+        local id = string.format("%d:%d:%d:%s", window.id, window.buffer, match.range.start_row, match.url)
         local height = nil
 
         ---@param image Image
@@ -140,11 +140,6 @@ local setup_autocommands = function(ctx)
     group = group,
     callback = function(args)
       if vim.bo[args.buf].filetype ~= "markdown" then return end
-      local current_window = vim.api.nvim_get_current_win()
-      local images = ctx.api.get_images({ window = current_window })
-      for _, image in ipairs(images) do
-        image.clear()
-      end
       render(ctx)
     end,
   })
