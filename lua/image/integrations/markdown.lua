@@ -99,17 +99,14 @@ local render = function(ctx)
           )
         else
           -- local
-          local url = resolve_absolute_path(file_path, match.url)
-
-          local ok = pcall(utils.png.get_dimensions, url)
-          if not ok then return end
-          local image = ctx.api.from_file(url, {
+          local path = resolve_absolute_path(file_path, match.url)
+          local image = ctx.api.from_file(path, {
             id = id,
             window = window.id,
             buffer = window.buffer,
             with_virtual_padding = true,
           })
-          render_image(image)
+          if image then render_image(image) end
         end
       end
 

@@ -12,11 +12,12 @@ local get_global_offsets = function()
 end
 
 ---@param term_size { cell_width: number, cell_height: number }
----@param dimensions { width: number, height: number }
+---@param image_width number
+---@param image_height number
 ---@param width number
 ---@param height number
-local adjust_to_aspect_ratio = function(term_size, dimensions, width, height)
-  local aspect_ratio = dimensions.width / dimensions.height
+local adjust_to_aspect_ratio = function(term_size, image_width, image_height, width, height)
+  local aspect_ratio = image_width / image_height
   local pixel_width = width * term_size.cell_width
   local pixel_height = height * term_size.cell_height
   if width > height then
@@ -32,9 +33,8 @@ end
 ---@param state State
 local render = function(image, state)
   local term_size = utils.term.get_size()
-  local image_dimensions = image.get_dimensions()
-  local image_rows = math.floor(image_dimensions.height / term_size.cell_height)
-  local image_columns = math.floor(image_dimensions.width / term_size.cell_width)
+  local image_rows = math.floor(image.image_height / term_size.cell_height)
+  local image_columns = math.floor(image.image_width / term_size.cell_width)
 
   local x = image.geometry.x or 0
   local y = image.geometry.y or 0
@@ -53,8 +53,8 @@ local render = function(image, state)
   local topfill = 0
 
   -- infer missing w/h component
-  if width == 0 and height ~= 0 then width = math.ceil(height * image_dimensions.width / image_dimensions.height) end
-  if height == 0 and width ~= 0 then height = math.ceil(width * image_dimensions.height / image_dimensions.width) end
+  if width == 0 and height ~= 0 then width = math.ceil(height * image.image_width / image.image_height) end
+  if height == 0 and width ~= 0 then height = math.ceil(width * image.image_height / image.image_width) end
 
   -- if both w/h are missing, use the image dimensions
   if width == 0 and height == 0 then
@@ -132,7 +132,7 @@ local render = function(image, state)
   if type(state.options.max_width) == "number" then width = math.min(width, state.options.max_width) end
   if type(state.options.max_height) == "number" then height = math.min(height, state.options.max_height) end
 
-  width, height = adjust_to_aspect_ratio(term_size, image_dimensions, width, height)
+  width, height = adjust_to_aspect_ratio(term_size, image.image_width, image.image_height, width, height)
 
   if width <= 0 or height <= 0 then return false end
 

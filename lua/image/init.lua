@@ -171,9 +171,14 @@ api.setup = function(options)
   })
 end
 
+local guard_setup = function()
+  if not state.backend then utils.throw("image.nvim is not setup. Call setup() first.") end
+end
+
 ---@param path string
 ---@param options? ImageOptions
 api.from_file = function(path, options)
+  guard_setup()
   return image.from_file(path, options, state)
 end
 
@@ -181,11 +186,13 @@ end
 ---@param options? ImageOptions
 ---@param callback fun(image: Image|nil)
 api.from_url = function(url, options, callback)
+  guard_setup()
   image.from_url(url, options, callback, state)
 end
 
 ---@param id? string
 api.clear = function(id)
+  guard_setup()
   local target = state.images[id]
   if target then
     target.clear()

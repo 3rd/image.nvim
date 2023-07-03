@@ -3,7 +3,7 @@
 ---@class API
 ---@field setup fun(options?: Options)
 ---@field from_file fun(path: string, options?: ImageOptions): Image
----@field from_url fun(url: string, options?: ImageOptions, callback: fun(image: Image| nil))
+---@field from_url fun(url: string, options?: ImageOptions, callback: fun(image: Image|nil))
 ---@field clear fun(id?: string)
 ---@field get_images fun(opts?: { window?: number, buffer?: number }): Image[]
 
@@ -56,10 +56,29 @@
 ---@field bottom number
 ---@field left number
 
+---@class MagickImage
+---@field adaptive_resize fun(self: MagickImage, width: number, height: number)
+---@field clone fun(self: MagickImage): MagickImage
+---@field composite fun(self: MagickImage, source: MagickImage, x: number, y: number, operator?: string)
+---@field crop fun(self: MagickImage, width: number, height: number, x?: number, y?: number)
+---@field destroy fun(self: MagickImage)
+---@field get_format fun(self: MagickImage): string
+---@field get_height fun(self: MagickImage): number
+---@field get_width fun(self: MagickImage): number
+---@field modulate fun(self: MagickImage, brightness?: number, saturation?: number, hue?: number)
+---@field resize fun(self: MagickImage, width: number, height: number)
+---@field resize_and_crop fun(self: MagickImage, width: number, height: number)
+---@field scale fun(self: MagickImage, width: number, height: number)
+---@field set_format fun(self: MagickImage, format: string)
+---@field write fun(self: MagickImage, path: string)
+
 ---@class Image
 ---@field id string
 ---@field internal_id number
 ---@field path string
+---@field original_path string
+---@field image_width number
+---@field image_height number
 ---@field window? number
 ---@field buffer? number
 ---@field with_virtual_padding? boolean
@@ -67,7 +86,6 @@
 ---@field rendered_geometry ImageGeometry
 ---@field bounds ImageBounds
 ---@field is_rendered boolean
----@field get_dimensions fun(): { width: number, height: number }
 ---@field render fun(geometry?: ImageGeometry)
 ---@field clear fun()
 

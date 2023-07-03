@@ -1,5 +1,6 @@
 local utils = require("image/utils")
 local renderer = require("image/renderer")
+local magick = require("image/magick")
 
 -- { ["buf:row"]: { id, height } }
 ---@type table<string, { id: number, height: number }>
@@ -9,10 +10,22 @@ local next_numerical_id = 1
 ---@param path string
 ---@param options? ImageOptions
 ---@param state State
-local create_image = function(path, options, state)
+---@return Image
+local from_file = function(path, options, state)
   if options and options.id then
     local existing_image = state.images[options.id] ---@type Image
     if existing_image then return existing_image end
+  end
+
+  if not vim.loop.fs_stat(path) then utils.throw(("image.nvim: file not found: %s"):format(path)) end
+
+  local actual_path = path
+  local magick_image = magick.load_image(path)
+  if not magick_image then error(("image.nvim: magick failed to load image: %s"):format(path)) end
+  if magick_image:get_format():lower() ~= "png" then
+    magick_image:set_format("png")
+    actual_path = vim.fn.tempname()
+    magick_image:write(actual_path)
   end
 
   local opts = options or {}
@@ -23,7 +36,10 @@ local create_image = function(path, options, state)
   local instance = {
     id = opts.id or utils.random.id(),
     internal_id = numerical_id,
-    path = path,
+    path = actual_path,
+    original_path = path,
+    image_width = magick_image:get_width(),
+    image_height = magick_image:get_height(),
     window = opts.window or nil,
     buffer = opts.buffer or nil,
     geometry = {
@@ -42,10 +58,6 @@ local create_image = function(path, options, state)
     is_rendered = false,
   }
 
-  instance.get_dimensions = function()
-    return utils.png.get_dimensions(instance.path)
-  end
-
   ---@param geometry? ImageGeometry
   instance.render = function(geometry)
     if geometry then instance.geometry = vim.tbl_deep_extend("force", instance.geometry, geometry) end
@@ -59,43 +71,6 @@ local create_image = function(path, options, state)
       local row = instance.geometry.y
       local width = instance.rendered_geometry.width or 1
       local height = instance.rendered_geometry.height or 1
-
-      -- for some reason this doesn't work, we set an extmark with 23 filler lines
-      -- and when retrieving it, it has 25 lines
-      -- local previous_extmark = vim.api.nvim_buf_get_extmarks(
-      --   instance.buffer,
-      --   state.extmarks_namespace,
-      --   { row - 1, 0 },
-      --   { row - 1, 0 },
-      --   { details = true }
-      -- )
-      -- if #previous_extmark > 0 then
-      --   local mark = previous_extmark[1]
-      --   utils.debug("prev extmark", previous_extmark)
-      --   local virt_height = #(mark[4].virt_lines or {})
-      --   utils.debug("coaie", mark[4].virt_lines)
-      --   for i, line in ipairs(mark[4].virt_lines or {}) do
-      --     utils.debug(i, line)
-      --   end
-      --   if virt_height == height then
-      --     utils.debug("extmark already exists", { id = numerical_id, buf = instance.buffer, height = height })
-      --     return
-      --   end
-      --   utils.debug("deleting extmark", { id = numerical_id, buf = instance.buffer, height = virt_height })
-      -- end
-
-      --   vim.api.nvim_buf_get_extmark_by_id(instance.buffer, state.extmarks_namespace, numerical_id, {})
-      -- if #previous_extmark > 0 then
-      --   utils.debug("prev extmark", previous_extmark)
-      --   if previous_extmark[1] == row - 1 then
-      --     utils.debug(
-      --       "extmark already exists",
-      --       { id = numerical_id, buf = instance.buffer, height = height, row = previous_extmark[1] }
-      --     )
-      --     return
-      --   end
-      --   utils.debug("deleting extmark", { id = numerical_id, buf = instance.buffer, row = previous_extmark[1] })
-      -- end
 
       local previous_extmark = buf_extmark_map[instance.buffer .. ":" .. row]
 
@@ -141,20 +116,13 @@ local create_image = function(path, options, state)
   return instance
 end
 
----@param path string
----@param options? ImageOptions
----@param state State
-local from_file = function(path, options, state)
-  return create_image(path, options, state)
-end
-
 ---@param url string
 ---@param options? ImageOptions
 ---@param callback fun(image: Image|nil)
 ---@param state State
 local from_url = function(url, options, callback, state)
   if state.remote_cache[url] then
-    local image = create_image(state.remote_cache[url], options, state)
+    local image = from_file(state.remote_cache[url], options, state)
     callback(image)
     return
   end
@@ -178,18 +146,11 @@ local from_url = function(url, options, callback, state)
   vim.loop.read_start(stdout, function(err, data)
     assert(not err, err)
     if not data then utils.debug("image: downloaded " .. url .. " to " .. tmp_path) end
-    local ok = pcall(utils.png.get_dimensions, tmp_path)
-    if not ok then
-      utils.debug("image: invalid png file", tmp_path)
-      callback(nil)
-      return
-    end
-
     state.remote_cache[url] = tmp_path
 
     vim.defer_fn(function()
-      local image = create_image(tmp_path, options, state)
-      callback(image)
+      local ok, image = pcall(from_file, tmp_path, options, state)
+      if ok then callback(image) end
     end, 0)
   end)
 end

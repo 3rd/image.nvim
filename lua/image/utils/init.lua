@@ -1,6 +1,5 @@
 local base64 = require("image/utils/base64")
 local logger = require("image/utils/logger")
-local png = require("image/utils/png")
 local random = require("image/utils/random")
 local window = require("image/utils/window")
 local term = require("image/utils/term")
@@ -31,7 +30,6 @@ return {
   throw = throw,
   debug = debug,
   base64 = base64,
-  png = png,
   random = random,
   window = window,
   term = term,

@@ -56,12 +56,6 @@ nvim --clean -c ":luafile minimal-setup.lua"
     - No cropping yet, so images will get out of bounds or stretched.
 - `sixels` - not implemented yet
 
-### Formats
-
-Currently, only PNG files are supported.
-
-- PNG
-
 ### Integrations
 
 Currently, there's a single integration for Markdown files, which is enabled by default.
