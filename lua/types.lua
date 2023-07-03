@@ -87,6 +87,7 @@
 ---@field rendered_geometry ImageGeometry
 ---@field bounds ImageBounds
 ---@field is_rendered boolean
+---@field is_cropped boolean
 ---@field render fun(geometry?: ImageGeometry)
 ---@field clear fun()
 

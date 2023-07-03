@@ -69,7 +69,7 @@ local render = function(image, state)
 
   -- screen max width/height
   width = math.min(width, term_size.screen_cols)
-  height = math.min(width, term_size.screen_rows)
+  height = math.min(height, term_size.screen_rows)
 
   -- utils.debug(("(1) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
 
@@ -222,17 +222,15 @@ local render = function(image, state)
 
   if prevent_rendering then absolute_y = -999999 end
 
-  image.bounds = bounds
-
   -- clear out of bounds images
   if
-    absolute_y + height < image.bounds.top
-    or absolute_y > image.bounds.bottom
-    or absolute_x + width < image.bounds.left
-    or absolute_x > image.bounds.right
+    absolute_y + height < bounds.top
+    or absolute_y > bounds.bottom
+    or absolute_x + width < bounds.left
+    or absolute_x > bounds.right
   then
     if image.is_rendered then
-      -- utils.debug("deleting out of bounds image", { id = image.id, x = x, y = y, width = width, height = height, bounds = image.bounds })
+      -- utils.debug("deleting out of bounds image", { id = image.id, x = x, y = y, width = width, height = height, bounds = bounds })
       state.backend.clear(image.id, true)
     else
       state.images[image.id] = image
@@ -240,36 +238,8 @@ local render = function(image, state)
     return true
   end
 
-  -- crop
-  local pixel_width = width * term_size.cell_width
-  local pixel_height = height * term_size.cell_height
-  local crop_offset_top = 0
-  local needs_crop = false
-
-  -- crop top
-  if absolute_y < image.bounds.top then
-    local visible_rows = height - (image.bounds.top - absolute_y)
-    pixel_height = visible_rows * term_size.cell_height
-    crop_offset_top = (image.bounds.top - absolute_y) * term_size.cell_height
-    absolute_y = image.bounds.top
-    needs_crop = true
-  end
-
-  -- crop bottom
-  if absolute_y > image.bounds.bottom then
-    pixel_height = (image.bounds.bottom - absolute_y + 1) * term_size.cell_height
-    needs_crop = true
-  end
-
-  -- crop right
-  if absolute_x + pixel_width > image.bounds.right then
-    pixel_width = (image.bounds.right - absolute_x) * term_size.cell_width
-    needs_crop = true
-  end
-
+  -- compute final geometry and prevent useless rerendering
   local rendered_geometry = { x = absolute_x, y = absolute_y, width = width, height = height }
-
-  -- prevent useless rerendering
   if
     image.is_rendered
     and image.rendered_geometry.x == rendered_geometry.x
@@ -280,8 +250,38 @@ local render = function(image, state)
     return true
   end
 
+  -- crop
+  local pixel_width = width * term_size.cell_width
+  local pixel_height = height * term_size.cell_height
+  local crop_offset_top = 0
+  local needs_crop = false
+
+  -- crop top
+  if absolute_y < bounds.top then
+    utils.debug("cropping top", { absolute_y = absolute_y, bounds_top = bounds.top })
+    local visible_rows = height - (bounds.top - absolute_y)
+    pixel_height = visible_rows * term_size.cell_height
+    crop_offset_top = (bounds.top - absolute_y) * term_size.cell_height
+    absolute_y = bounds.top
+    needs_crop = true
+  end
+
+  -- crop bottom
+  if absolute_y > bounds.bottom then
+    utils.debug("cropping bot")
+    pixel_height = (bounds.bottom - absolute_y + 1) * term_size.cell_height
+    needs_crop = true
+  end
+
+  -- crop right
+  if absolute_x + width > bounds.right then
+    utils.debug("cropping right")
+    pixel_width = (bounds.right - absolute_x) * term_size.cell_width
+    needs_crop = true
+  end
+
   -- perform crop
-  if needs_crop then
+  if needs_crop or (image.is_cropped and not needs_crop) then
     local cropped_image = magick.load_image(image.original_path)
     cropped_image:set_format("png")
     utils.debug(("cropping image: %d, %d, %d, %d"):format(pixel_width, pixel_height, 0, crop_offset_top))
@@ -289,11 +289,13 @@ local render = function(image, state)
     local tmp_path = state.tmp_dir .. "/" .. utils.random.id() .. ".png"
     cropped_image:write(tmp_path)
     image.path = tmp_path
+    image.is_cropped = true
   end
 
   -- utils.debug(("(5) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
   state.backend.render(image, absolute_x, absolute_y, width, height)
   image.rendered_geometry = rendered_geometry
+  image.bounds = bounds
 
   return true
 end

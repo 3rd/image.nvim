@@ -59,6 +59,7 @@ local from_file = function(path, options, state)
     },
     with_virtual_padding = opts.with_virtual_padding or false,
     is_rendered = false,
+    is_cropped = false,
   }
 
   ---@param geometry? ImageGeometry
