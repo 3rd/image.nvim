@@ -87,7 +87,7 @@
 ---@field rendered_geometry ImageGeometry
 ---@field bounds ImageBounds
 ---@field is_rendered boolean
----@field is_cropped boolean
+---@field crop_hash? string
 ---@field render fun(geometry?: ImageGeometry)
 ---@field clear fun()
 
@@ -134,4 +134,4 @@
 ---@field display_cursor_policy 0|1
 ---@field display_virtual_placeholder 0|1
 ---@field display_zindex number
----@field display_delete "a"|"i"|"p"
+---@field display_delete "a"|"i"|"I"|"p"

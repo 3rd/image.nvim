@@ -32,7 +32,7 @@ backend.setup = function(state)
   })
 end
 
--- extend from empty line strategy to use extmarks
+local transmitted_images = {}
 backend.render = function(image, x, y, width, height)
   local with_virtual_placeholders = backend.state.options.kitty_method == "unicode-placeholders"
 
@@ -40,15 +40,19 @@ backend.render = function(image, x, y, width, height)
   helpers.move_cursor(x + 1, y + 1, true)
 
   -- transmit image
-  helpers.write_graphics({
+  if transmitted_images[image.id] ~= image.crop_hash then
     action = codes.control.action.transmit,
-    image_id = image.internal_id,
-    transmit_format = codes.control.transmit_format.png,
-    transmit_medium = codes.control.transmit_medium.file,
-    display_cursor_policy = codes.control.display_cursor_policy.do_not_move,
-    display_virtual_placeholder = with_virtual_placeholders and 1 or 0,
-    quiet = 2,
-  }, image.path)
+    helpers.write_graphics({
+      action = codes.control.action.transmit,
+      image_id = image.internal_id,
+      transmit_format = codes.control.transmit_format.png,
+      transmit_medium = codes.control.transmit_medium.file,
+      display_cursor_policy = codes.control.display_cursor_policy.do_not_move,
+      display_virtual_placeholder = with_virtual_placeholders and 1 or 0,
+      quiet = 2,
+    }, image.path)
+    transmitted_images[image.id] = true
+  end
 
   -- unicode placeholders
   if with_virtual_placeholders then
@@ -94,7 +98,7 @@ backend.clear = function(image_id, shallow)
     if not image then return end
     helpers.write_graphics({
       action = codes.control.action.delete,
-      display_delete = "i",
+      display_delete = shallow and "i" or "I",
       image_id = image.internal_id,
       quiet = 2,
     })

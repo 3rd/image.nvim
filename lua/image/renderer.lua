@@ -147,6 +147,7 @@ local render = function(image, state)
 
   if image.window and image.buffer then
     local win_info = vim.fn.getwininfo(image.window)[1]
+    if not win_info then return false end
     local topline = win_info.topline
     local botline = win_info.botline
 
@@ -281,7 +282,8 @@ local render = function(image, state)
   end
 
   -- perform crop
-  if needs_crop or (image.is_cropped and not needs_crop) then
+  local crop_hash = needs_crop and ("%d-%d-%d-%d"):format(pixel_width, pixel_height, 0, crop_offset_top) or nil
+  if crop_hash or (image.crop_hash ~= crop_hash) then
     local cropped_image = magick.load_image(image.original_path)
     cropped_image:set_format("png")
     utils.debug(("cropping image: %d, %d, %d, %d"):format(pixel_width, pixel_height, 0, crop_offset_top))
@@ -290,7 +292,7 @@ local render = function(image, state)
     cropped_image:write(tmp_path)
     cropped_image:destroy()
     image.path = tmp_path
-    image.is_cropped = true
+    image.crop_hash = crop_hash
   end
 
   -- utils.debug(("(5) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
