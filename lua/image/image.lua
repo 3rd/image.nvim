@@ -27,6 +27,9 @@ local from_file = function(path, options, state)
     actual_path = vim.fn.tempname()
     magick_image:write(actual_path)
   end
+  local image_width = magick_image:get_width()
+  local image_height = magick_image:get_height()
+  magick_image:destroy()
 
   local opts = options or {}
   local numerical_id = next_numerical_id
@@ -38,8 +41,8 @@ local from_file = function(path, options, state)
     internal_id = numerical_id,
     path = actual_path,
     original_path = path,
-    image_width = magick_image:get_width(),
-    image_height = magick_image:get_height(),
+    image_width = image_width,
+    image_height = image_height,
     window = opts.window or nil,
     buffer = opts.buffer or nil,
     geometry = {
@@ -64,7 +67,7 @@ local from_file = function(path, options, state)
 
     -- utils.debug(("\n\n---------------- %s ----------------"):format(instance.id))
     local was_rendered = renderer.render(instance, state)
-    -- utils.debug("render result", instance.id, ok)
+    -- utils.log("render result", instance.id, was_rendered)
 
     -- virtual padding
     if instance.buffer and instance.with_virtual_padding then

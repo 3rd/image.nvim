@@ -83,9 +83,11 @@ backend.render = function(image, x, y, width, height)
       display_columns = width,
       display_cursor_policy = codes.control.display_cursor_policy.do_not_move,
       display_virtual_placeholder = 1,
+      placement_id = image.internal_id,
     })
     helpers.write_placeholder(image.internal_id, x, y, width, height)
 
+    image.is_rendered = true
     backend.state.images[image.id] = image
     helpers.restore_cursor()
     return
@@ -120,7 +122,9 @@ backend.render = function(image, x, y, width, height)
     display_y = pixel_top,
     display_zindex = -1,
     display_cursor_policy = codes.control.display_cursor_policy.do_not_move,
+    placement_id = image.internal_id,
   })
+  image.is_rendered = true
   backend.state.images[image.id] = image
   helpers.restore_cursor()
 end

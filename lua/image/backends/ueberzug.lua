@@ -74,6 +74,7 @@ backend.render = function(image, x, y, width, height)
     width = width,
     height = height,
   })
+  image.is_rendered = true
   backend.state.images[image.id] = image
 end
 backend.clear = function(image_id, shallow)
