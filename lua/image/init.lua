@@ -10,7 +10,12 @@ local default_options = {
       enabled = true,
       sizing_strategy = "auto",
       download_remote_images = true,
-      clear_in_insert_mode = true,
+      clear_in_insert_mode = false,
+    },
+    neorg = {
+      enabled = true,
+      download_remote_images = true,
+      clear_in_insert_mode = false,
     },
   },
   max_width = nil,

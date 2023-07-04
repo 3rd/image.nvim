@@ -16,27 +16,25 @@ end
 local query_buffer_images = function(buffer)
   local buf = buffer or vim.api.nvim_get_current_buf()
 
-  local parser = vim.treesitter.get_parser(buf, "markdown_inline")
+  local parser = vim.treesitter.get_parser(buf, "norg")
   local root = parser:parse()[1]:root()
-  local query = vim.treesitter.query.parse("markdown_inline", "(image (link_destination) @url) @image")
+  local query =
+    vim.treesitter.query.parse("norg", '(infirm_tag (tag_name) @name (tag_parameters) @path (#eq? name "image"))')
 
   local images = {}
-  local current_image = nil
 
   for id, node in query:iter_captures(root, 0) do
-    local key = query.captures[id]
-    local value = vim.treesitter.get_node_text(node, buf)
-
-    if key == "image" then
-      local start_row, start_col, end_row, end_col = node:range()
-      current_image = {
-        node = node,
-        range = { start_row = start_row, start_col = start_col, end_row = end_row, end_col = end_col },
-      }
-    elseif key == "url" then
-      current_image.url = value
-      table.insert(images, current_image)
-      current_image = nil
+    local capture = query.captures[id]
+    if capture == "path" then
+      local path = vim.treesitter.get_node_text(node, buffer)
+      if path then
+        local start_row, start_col, end_row, end_col = node:range()
+        table.insert(images, {
+          node = node,
+          range = { start_row = start_row, start_col = start_col, end_row = end_row, end_col = end_col },
+          url = resolve_absolute_path(vim.api.nvim_buf_get_name(buffer), path),
+        })
+      end
     end
   end
 
@@ -48,7 +46,7 @@ local render = function(ctx)
   local windows = utils.window.get_visible_windows()
 
   for _, window in ipairs(windows) do
-    if vim.bo[window.buffer].filetype == "markdown" then
+    if vim.bo[window.buffer].filetype == "norg" then
       local matches = query_buffer_images(window.buffer)
 
       local previous_images = ctx.api.get_images({
@@ -65,18 +63,6 @@ local render = function(ctx)
 
         ---@param image Image
         local render_image = function(image)
-          if ctx.options.sizing_strategy == "height-from-empty-lines" then
-            local empty_line_count = -1
-            local lines = vim.api.nvim_buf_get_lines(window.buffer, 0, -1, false)
-            for i = match.range.end_row + 2, #lines do
-              if lines[i] == "" then
-                empty_line_count = empty_line_count + 1
-              else
-                break
-              end
-            end
-            height = math.max(1, empty_line_count)
-          end
           image:render({
             height = height,
             x = match.range.start_col,
@@ -119,7 +105,7 @@ end
 
 ---@type fun(ctx: IntegrationContext)
 local setup_autocommands = function(ctx)
-  local group = vim.api.nvim_create_augroup("image.nvim:markdown", { clear = true })
+  local group = vim.api.nvim_create_augroup("image.nvim:neorg", { clear = true })
 
   vim.api.nvim_create_autocmd({
     "WinNew",
@@ -128,7 +114,7 @@ local setup_autocommands = function(ctx)
   }, {
     group = group,
     callback = function(args)
-      if vim.bo[args.buf].filetype ~= "markdown" then return end
+      if vim.bo[args.buf].filetype ~= "norg" then return end
       render(ctx)
     end,
   })
@@ -139,7 +125,7 @@ local setup_autocommands = function(ctx)
   }, {
     group = group,
     callback = function(args)
-      if vim.bo[args.buf].filetype ~= "markdown" then return end
+      if vim.bo[args.buf].filetype ~= "norg" then return end
       if args.event == "TextChangedI" and ctx.options.clear_in_insert_mode then return end
       render(ctx)
     end,
@@ -151,7 +137,7 @@ local setup_autocommands = function(ctx)
     }, {
       group = group,
       callback = function(args)
-        if vim.bo[args.buf].filetype ~= "markdown" then return end
+        if vim.bo[args.buf].filetype ~= "norg" then return end
         local current_window = vim.api.nvim_get_current_win()
         local images = ctx.api.get_images({ window = current_window })
         for _, image in ipairs(images) do
@@ -165,16 +151,16 @@ local setup_autocommands = function(ctx)
     }, {
       group = group,
       callback = function(args)
-        if vim.bo[args.buf].filetype ~= "markdown" then return end
+        if vim.bo[args.buf].filetype ~= "norg" then return end
         render(ctx)
       end,
     })
   end
 end
 
----@type fun(api: API, options: MarkdownIntegrationOptions)
+---@type fun(api: API, options: NeorgIntegrationOptions)
 local setup = function(api, options)
-  local opts = options or {} --[[@as MarkdownIntegrationOptions]]
+  local opts = options or {} --[[@as NeorgIntegrationOptions]]
   local context = {
     api = api,
     options = opts,
@@ -186,7 +172,7 @@ local setup = function(api, options)
   end, 0)
 end
 
----@class MarkdownIntegration: Integration
+---@class NeorgIntegration: Integration
 local integration = {
   setup = setup,
 }

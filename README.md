@@ -43,6 +43,11 @@ require("image").setup({
       download_remote_images = true,
       clear_in_insert_mode = false,
     },
+    neorg = {
+      enabled = true,
+      download_remote_images = true,
+      clear_in_insert_mode = false,
+    },
   },
   max_width = nil,
   max_height = nil,
@@ -75,11 +80,8 @@ nvim --clean -c ":luafile minimal-setup.lua"
 
 ### Integrations
 
-Currently, there's a single integration for Markdown files, which is enabled by default.
-\
-Will add more soon and document them here.
-
 - Markdown
+- Neorg (pending https://github.com/nvim-neorg/neorg/issues/971)
 
 ## API
 

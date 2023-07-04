@@ -21,11 +21,16 @@
 ---@field download_remote_images boolean
 ---@field clear_in_insert_mode boolean
 
----@alias IntegrationOptions MarkdownIntegrationOptions
+---@class NeorgIntegrationOptions
+---@field enabled boolean
+---@field download_remote_images boolean
+---@field clear_in_insert_mode boolean
+
+---@alias IntegrationOptions MarkdownIntegrationOptions|NeorgIntegrationOptions
 
 ---@class Options
 ---@field backend "kitty"|"ueberzug"
----@field integrations { markdown: IntegrationOptions }
+---@field integrations { markdown: MarkdownIntegrationOptions, neorg: NeorgIntegrationOptions }
 ---@field max_width? number
 ---@field max_height? number
 ---@field max_width_window_percentage? number
