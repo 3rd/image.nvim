@@ -12,7 +12,7 @@ https://github.com/3rd/image.nvim/assets/59587503/56a814d9-0bfa-436a-b0ca-fa8b9e
 
 These are things you have to setup on your own:
 - [ImageMagick](https://github.com/ImageMagick/ImageMagick) - mandatory
-- [magick LuaRock](https://github.com/leafo/magick) - mandatory (`luarocks --local install magick`)
+- [magick LuaRock](https://github.com/leafo/magick) - mandatory (`luarocks --local install magick` or through your [package manager](https://github.com/vhyrro/hologram.nvim#install))
 - [Kitty](https://sw.kovidgoyal.net/kitty/) - for the `kitty` backend
 - [ueberzugpp](https://github.com/jstkdng/ueberzugpp) - for the `ueberzug` backend
 - [curl](https://github.com/curl/curl) - for remote images
@@ -69,19 +69,20 @@ nvim --clean -c ":luafile minimal-setup.lua"
 
 ### Backends
 
-- `kitty` (default and with Unicode placeholders, both work inside Tmux)
-    - **Using Kitty with the default rendering mode is the best right now.**
+All the backends support rendering inside Tmux.
+
+- `kitty` - best in class
     - Works great, is snappy and has very few artifacts (on my machine, at least).
+    - Use the default mode, the unicode placeholder method is buggy for now.
 - `ueberzug` - backed by [ueberzugpp](https://github.com/jstkdng/ueberzugpp)
-    - It's more general but a bit slower.
+    - More genera, on-par with Kitty in terms of features, but slower.
     - Supports multiple images thanks to [@jstkdng](https://github.com/jstkdng/ueberzugpp/issues/74).
-    - On-par with Kitty in terms of features, but slower.
 - `sixels` - not implemented yet
 
 ### Integrations
 
 - Markdown
-- Neorg (pending https://github.com/nvim-neorg/neorg/issues/971)
+- Neorg (https://github.com/nvim-neorg/neorg/issues/971)
 
 ## API
 
@@ -123,6 +124,7 @@ image:hue(value) -- change hue
 ### Thanks
 
 - [@edluffy](https://github.com/edluffy) for [hologram.nvim](https://github.com/edluffy/hologram.nvim) - of which I borrowed a lot of code.
+- [@vhyrro](https://github.com/vhyrro) for his great ideas and [hologram.nvim fork](https://github.com/vhyrro/hologram.nvim) changes.
 - [@kovidgoyal](https://github.com/kovidgoyal) for [Kitty](https://github.com/kovidgoyal/kitty) - the program I spend most of my time in.
 - [@jstkdng](https://github.com/jstkdng) for [ueberzugpp](https://github.com/jstkdng/ueberzugpp) - the revived version of ueberzug.
 
