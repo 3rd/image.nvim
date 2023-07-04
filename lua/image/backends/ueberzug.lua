@@ -73,7 +73,7 @@ backend.render = function(image, x, y, width, height)
   child.write({
     action = "add",
     identifier = image.id,
-    path = image.path,
+    path = image.cropped_path,
     x = x,
     y = y,
     width = width,

@@ -42,7 +42,7 @@ end
 local write_graphics = function(config, data)
   local control_payload = ""
 
-  -- utils.debug("kitty.write_graphics()", config)
+  -- utils.debug("kitty.write_graphics()", config, data)
 
   for k, v in pairs(config) do
     if v ~= nil then

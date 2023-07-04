@@ -20,6 +20,7 @@ local get_size = function()
     TIOCGWINSZ = 0x40087468
   end
 
+  ---@type { row: number, col: number, xpixel: number, ypixel: number }
   local sz = ffi.new("winsize")
   assert(ffi.C.ioctl(1, TIOCGWINSZ, sz) == 0, "Failed to get terminal size")
 

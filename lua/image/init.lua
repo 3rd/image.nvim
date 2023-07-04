@@ -102,11 +102,11 @@ api.setup = function(options)
         vim.defer_fn(function()
           if needs_clear then
             for _, curr in ipairs(api.get_images({ buffer = prev.bufnr })) do
-              curr.clear()
+              curr:clear()
             end
           elseif needs_rerender then
-            for _, curr in ipairs(api.get_images({ window = winid })) do
-              curr.render()
+            for _, current_image in ipairs(api.get_images({ window = winid })) do
+              current_image:render()
             end
           end
         end, 0)
@@ -147,7 +147,7 @@ api.setup = function(options)
         elseif is_buffer_bound and not is_buffer_binding_valid then
           should_clear = true
         end
-        if should_clear then current_image.clear() end
+        if should_clear then current_image:clear() end
       end
     end,
   })
@@ -158,7 +158,7 @@ api.setup = function(options)
     callback = function(au) -- auto-clear images when windows and buffers change
       local images = api.get_images({ window = tonumber(au.file) })
       for _, current_image in ipairs(images) do
-        current_image.clear()
+        current_image:clear()
       end
     end,
   })
@@ -167,10 +167,9 @@ api.setup = function(options)
   vim.api.nvim_create_autocmd("WinScrolled", {
     group = group,
     callback = function(au)
-      utils.debug("WinScrolled", au)
       local images = api.get_images({ window = tonumber(au.file) })
       for _, current_image in ipairs(images) do
-        current_image.render()
+        current_image:render()
       end
     end,
   })
@@ -200,7 +199,7 @@ api.clear = function(id)
   guard_setup()
   local target = state.images[id]
   if target then
-    target.clear()
+    target:clear()
   else
     state.backend.clear(id)
   end

@@ -77,7 +77,7 @@ local render = function(ctx)
             end
             height = math.max(1, empty_line_count)
           end
-          image.render({
+          image:render({
             height = height,
             x = match.range.start_col,
             y = match.range.start_row + 1,
@@ -111,7 +111,7 @@ local render = function(ctx)
       end
 
       for _, image in ipairs(previous_images) do
-        if not vim.tbl_contains(new_image_ids, image.id) then image.clear() end
+        if not vim.tbl_contains(new_image_ids, image.id) then image:clear() end
       end
     end
   end
@@ -155,7 +155,7 @@ local setup_autocommands = function(ctx)
         local current_window = vim.api.nvim_get_current_win()
         local images = ctx.api.get_images({ window = current_window })
         for _, image in ipairs(images) do
-          image.clear()
+          image:clear()
         end
       end,
     })

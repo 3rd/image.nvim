@@ -51,7 +51,7 @@ backend.render = function(image, x, y, width, height)
       display_cursor_policy = codes.control.display_cursor_policy.do_not_move,
       display_virtual_placeholder = with_virtual_placeholders and 1 or 0,
       quiet = 2,
-    }, image.path)
+    }, image.cropped_path)
   end
   if backend.features.crop then
     if not transmitted_images[image.id] then

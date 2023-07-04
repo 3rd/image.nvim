@@ -31,8 +31,8 @@ local adjust_to_aspect_ratio = function(term_size, image_width, image_height, wi
 end
 
 ---@param image Image
----@param state State
-local render = function(image, state)
+local render = function(image)
+  local state = image.global_state
   local term_size = utils.term.get_size()
   local image_rows = math.floor(image.image_height / term_size.cell_height)
   local image_columns = math.floor(image.image_width / term_size.cell_width)
@@ -282,13 +282,13 @@ local render = function(image, state)
     -- perform crop
     local crop_hash = needs_crop and ("%d-%d-%d-%d"):format(pixel_width, pixel_height, 0, crop_offset_top) or nil
     if crop_hash or (image.crop_hash ~= crop_hash) then
-      local cropped_image = magick.load_image(image.original_path)
+      local cropped_image = magick.load_image(image.path)
       cropped_image:set_format("png")
       cropped_image:crop(pixel_width, pixel_height, 0, crop_offset_top)
       local tmp_path = state.tmp_dir .. "/" .. utils.random.id() .. ".png"
       cropped_image:write(tmp_path)
       cropped_image:destroy()
-      image.path = tmp_path
+      image.cropped_path = tmp_path
       image.crop_hash = crop_hash
     end
   end

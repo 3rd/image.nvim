@@ -88,7 +88,8 @@ Check [types.lua](./lua/types.lua) for a better overview of how everything is mo
 ```lua
 local api = require("image")
 
-local image = api.from_file("path/to/image.png", {
+-- from a file (absolute path)
+local image = api.from_file("/path/to/image.png", {
   id = "my_image_id", -- optional, defaults to a random string
   window = 1000, -- optional, binds image to a window and its bounds
   buffer = 1000, -- optional, binds image to a buffer (paired with window binding)
@@ -96,9 +97,23 @@ local image = api.from_file("path/to/image.png", {
   ...geometry, -- optional, { x, y, width, height }
 })
 
-image.render() -- render image
-image.render(geometry) -- update image geometry and render it
-image.clear()
+-- from a URL
+local image = api.from_file("https://gist.ro/s/remote.png", {
+  id = "my_image_id", -- optional, defaults to a random string
+  window = 1000, -- optional, binds image to a window and its bounds
+  buffer = 1000, -- optional, binds image to a buffer (paired with window binding)
+  with_virtual_padding = true, -- optional, pads vertically with extmarks
+  ...geometry, -- optional, { x, y, width, height }
+})
+
+image:render() -- render image
+image:render(geometry) -- update image geometry and render it
+image:clear()
+
+image:move(x, y) -- move image
+image:brightness(value) -- change brightness
+image:saturation(value) -- change saturation
+image:hue(value) -- change hue
 ```
 
 ---

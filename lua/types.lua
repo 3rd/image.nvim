@@ -81,6 +81,7 @@
 ---@field id string
 ---@field internal_id number
 ---@field path string
+---@field cropped_path string
 ---@field original_path string
 ---@field image_width number
 ---@field image_height number
@@ -92,8 +93,13 @@
 ---@field bounds ImageBounds
 ---@field is_rendered boolean
 ---@field crop_hash? string
----@field render fun(geometry?: ImageGeometry)
----@field clear fun()
+---@field global_state State
+---@field render fun(self: Image, geometry?: ImageGeometry)
+---@field clear fun(self: Image)
+---@field move fun(self: Image, x: number, y: number)
+---@field brightness fun(self: Image, brightness: number)
+---@field saturation fun(self: Image, saturation: number)
+---@field hue fun(self: Image, hue: number)
 
 ---@class IntegrationContext -- wish proper generics were a thing here
 ---@field options IntegrationOptions
