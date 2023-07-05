@@ -323,7 +323,9 @@ local render = function(image)
 
   -- utils.debug("prev hash:", image.crop_resize_hash, "next hash:", crop_resize_hash)
 
-  -- TODO: make this non-blocking
+  -- TODO make this non-blocking
+  -- TODO separate "resized" and "cropped" temp images and reuse them
+  -- TODO make temp paths persistent per image to avoid creating many files
   if (needs_crop or needs_resize) and (image.crop_resize_hash ~= crop_resize_hash) then
     local cropped_image = magick.load_image(image.path)
     cropped_image:set_format("png")
@@ -337,7 +339,6 @@ local render = function(image)
       cropped_image:crop(pixel_width, cropped_pixel_height, 0, crop_offset_top)
       -- utils.debug(("cropping image %s to %dx%d"):format(image.path, pixel_width, cropped_pixel_height))
     end
-    -- TODO make this temp path persistent per image to avoid generating a file for each resize/crop
     local tmp_path = state.tmp_dir .. "/" .. utils.random.id() .. ".png"
     cropped_image:write(tmp_path)
     cropped_image:destroy()
