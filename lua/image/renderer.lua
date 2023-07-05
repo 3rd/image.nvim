@@ -152,18 +152,35 @@ local render = function(image)
     local botline = win_info.botline
 
     -- bail if out of bounds
-    if image.geometry.y + 1 < topline or image.geometry.y > botline then prevent_rendering = true end
+    if image.geometry.y + 1 < topline or image.geometry.y > botline then
+      -- utils.debug("prevent rendering 1", image.id)
+      prevent_rendering = true
+    end
 
     -- extmark offsets
     if image.with_virtual_padding then
-      -- bail if the image is above the top of the window and there's no topfill
-      if topfill == 0 and image.geometry.y < topline then prevent_rendering = true end
+      -- bail if the image is above the top of the window at least by one line
+      if topfill == 0 and image.geometry.y < topline then
+        -- utils.debug("prevent rendering 2", image.id)
+        prevent_rendering = true
+      end
 
       -- bail if the image + its height is above the top of the window + topfill
-      if image.geometry.y + height + 1 < topline + topfill then prevent_rendering = true end
+      -- if image.geometry.y + height + 1 < topline + topfill then
+      --   utils.debug("prevent rendering 3", image.id, {
+      --     y = image.geometry.y,
+      --     height = height,
+      --     topline = topline,
+      --     topfill = topfill,
+      --   })
+      --   prevent_rendering = true
+      -- end
 
       -- bail if the image is below the bottom of the window
-      if image.geometry.y > botline then prevent_rendering = true end
+      if image.geometry.y > botline then
+        -- utils.debug("prevent rendering 4", image.id)
+        prevent_rendering = true
+      end
 
       -- offset by topfill if the image started above the top of the window
       if not prevent_rendering then
@@ -231,7 +248,7 @@ local render = function(image)
     or absolute_x > bounds.right
   then
     if image.is_rendered then
-      -- utils.debug("deleting out of bounds image", { id = image.id, x = x, y = y, width = width, height = height, bounds = bounds })
+      -- utils.debug("deleting out of bounds image", { id = image.id, x = absolute_x, y = absolute_y, width = width, height = height, bounds = bounds })
       state.backend.clear(image.id, true)
     else
       state.images[image.id] = image
@@ -251,17 +268,20 @@ local render = function(image)
     return true
   end
 
-  -- crop
-  if not state.backend.features.crop then
-    local pixel_width = width * term_size.cell_width
-    local pixel_height = height * term_size.cell_height
-    local crop_offset_top = 0
-    local needs_crop = false
+  -- handle crop/resize
+  local pixel_width = width * term_size.cell_width
+  local pixel_height = height * term_size.cell_height
+  local crop_offset_top = 0
+  local cropped_pixel_height = height * term_size.cell_height
+  local needs_crop = false
+  local needs_resize = false
 
+  -- compute crop top/bottom
+  if not state.backend.features.crop then
     -- crop top
     if absolute_y < bounds.top then
       local visible_rows = height - (bounds.top - absolute_y)
-      pixel_height = visible_rows * term_size.cell_height
+      cropped_pixel_height = visible_rows * term_size.cell_height
       crop_offset_top = (bounds.top - absolute_y) * term_size.cell_height
       absolute_y = bounds.top
       needs_crop = true
@@ -269,31 +289,63 @@ local render = function(image)
 
     -- crop bottom
     if absolute_y + height > bounds.bottom then
-      pixel_height = (bounds.bottom - absolute_y + 1) * term_size.cell_height
+      cropped_pixel_height = (bounds.bottom - absolute_y + 1) * term_size.cell_height
       needs_crop = true
     end
 
-    -- crop right
-    if absolute_x + width > bounds.right then
-      pixel_width = (bounds.right - absolute_x) * term_size.cell_width
-      needs_crop = true
-    end
-
-    -- perform crop
-    local crop_hash = needs_crop and ("%d-%d-%d-%d"):format(pixel_width, pixel_height, 0, crop_offset_top) or nil
-    if crop_hash or (image.crop_hash ~= crop_hash) then
-      local cropped_image = magick.load_image(image.path)
-      cropped_image:set_format("png")
-      cropped_image:crop(pixel_width, pixel_height, 0, crop_offset_top)
-      local tmp_path = state.tmp_dir .. "/" .. utils.random.id() .. ".png"
-      cropped_image:write(tmp_path)
-      cropped_image:destroy()
-      image.cropped_path = tmp_path
-      image.crop_hash = crop_hash
-    end
+    -- -- crop right
+    -- if absolute_x + width > bounds.right then
+    --   pixel_width = (bounds.right - absolute_x) * term_size.cell_width
+    --   needs_crop = true
+    -- end
   end
 
-  -- utils.debug(("(5) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
+  -- compute resize
+  if image.image_width > pixel_width then needs_resize = true end
+  utils.debug(
+    ("image %s: pixel_width: %d, image_width: %d, needs_resize: %s"):format(
+      image.path,
+      pixel_width,
+      image.image_width,
+      tostring(needs_resize)
+    )
+  )
+
+  -- perform resize / crop
+  local crop_resize_hash = ("%d-%d-%d-%d-%d-%d"):format(
+    pixel_width,
+    cropped_pixel_height,
+    0,
+    crop_offset_top,
+    pixel_width,
+    pixel_height
+  ) or nil
+
+  -- utils.debug("prev hash:", image.crop_resize_hash, "next hash:", crop_resize_hash)
+
+  -- TODO: make this non-blocking
+  if (needs_crop or needs_resize) and (image.crop_resize_hash ~= crop_resize_hash) then
+    local cropped_image = magick.load_image(image.path)
+    cropped_image:set_format("png")
+    if needs_resize then
+      -- resize to target width
+      cropped_image:scale(pixel_width, pixel_height)
+      -- utils.debug(("resizing image %s to %dx%d"):format(image.path, pixel_width, pixel_height))
+    end
+    if needs_crop then
+      -- crop
+      cropped_image:crop(pixel_width, cropped_pixel_height, 0, crop_offset_top)
+      -- utils.debug(("cropping image %s to %dx%d"):format(image.path, pixel_width, cropped_pixel_height))
+    end
+    -- TODO make this temp path persistent per image to avoid generating a file for each resize/crop
+    local tmp_path = state.tmp_dir .. "/" .. utils.random.id() .. ".png"
+    cropped_image:write(tmp_path)
+    cropped_image:destroy()
+    image.cropped_path = tmp_path
+    image.crop_resize_hash = crop_resize_hash
+  end
+
+  -- utils.debug(("render x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
   image.bounds = bounds
   state.backend.render(image, absolute_x, absolute_y, width, height)
   image.rendered_geometry = rendered_geometry

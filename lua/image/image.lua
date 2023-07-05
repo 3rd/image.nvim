@@ -191,7 +191,7 @@ local from_file = function(path, options, state)
     },
     with_virtual_padding = opts.with_virtual_padding or false,
     is_rendered = false,
-    crop_hash = nil,
+    crop_resize_hash = nil,
   }, state)
 
   return instance

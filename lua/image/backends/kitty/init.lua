@@ -59,9 +59,9 @@ backend.render = function(image, x, y, width, height)
       transmitted_images[image.id] = true
     end
   else
-    if transmitted_images[image.id] ~= image.crop_hash then
+    if transmitted_images[image.id] ~= image.crop_resize_hash then
       transmit()
-      transmitted_images[image.id] = image.crop_hash
+      transmitted_images[image.id] = image.crop_resize_hash
     end
   end
 
@@ -113,7 +113,7 @@ backend.render = function(image, x, y, width, height)
     if y + height > image.bounds.bottom then pixel_height = (image.bounds.bottom - y + 1) * term_size.cell_height end
 
     -- crop right
-    if x + width > image.bounds.right then pixel_width = (image.bounds.right - x) * term_size.cell_width end
+    -- if x + width > image.bounds.right then pixel_width = (image.bounds.right - x) * term_size.cell_width end
 
     display_payload.display_width = pixel_width
     display_payload.display_height = pixel_height

@@ -97,7 +97,7 @@
 ---@field rendered_geometry ImageGeometry
 ---@field bounds ImageBounds
 ---@field is_rendered boolean
----@field crop_hash? string
+---@field crop_resize_hash? string
 ---@field global_state State
 ---@field render fun(self: Image, geometry?: ImageGeometry)
 ---@field clear fun(self: Image)
