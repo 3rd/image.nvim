@@ -296,10 +296,7 @@ local render = function(image)
 
   -- compute resize
   local resize_hash = ("%d-%d"):format(pixel_width, pixel_height)
-  if image.image_width > pixel_width then
-    -- utils.debug("needs resize", { id = image.id, prev_resize_hash = image.resize_hash, new_resize_hash = resize_hash })
-    needs_resize = true
-  end
+  if image.image_width > pixel_width then needs_resize = true end
 
   -- TODO make this non-blocking
 

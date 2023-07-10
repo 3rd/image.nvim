@@ -20,6 +20,7 @@ local backend = {
 }
 
 -- TODO: check for kitty
+local transmitted_images = {}
 backend.setup = function(state)
   backend.state = state
   if is_tmux and not tmux_has_passthrough then
@@ -29,15 +30,27 @@ backend.setup = function(state)
 
   if state.options.kitty_method == "unicode-placeholders" then backend.features.crop = false end
 
+  vim.api.nvim_create_autocmd("VimResized", {
+    callback = function()
+      transmitted_images = {}
+      vim.defer_fn(function()
+        for _, image in pairs(backend.state.images) do
+          if image.is_rendered then
+            image.is_rendered = false
+            image:render()
+          end
+        end
+      end, 0)
+    end,
+  })
+
   vim.api.nvim_create_autocmd("VimLeavePre", {
-    pattern = "*",
     callback = function()
       backend.clear()
     end,
   })
 end
 
-local transmitted_images = {}
 backend.render = function(image, x, y, width, height)
   local with_virtual_placeholders = backend.state.options.kitty_method == "unicode-placeholders"
 
