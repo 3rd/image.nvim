@@ -302,8 +302,6 @@ local render = function(image)
   end
 
   -- TODO make this non-blocking
-  -- TODO separate "resized" and "cropped" temp images and reuse them
-  -- TODO make temp paths persistent per image to avoid creating many files
 
   -- resize
   if needs_resize then
@@ -311,7 +309,7 @@ local render = function(image)
       local resized_image = magick.load_image(image.path)
       resized_image:set_format("png")
 
-      utils.debug(("resizing image %s to %dx%d"):format(image.path, pixel_width, pixel_height))
+      -- utils.debug(("resizing image %s to %dx%d"):format(image.path, pixel_width, pixel_height))
       resized_image:scale(pixel_width, pixel_height)
       local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-resized.png"
       resized_image:write(tmp_path)
@@ -332,7 +330,7 @@ local render = function(image)
       local cropped_image = magick.load_image(image.resized_path or image.path)
       cropped_image:set_format("png")
 
-      utils.debug(("cropping image %s to %dx%d"):format(image.path, pixel_width, cropped_pixel_height))
+      -- utils.debug(("cropping image %s to %dx%d"):format(image.path, pixel_width, cropped_pixel_height))
       cropped_image:crop(pixel_width, cropped_pixel_height, 0, crop_offset_top)
       local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-cropped.png"
       cropped_image:write(tmp_path)
@@ -346,7 +344,7 @@ local render = function(image)
     image.crop_hash = nil
   end
 
-  utils.debug("render", image)
+  -- utils.debug("render", image)
   image.bounds = bounds
   state.backend.render(image, absolute_x, absolute_y, width, height)
   image.rendered_geometry = rendered_geometry
