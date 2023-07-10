@@ -46,19 +46,14 @@ api.setup = function(options)
   state.options = opts
 
   -- load backend
-  local ok, backend = pcall(require, "image/backends/" .. opts.backend)
-  if not ok then
-    utils.throw("render: failed to load " .. opts.backend .. " backend")
-    return
-  end
+  local backend = require("image/backends/" .. opts.backend)
   if type(backend.setup) == "function" then backend.setup(state) end
   state.backend = backend
 
   -- load integrations
-  for name, integration_options in pairs(opts.integrations) do
+  for integration_name, integration_options in pairs(opts.integrations) do
     if integration_options.enabled then
-      local integration_ok, integration = pcall(require, "image/integrations." .. name)
-      if not integration_ok then utils.throw("render: failed to load " .. name .. " integration") end
+      local integration = require("image/integrations/" .. integration_name)
       if type(integration.setup) == "function" then integration.setup(api, integration_options) end
     end
   end
