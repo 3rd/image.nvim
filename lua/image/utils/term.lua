@@ -1,5 +1,14 @@
+local cached_size = {
+  screen_x = 0,
+  screen_y = 0,
+  screen_cols = 0,
+  screen_rows = 0,
+  cell_width = 0,
+  cell_height = 0,
+}
+
 -- https://github.com/edluffy/hologram.nvim/blob/main/lua/hologram/state.lua#L15
-local get_size = function()
+local update_size = function()
   local ffi = require("ffi")
   ffi.cdef([[
     typedef struct {
@@ -24,7 +33,7 @@ local get_size = function()
   local sz = ffi.new("winsize")
   assert(ffi.C.ioctl(1, TIOCGWINSZ, sz) == 0, "Failed to get terminal size")
 
-  return {
+  cached_size = {
     screen_x = sz.xpixel,
     screen_y = sz.ypixel,
     screen_cols = sz.col,
@@ -34,6 +43,13 @@ local get_size = function()
   }
 end
 
+update_size()
+vim.api.nvim_create_autocmd("VimResized", {
+  callback = update_size,
+})
+
 return {
-  get_size = get_size,
+  get_size = function()
+    return cached_size
+  end,
 }
