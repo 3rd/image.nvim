@@ -44,7 +44,7 @@ local query_buffer_images = function(buffer)
 end
 
 ---@type fun(ctx: IntegrationContext)
-local render = function(ctx)
+local render = vim.schedule_wrap(function(ctx)
   local windows = utils.window.get_visible_windows()
 
   for _, window in ipairs(windows) do
@@ -112,14 +112,11 @@ local render = function(ctx)
 
       -- clear previous images
       for _, image in ipairs(previous_images) do
-        if not vim.tbl_contains(new_image_ids, image.id) then
-          -- utils.debug("[markdown] clearing removed image", image.id)
-          image:clear()
-        end
+        if not vim.tbl_contains(new_image_ids, image.id) then image:clear() end
       end
     end
   end
-end
+end)
 
 ---@type fun(ctx: IntegrationContext)
 local setup_autocommands = function(ctx)

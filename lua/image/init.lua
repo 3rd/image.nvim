@@ -78,10 +78,16 @@ api.setup = function(options)
       end
 
       local height = vim.api.nvim_win_get_height(winid)
-      local needs_clear = prev.bufnr ~= bufnr
-      local needs_rerender = prev.topline ~= topline or prev.botline ~= botline or prev.height ~= height
+      local needs_clear = false
+      local needs_rerender = false
 
-      -- compute folded lines
+      -- clear if buffer changed
+      needs_clear = prev.bufnr ~= bufnr
+
+      -- rerender if height, topline, or botline changed
+      needs_rerender = prev.topline ~= topline or prev.botline ~= botline or prev.height ~= height
+
+      -- rerender if the amount of folded lines changed
       local folded_lines = 0
       local i = 1
       while i < botline do
@@ -95,64 +101,32 @@ api.setup = function(options)
       end
       if prev.folded_lines ~= folded_lines then needs_rerender = true end
 
+      -- store new state
       window_history[winid] =
         { topline = topline, botline = botline, bufnr = bufnr, height = height, folded_lines = folded_lines }
 
-      if needs_clear or needs_rerender then
-        vim.defer_fn(function()
-          if needs_clear then
-            for _, curr in ipairs(api.get_images({ buffer = prev.bufnr })) do
-              curr:clear(true)
-            end
-          elseif needs_rerender then
-            for _, current_image in ipairs(api.get_images({ window = winid })) do
-              current_image:render()
-            end
+      -- execute deferred clear / rerender
+      utils.debug("needs_clear", needs_clear, "needs_rerender", needs_rerender)
+      if needs_rerender then utils.debug("window", winid, "needs rerender") end
+      local images = (needs_clear and api.get_images({ window = winid, buffer = prev.bufnr }))
+        or (needs_rerender and api.get_images({ window = winid, buffer = bufnr }))
+        or {}
+      vim.defer_fn(function()
+        if needs_clear then
+          for _, curr in ipairs(images) do
+            curr:clear(true)
           end
-        end, 0)
-      end
+        else
+          for _, curr in ipairs(images) do
+            curr:render()
+          end
+        end
+      end, 0)
     end,
   })
 
   -- setup autocommands
   local group = vim.api.nvim_create_augroup("image.nvim", { clear = true })
-
-  -- auto-clear on buffer change
-  vim.api.nvim_create_autocmd("BufWinEnter", {
-    group = group,
-    callback = function()
-      local has_images = false
-      for _ in pairs(state.images) do
-        has_images = true
-        break
-      end
-      if not has_images then return end
-
-      local windows = utils.window.get_visible_windows()
-      local win_buf_map = {}
-      for _, window in ipairs(windows) do
-        win_buf_map[window.id] = window.buffer
-      end
-
-      local images = api.get_images()
-      for _, current_image in ipairs(images) do
-        local is_window_bound = type(current_image.window) == "number"
-        local is_window_binding_valid = win_buf_map[current_image.window] ~= nil
-        local is_buffer_bound = type(current_image.buffer) == "number"
-        local is_buffer_binding_valid = win_buf_map[current_image.window] == current_image.buffer
-
-        local should_clear = false
-        local shallow = false
-        if is_window_bound and not is_window_binding_valid then
-          should_clear = true
-        elseif is_buffer_bound and not is_buffer_binding_valid then
-          should_clear = true
-          shallow = true
-        end
-        if should_clear then current_image:clear(shallow) end
-      end
-    end,
-  })
 
   -- auto-clear on window close
   vim.api.nvim_create_autocmd("WinClosed", {

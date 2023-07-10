@@ -304,16 +304,18 @@ local render = function(image)
   if needs_resize then
     if image.resize_hash ~= resize_hash then
       local resized_image = magick.load_image(image.path)
-      resized_image:set_format("png")
+      if resized_image then
+        resized_image:set_format("png")
 
-      -- utils.debug(("resizing image %s to %dx%d"):format(image.path, pixel_width, pixel_height))
-      resized_image:scale(pixel_width, pixel_height)
-      local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-resized.png"
-      resized_image:write(tmp_path)
-      resized_image:destroy()
+        -- utils.debug(("resizing image %s to %dx%d"):format(image.path, pixel_width, pixel_height))
+        resized_image:scale(pixel_width, pixel_height)
+        local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-resized.png"
+        resized_image:write(tmp_path)
+        resized_image:destroy()
 
-      image.resized_path = tmp_path
-      image.resize_hash = resize_hash
+        image.resized_path = tmp_path
+        image.resize_hash = resize_hash
+      end
     end
   else
     image.resized_path = image.path
