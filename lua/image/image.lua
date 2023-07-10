@@ -34,6 +34,11 @@ function Image:render(geometry)
   local was_rendered = renderer.render(self)
   -- utils.log("render result", self.id, was_rendered)
 
+  if self.is_rendered and not was_rendered then
+    -- shallow clear if render was prevented
+    self.global_state.backend.clear(self.id, true)
+  end
+
   -- virtual padding
   if self.buffer and self.with_virtual_padding then
     local row = self.geometry.y
@@ -42,48 +47,62 @@ function Image:render(geometry)
 
     local previous_extmark = buf_extmark_map[self.buffer .. ":" .. row]
 
+    -- clear previous extmark if rendering was prevented
     if not was_rendered and previous_extmark then
-      self.global_state.backend.clear(self.id, true)
-      vim.api.nvim_buf_del_extmark(self.buffer, self.global_state.extmarks_namespace, previous_extmark.id)
+      if vim.api.nvim_buf_is_valid(self.buffer) then
+        vim.api.nvim_buf_del_extmark(self.buffer, self.global_state.extmarks_namespace, previous_extmark.id)
+      end
       buf_extmark_map[self.buffer .. ":" .. row] = nil
       return
     end
 
-    if previous_extmark then
-      if previous_extmark.height == height then return end
-      vim.api.nvim_buf_del_extmark(self.buffer, self.global_state.extmarks_namespace, previous_extmark.id)
-    end
-
+    -- create extmark if outdated or it doesn't exist
     if was_rendered then
-      local text = string.rep(" ", width)
-      local filler = {}
-      for _ = 0, height - 1 do
-        filler[#filler + 1] = { { text, "" } }
+      if previous_extmark then
+        if previous_extmark.height == height then return end
+        vim.api.nvim_buf_del_extmark(self.buffer, self.global_state.extmarks_namespace, previous_extmark.id)
       end
-      vim.api.nvim_buf_set_extmark(self.buffer, self.global_state.extmarks_namespace, row - 1, 0, {
-        id = self.internal_id,
-        virt_lines = filler,
-      })
-      buf_extmark_map[self.buffer .. ":" .. row] = { id = self.internal_id, height = height }
 
-      -- rerender any images that are below this one
-      for _, image in pairs(self.global_state.images) do
-        if image.buffer == self.buffer and image.geometry.y > self.geometry.y then image:render() end
+      if was_rendered then
+        local text = string.rep(" ", width)
+        local filler = {}
+        for _ = 0, height - 1 do
+          filler[#filler + 1] = { { text, "" } }
+        end
+        vim.api.nvim_buf_set_extmark(self.buffer, self.global_state.extmarks_namespace, row - 1, 0, {
+          id = self.internal_id,
+          virt_lines = filler,
+        })
+        buf_extmark_map[self.buffer .. ":" .. row] = { id = self.internal_id, height = height }
+
+        -- rerender any images that are below this one
+        -- TODO: only the one after
+        -- TODO: should this be here?
+        for _, image in pairs(self.global_state.images) do
+          if image.buffer == self.buffer and image.geometry.y > self.geometry.y then image:render() end
+        end
       end
     end
   end
 end
 
-function Image:clear()
-  self.global_state.backend.clear(self.id)
+---@param shallow? boolean
+function Image:clear(shallow)
+  if not self.is_rendered then return end
+
+  -- utils.debug(("[image] clear %s, shallow: %s"):format(self.id, shallow))
+  self.global_state.backend.clear(self.id, shallow or false)
   self.rendered_geometry = {
     x = nil,
     y = nil,
     width = nil,
     height = nil,
   }
-  if self.buffer then
-    vim.api.nvim_buf_del_extmark(self.buffer, self.global_state.extmarks_namespace, self.internal_id)
+
+  if self.with_virtual_padding and self.buffer then
+    if vim.api.nvim_buf_is_valid(self.buffer) then
+      vim.api.nvim_buf_del_extmark(self.buffer, self.global_state.extmarks_namespace, self.internal_id)
+    end
     buf_extmark_map[self.buffer .. ":" .. self.geometry.y] = nil
   end
 end
@@ -207,7 +226,8 @@ local from_file = function(path, options, state)
     },
     with_virtual_padding = opts.with_virtual_padding or false,
     is_rendered = false,
-    crop_resize_hash = nil,
+    crop_hash = nil,
+    resize_hash = nil,
   }, state)
 
   return instance

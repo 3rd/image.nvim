@@ -110,8 +110,12 @@ local render = function(ctx)
         end
       end
 
+      -- clear previous images
       for _, image in ipairs(previous_images) do
-        if not vim.tbl_contains(new_image_ids, image.id) then image:clear() end
+        if not vim.tbl_contains(new_image_ids, image.id) then
+          -- utils.debug("[markdown] clearing removed image", image.id)
+          image:clear()
+        end
       end
     end
   end

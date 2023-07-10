@@ -141,7 +141,7 @@ local setup_autocommands = function(ctx)
         local current_window = vim.api.nvim_get_current_win()
         local images = ctx.api.get_images({ window = current_window })
         for _, image in ipairs(images) do
-          image:clear()
+          image:clear(true)
         end
       end,
     })

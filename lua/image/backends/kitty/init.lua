@@ -52,11 +52,13 @@ backend.render = function(image, x, y, width, height)
       display_virtual_placeholder = with_virtual_placeholders and 1 or 0,
       quiet = 2,
     }, image.cropped_path)
+    -- utils.debug("[kitty] transmitted image " .. image.id .. " (" .. image.internal_id .. ")")
   end
   if backend.features.crop then
-    if not transmitted_images[image.id] then
+    local preprocessing_hash = ("%s-%s"):format(image.id, image.resize_hash)
+    if transmitted_images[image.id] ~= preprocessing_hash then
       transmit()
-      transmitted_images[image.id] = true
+      transmitted_images[image.id] = preprocessing_hash
     end
   else
     local preprocessing_hash = ("%s-%s-%s"):format(image.id, image.resize_hash, image.crop_hash)
@@ -126,6 +128,8 @@ backend.render = function(image, x, y, width, height)
   image.is_rendered = true
   backend.state.images[image.id] = image
   helpers.restore_cursor()
+
+  -- utils.debug("[kitty] rendered image", image.id, "(" .. image.internal_id .. ")")
 end
 
 backend.clear = function(image_id, shallow)
@@ -135,7 +139,7 @@ backend.clear = function(image_id, shallow)
     if not image then return end
     helpers.write_graphics({
       action = codes.control.action.delete,
-      display_delete = shallow and "i" or "I",
+      display_delete = "i",
       image_id = image.internal_id,
       quiet = 2,
     })
@@ -144,6 +148,7 @@ backend.clear = function(image_id, shallow)
       backend.state.images[image_id] = nil
       transmitted_images[image.id] = nil
     end
+    -- utils.debug("[kitty] cleared image", image.id, "(" .. image.internal_id .. ")", "shallow:", shallow)
     return
   end
 
@@ -153,12 +158,14 @@ backend.clear = function(image_id, shallow)
     display_delete = "a",
     quiet = 2,
   })
+  -- utils.debug("[kitty] cleared all")
   for id, image in pairs(backend.state.images) do
     image.is_rendered = false
     if not shallow then
       backend.state.images[id] = nil
       transmitted_images[image.id] = nil
     end
+    -- utils.debug("[kitty] cleared image (all)", image.id, "shallow:", shallow)
   end
 end
 

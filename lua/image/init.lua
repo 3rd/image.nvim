@@ -107,7 +107,7 @@ api.setup = function(options)
         vim.defer_fn(function()
           if needs_clear then
             for _, curr in ipairs(api.get_images({ buffer = prev.bufnr })) do
-              curr:clear()
+              curr:clear(true)
             end
           elseif needs_rerender then
             for _, current_image in ipairs(api.get_images({ window = winid })) do
@@ -147,12 +147,14 @@ api.setup = function(options)
         local is_buffer_binding_valid = win_buf_map[current_image.window] == current_image.buffer
 
         local should_clear = false
+        local shallow = false
         if is_window_bound and not is_window_binding_valid then
           should_clear = true
         elseif is_buffer_bound and not is_buffer_binding_valid then
           should_clear = true
+          shallow = true
         end
-        if should_clear then current_image:clear() end
+        if should_clear then current_image:clear(shallow) end
       end
     end,
   })

@@ -102,7 +102,7 @@
 ---@field crop_hash? string
 ---@field global_state State
 ---@field render fun(self: Image, geometry?: ImageGeometry)
----@field clear fun(self: Image)
+---@field clear fun(self: Image, shallow?: boolean)
 ---@field move fun(self: Image, x: number, y: number)
 ---@field brightness fun(self: Image, brightness: number)
 ---@field saturation fun(self: Image, saturation: number)
@@ -151,4 +151,4 @@
 ---@field display_cursor_policy 0|1
 ---@field display_virtual_placeholder 0|1
 ---@field display_zindex number
----@field display_delete "a"|"i"|"I"|"p"
+---@field display_delete "a"|"A"|"i"|"I"|"p"

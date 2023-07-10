@@ -324,8 +324,8 @@ local render = function(image)
   end
 
   -- crop
-  local crop_hash = ("%d-%d-%d-%d"):format(0, crop_offset_top, pixel_width, cropped_pixel_height)
   if needs_crop then
+    local crop_hash = ("%d-%d-%d-%d"):format(0, crop_offset_top, pixel_width, cropped_pixel_height)
     if (needs_resize and image.resize_hash ~= resize_hash) or image.crop_hash ~= crop_hash then
       local cropped_image = magick.load_image(image.resized_path or image.path)
       cropped_image:set_format("png")
