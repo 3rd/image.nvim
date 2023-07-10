@@ -99,11 +99,15 @@ function Image:brightness(brightness)
   local magick_image = magick.load_image(self.path)
   if not magick_image then error(("image.nvim: magick failed to load image: %s"):format(self.path)) end
   magick_image:modulate(brightness)
-  local tmp_file = self.global_state.tmp_dir .. "/" .. utils.random.id()
-  magick_image:write(tmp_file)
-  self.path = tmp_file
-  self.cropped_path = tmp_file
+  local altered_path = self.global_state.tmp_dir .. "/" .. utils.base64.encode(self.id) .. "-source.png"
+  magick_image:write(altered_path)
   magick_image:destroy()
+
+  self.path = altered_path
+  self.cropped_path = altered_path
+  self.resize_hash = nil
+  self.cropped_hash = nil
+  self.resize_hash = nil
   if self.is_rendered then
     self:clear()
     self:render()
@@ -115,11 +119,15 @@ function Image:saturation(saturation)
   local magick_image = magick.load_image(self.path)
   if not magick_image then error(("image.nvim: magick failed to load image: %s"):format(self.path)) end
   magick_image:modulate(nil, saturation)
-  local tmp_file = self.global_state.tmp_dir .. "/" .. utils.random.id()
-  magick_image:write(tmp_file)
-  self.path = tmp_file
-  self.cropped_path = tmp_file
+  local altered_path = self.global_state.tmp_dir .. "/" .. utils.base64.encode(self.id) .. "-source.png"
+  magick_image:write(altered_path)
   magick_image:destroy()
+
+  self.path = altered_path
+  self.cropped_path = altered_path
+  self.resize_hash = nil
+  self.cropped_hash = nil
+  self.resize_hash = nil
   if self.is_rendered then
     self:clear()
     self:render()
@@ -131,11 +139,15 @@ function Image:hue(hue)
   local magick_image = magick.load_image(self.path)
   if not magick_image then error(("image.nvim: magick failed to load image: %s"):format(self.path)) end
   magick_image:modulate(nil, nil, hue)
-  local tmp_file = self.global_state.tmp_dir .. "/" .. utils.random.id()
-  magick_image:write(tmp_file)
-  self.path = tmp_file
-  self.cropped_path = tmp_file
+  local altered_path = self.global_state.tmp_dir .. "/" .. utils.base64.encode(self.id) .. "-source.png"
+  magick_image:write(altered_path)
   magick_image:destroy()
+
+  self.path = altered_path
+  self.cropped_path = altered_path
+  self.resize_hash = nil
+  self.cropped_hash = nil
+  self.resize_hash = nil
   if self.is_rendered then
     self:clear()
     self:render()
@@ -156,22 +168,26 @@ local from_file = function(path, options, state)
   local absolute_path = vim.fn.fnamemodify(path, ":p")
   if not vim.loop.fs_stat(absolute_path) then utils.throw(("image.nvim: file not found: %s"):format(absolute_path)) end
 
-  local rendered_path = absolute_path
+  local id = opts.id or utils.random.id()
+
+  -- convert non-png images to png and read the dimensions
+  local source_path = absolute_path
   local magick_image = magick.load_image(absolute_path)
   if not magick_image then error(("image.nvim: magick failed to load image: %s"):format(absolute_path)) end
   if magick_image:get_format():lower() ~= "png" then
     magick_image:set_format("png")
-    rendered_path = state.tmp_dir .. "/" .. utils.random.id()
-    magick_image:write(rendered_path)
+    source_path = state.tmp_dir .. "/" .. utils.base64.encode(id) .. "-source.png"
+    magick_image:write(source_path)
   end
   local image_width = magick_image:get_width()
   local image_height = magick_image:get_height()
   magick_image:destroy()
 
   local instance = createImage({
-    id = opts.id or utils.random.id(),
-    path = rendered_path,
-    cropped_path = rendered_path,
+    id = id,
+    path = source_path,
+    resized_path = source_path,
+    cropped_path = source_path,
     original_path = path,
     image_width = image_width,
     image_height = image_height,
@@ -208,7 +224,7 @@ local from_url = function(url, options, callback, state)
     return
   end
 
-  local tmp_path = state.tmp_dir .. "/" .. utils.random.id() .. ".png"
+  local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(url) .. ".png"
   local stdout = vim.loop.new_pipe()
 
   vim.loop.spawn("curl", {

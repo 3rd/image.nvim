@@ -313,7 +313,7 @@ local render = function(image)
 
       utils.debug(("resizing image %s to %dx%d"):format(image.path, pixel_width, pixel_height))
       resized_image:scale(pixel_width, pixel_height)
-      local tmp_path = state.tmp_dir .. "/" .. utils.random.id() .. ".png"
+      local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-resized.png"
       resized_image:write(tmp_path)
       resized_image:destroy()
 
@@ -334,7 +334,7 @@ local render = function(image)
 
       utils.debug(("cropping image %s to %dx%d"):format(image.path, pixel_width, cropped_pixel_height))
       cropped_image:crop(pixel_width, cropped_pixel_height, 0, crop_offset_top)
-      local tmp_path = state.tmp_dir .. "/" .. utils.random.id() .. ".png"
+      local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-cropped.png"
       cropped_image:write(tmp_path)
       cropped_image:destroy()
 
@@ -346,7 +346,7 @@ local render = function(image)
     image.crop_hash = nil
   end
 
-  -- utils.debug(("render x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
+  utils.debug("render", image)
   image.bounds = bounds
   state.backend.render(image, absolute_x, absolute_y, width, height)
   image.rendered_geometry = rendered_geometry
