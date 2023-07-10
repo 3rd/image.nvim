@@ -98,8 +98,6 @@ end
 
 ---@param shallow? boolean
 function Image:clear(shallow)
-  if not self.is_rendered then return end
-
   -- utils.debug(("[image] clear %s, shallow: %s"):format(self.id, shallow))
   self.global_state.backend.clear(self.id, shallow or false)
   self.rendered_geometry = {
