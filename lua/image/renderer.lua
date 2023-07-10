@@ -292,58 +292,58 @@ local render = function(image)
       cropped_pixel_height = (bounds.bottom - absolute_y + 1) * term_size.cell_height
       needs_crop = true
     end
-
-    -- -- crop right
-    -- if absolute_x + width > bounds.right then
-    --   pixel_width = (bounds.right - absolute_x) * term_size.cell_width
-    --   needs_crop = true
-    -- end
   end
 
   -- compute resize
-  if image.image_width > pixel_width then needs_resize = true end
-  utils.debug(
-    ("image %s: pixel_width: %d, image_width: %d, needs_resize: %s"):format(
-      image.path,
-      pixel_width,
-      image.image_width,
-      tostring(needs_resize)
-    )
-  )
-
-  -- perform resize / crop
-  local crop_resize_hash = ("%d-%d-%d-%d-%d-%d"):format(
-    pixel_width,
-    cropped_pixel_height,
-    0,
-    crop_offset_top,
-    pixel_width,
-    pixel_height
-  ) or nil
-
-  -- utils.debug("prev hash:", image.crop_resize_hash, "next hash:", crop_resize_hash)
+  local resize_hash = ("%d-%d"):format(pixel_width, pixel_height)
+  if image.image_width > pixel_width then
+    -- utils.debug("needs resize", { id = image.id, prev_resize_hash = image.resize_hash, new_resize_hash = resize_hash })
+    needs_resize = true
+  end
 
   -- TODO make this non-blocking
   -- TODO separate "resized" and "cropped" temp images and reuse them
   -- TODO make temp paths persistent per image to avoid creating many files
-  if (needs_crop or needs_resize) and (image.crop_resize_hash ~= crop_resize_hash) then
-    local cropped_image = magick.load_image(image.path)
-    cropped_image:set_format("png")
-    if needs_resize then
-      -- resize to target width
-      cropped_image:scale(pixel_width, pixel_height)
-      -- utils.debug(("resizing image %s to %dx%d"):format(image.path, pixel_width, pixel_height))
+
+  -- resize
+  if needs_resize then
+    if image.resize_hash ~= resize_hash then
+      local resized_image = magick.load_image(image.path)
+      resized_image:set_format("png")
+
+      utils.debug(("resizing image %s to %dx%d"):format(image.path, pixel_width, pixel_height))
+      resized_image:scale(pixel_width, pixel_height)
+      local tmp_path = state.tmp_dir .. "/" .. utils.random.id() .. ".png"
+      resized_image:write(tmp_path)
+      resized_image:destroy()
+
+      image.resized_path = tmp_path
+      image.resize_hash = resize_hash
     end
-    if needs_crop then
-      -- crop
+  else
+    image.resized_path = image.path
+    image.resize_hash = nil
+  end
+
+  -- crop
+  local crop_hash = ("%d-%d-%d-%d"):format(0, crop_offset_top, pixel_width, cropped_pixel_height)
+  if needs_crop then
+    if (needs_resize and image.resize_hash ~= resize_hash) or image.crop_hash ~= crop_hash then
+      local cropped_image = magick.load_image(image.resized_path or image.path)
+      cropped_image:set_format("png")
+
+      utils.debug(("cropping image %s to %dx%d"):format(image.path, pixel_width, cropped_pixel_height))
       cropped_image:crop(pixel_width, cropped_pixel_height, 0, crop_offset_top)
-      -- utils.debug(("cropping image %s to %dx%d"):format(image.path, pixel_width, cropped_pixel_height))
+      local tmp_path = state.tmp_dir .. "/" .. utils.random.id() .. ".png"
+      cropped_image:write(tmp_path)
+      cropped_image:destroy()
+
+      image.cropped_path = tmp_path
+      image.crop_hash = crop_hash
     end
-    local tmp_path = state.tmp_dir .. "/" .. utils.random.id() .. ".png"
-    cropped_image:write(tmp_path)
-    cropped_image:destroy()
-    image.cropped_path = tmp_path
-    image.crop_resize_hash = crop_resize_hash
+  else
+    image.cropped_path = image.resized_path
+    image.crop_hash = nil
   end
 
   -- utils.debug(("render x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))

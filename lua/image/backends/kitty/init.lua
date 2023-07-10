@@ -59,9 +59,10 @@ backend.render = function(image, x, y, width, height)
       transmitted_images[image.id] = true
     end
   else
-    if transmitted_images[image.id] ~= image.crop_resize_hash then
+    local preprocessing_hash = ("%s-%s-%s"):format(image.id, image.resize_hash, image.crop_hash)
+    if transmitted_images[image.id] ~= preprocessing_hash then
       transmit()
-      transmitted_images[image.id] = image.crop_resize_hash
+      transmitted_images[image.id] = preprocessing_hash
     end
   end
 

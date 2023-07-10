@@ -86,6 +86,7 @@
 ---@field id string
 ---@field internal_id number
 ---@field path string
+---@field resized_path string
 ---@field cropped_path string
 ---@field original_path string
 ---@field image_width number
@@ -97,7 +98,8 @@
 ---@field rendered_geometry ImageGeometry
 ---@field bounds ImageBounds
 ---@field is_rendered boolean
----@field crop_resize_hash? string
+---@field resize_hash? string
+---@field crop_hash? string
 ---@field global_state State
 ---@field render fun(self: Image, geometry?: ImageGeometry)
 ---@field clear fun(self: Image)
