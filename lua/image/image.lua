@@ -32,12 +32,11 @@ function Image:render(geometry)
 
   -- utils.debug(("\n\n---------------- %s ----------------"):format(self.id))
   local was_rendered = renderer.render(self)
-  -- utils.log("render result", self.id, was_rendered)
 
-  if self.is_rendered and not was_rendered then
-    -- shallow clear if render was prevented
-    self.global_state.backend.clear(self.id, true)
-  end
+  -- utils.debug(("[image] render: %s, success: %s x: %s, y: %s, width: %s, height: %s"):format( self.id, was_rendered, self.geometry.x, self.geometry.y, self.geometry.width, self.geometry.height))
+
+  -- clear if render was prevented
+  if self.is_rendered and not was_rendered then self.global_state.backend.clear(self.id, true) end
 
   -- virtual padding
   if self.buffer and self.with_virtual_padding then
@@ -57,31 +56,42 @@ function Image:render(geometry)
     end
 
     -- create extmark if outdated or it doesn't exist
+    if was_rendered and previous_extmark then
+      if previous_extmark.height == height then return end
+      vim.api.nvim_buf_del_extmark(self.buffer, self.global_state.extmarks_namespace, previous_extmark.id)
+    end
     if was_rendered then
-      if previous_extmark then
-        if previous_extmark.height == height then return end
-        vim.api.nvim_buf_del_extmark(self.buffer, self.global_state.extmarks_namespace, previous_extmark.id)
+      local text = string.rep(" ", width)
+      local filler = {}
+      for _ = 0, height - 1 do
+        filler[#filler + 1] = { { text, "" } }
       end
+      vim.api.nvim_buf_set_extmark(self.buffer, self.global_state.extmarks_namespace, row - 1, 0, {
+        id = self.internal_id,
+        virt_lines = filler,
+      })
+      buf_extmark_map[self.buffer .. ":" .. row] = { id = self.internal_id, height = height }
+    end
 
-      if was_rendered then
-        local text = string.rep(" ", width)
-        local filler = {}
-        for _ = 0, height - 1 do
-          filler[#filler + 1] = { { text, "" } }
-        end
-        vim.api.nvim_buf_set_extmark(self.buffer, self.global_state.extmarks_namespace, row - 1, 0, {
-          id = self.internal_id,
-          virt_lines = filler,
-        })
-        buf_extmark_map[self.buffer .. ":" .. row] = { id = self.internal_id, height = height }
+    -- TODO: chain rerendering only the next affected image after this one
+    -- local next_image = nil
+    -- local next_image_distance = math.huge
+    -- for _, image in pairs(self.global_state.images) do
+    --   -- if image.buffer == self.buffer and image.geometry.y > self.geometry.y then image:render() end
+    --   if image.buffer == self.buffer then
+    --     local distance = image.geometry.y - self.geometry.y
+    --     if distance > 0 and distance < next_image_distance then
+    --       next_image = image
+    --       next_image_distance = distance
+    --     end
+    --   end
+    -- end
+    -- utils.debug(("(image.render) id: %s, next_image: %s"):format(self.id, next_image and next_image.id))
+    -- if next_image then next_image:render() end
 
-        -- rerender any images that are below this one
-        -- TODO: only the one after
-        -- TODO: should this be here?
-        for _, image in pairs(self.global_state.images) do
-          if image.buffer == self.buffer and image.geometry.y > self.geometry.y then image:render() end
-        end
-      end
+    -- rerender any images that are below this one
+    for _, image in pairs(self.global_state.images) do
+      if image.buffer == self.buffer and image.geometry.y > self.geometry.y then image:render() end
     end
   end
 end

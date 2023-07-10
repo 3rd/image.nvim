@@ -194,20 +194,20 @@ local render = function(image)
               ---@diagnostic disable-next-line: deprecated
               local mark_id, mark_row, mark_col, mark_opts = unpack(mark)
               local virt_height = #(mark_opts.virt_lines or {})
-              return { id = mark_id, row = mark_row + 1, col = mark_col, height = virt_height }
+              return { id = mark_id, row = mark_row, col = mark_col, height = virt_height }
             end,
             vim.api.nvim_buf_get_extmarks(
               image.buffer,
               -1,
               { topline - 1, 0 },
-              { image.geometry.y, 0 },
+              { image.geometry.y - 1, 0 },
               { details = true }
             )
           )
 
           local offset = topfill
           for _, mark in ipairs(extmarks) do
-            if mark.row ~= image.geometry.y then offset = offset + mark.height end
+            if mark.row + 1 ~= image.geometry.y then offset = offset + mark.height end
           end
 
           absolute_y = absolute_y + offset
