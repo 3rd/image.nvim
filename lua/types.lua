@@ -37,6 +37,8 @@
 ---@field max_height_window_percentage? number
 ---@field kitty_method "normal"|"unicode-placeholders"
 ---@field kitty_tmux_write_delay? number
+---@field window_overlap_clear_enabled? boolean
+---@field window_overlap_clear_ft_ignore? string[]
 
 ---@class BackendFeatures
 ---@field crop boolean
@@ -108,16 +110,20 @@
 ---@field saturation fun(self: Image, saturation: number)
 ---@field hue fun(self: Image, hue: number)
 
----@class IntegrationContext -- wish proper generics were a thing here
----@field options IntegrationOptions
+-- wish proper generics were a thing here
+---@class IntegrationContext
 ---@field api API
+---@field options IntegrationOptions
+---@field state State
 
 ---@class Integration
----@field setup? fun(api: API, options: IntegrationOptions)
+---@field setup? fun(api: API, options: IntegrationOptions, state: State)
 
 ---@class Window
 ---@field id number
 ---@field buffer number
+---@field buffer_filetype string
+---@field buffer_is_listed boolean
 ---@field x number
 ---@field y number
 ---@field width number
@@ -125,6 +131,11 @@
 ---@field scroll_x number
 ---@field scroll_y number
 ---@field is_visible boolean
+---@field is_normal boolean
+---@field is_floating boolean
+---@field zindex number
+---@field rect { top: number, right: number, bottom: number, left: number }
+---@field masks { x: number, y: number, width: number, height: number }[]
 
 ---@class KittyControlConfig
 ---@field action "t"|"T"|"p"|"d"|"f"|"c"|"a"|"q"

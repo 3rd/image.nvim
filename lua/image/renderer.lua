@@ -75,11 +75,17 @@ local render = function(image)
 
   if image.window ~= nil then
     -- bail if the window is invalid
-    local window = utils.window.get_window(image.window)
+    local window = utils.window.get_window(image.window, {
+      with_masks = state.options.window_overlap_clear_enabled,
+      ignore_masking_filetypes = state.options.window_overlap_clear_ft_ignore,
+    })
     if window == nil then return false end
 
     -- bail if the window is not visible
     if not window.is_visible then return false end
+
+    -- bail if the window is overlapped
+    if state.options.window_overlap_clear_enabled and #window.masks > 0 then return false end
 
     -- if the image is tied to a buffer the window must be displaying that buffer
     if image.buffer ~= nil and window.buffer ~= image.buffer then return false end

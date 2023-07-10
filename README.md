@@ -55,6 +55,8 @@ require("image").setup({
   max_height_window_percentage = 50,
   kitty_method = "normal",
   kitty_tmux_write_delay = 10, -- makes rendering more reliable with Kitty+Tmux
+  window_overlap_clear_enabled = false, -- toggles images when windows are overlapped
+  window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "" },
 })
 ```
 

@@ -43,80 +43,88 @@ local query_buffer_images = function(buffer)
   return images
 end
 
----@type fun(ctx: IntegrationContext)
-local render = vim.schedule_wrap(function(ctx)
-  local windows = utils.window.get_visible_windows()
+local render = vim.schedule_wrap(
+  ---@param ctx IntegrationContext
+  function(ctx)
+    local windows = utils.window.get_windows({
+      normal = true,
+      with_masks = ctx.state.options.window_overlap_clear_enabled,
+      ignore_masking_filetypes = ctx.state.options.window_overlap_clear_ft_ignore,
+    })
+    -- utils.debug("[markdown] render", { windows = windows })
 
-  for _, window in ipairs(windows) do
-    if vim.bo[window.buffer].filetype == "markdown" then
-      local matches = query_buffer_images(window.buffer)
+    for _, window in ipairs(windows) do
+      if window.buffer_filetype == "markdown" then
+        local matches = query_buffer_images(window.buffer)
 
-      local previous_images = ctx.api.get_images({
-        window = window.id,
-        buffer = window.buffer,
-      })
-      local new_image_ids = {}
+        local previous_images = ctx.api.get_images({
+          window = window.id,
+          buffer = window.buffer,
+        })
+        local new_image_ids = {}
 
-      local file_path = vim.api.nvim_buf_get_name(window.buffer)
+        local file_path = vim.api.nvim_buf_get_name(window.buffer)
 
-      for _, match in ipairs(matches) do
-        local id = string.format("%d:%d:%d:%s", window.id, window.buffer, match.range.start_row, match.url)
-        local height = nil
+        for _, match in ipairs(matches) do
+          local id = string.format("%d:%d:%d:%s", window.id, window.buffer, match.range.start_row, match.url)
+          local height = nil
 
-        ---@param image Image
-        local render_image = function(image)
-          if ctx.options.sizing_strategy == "height-from-empty-lines" then
-            local empty_line_count = -1
-            local lines = vim.api.nvim_buf_get_lines(window.buffer, 0, -1, false)
-            for i = match.range.end_row + 2, #lines do
-              if lines[i] == "" then
-                empty_line_count = empty_line_count + 1
-              else
-                break
+          ---@param image Image
+          local render_image = function(image)
+            -- utils.debug("[markdown] rendering image", id, window)
+            if ctx.options.sizing_strategy == "height-from-empty-lines" then
+              local empty_line_count = -1
+              local lines = vim.api.nvim_buf_get_lines(window.buffer, 0, -1, false)
+              for i = match.range.end_row + 2, #lines do
+                if lines[i] == "" then
+                  empty_line_count = empty_line_count + 1
+                else
+                  break
+                end
               end
+              height = math.max(1, empty_line_count)
             end
-            height = math.max(1, empty_line_count)
+            image:render({
+              height = height,
+              x = match.range.start_col,
+              y = match.range.start_row + 1,
+            })
+            table.insert(new_image_ids, id)
           end
-          image:render({
-            height = height,
-            x = match.range.start_col,
-            y = match.range.start_row + 1,
-          })
-          table.insert(new_image_ids, id)
+
+          -- remote
+          if is_remote_url(match.url) then
+            if not ctx.options.download_remote_images then return end
+
+            ctx.api.from_url(
+              match.url,
+              { id = id, window = window.id, buffer = window.buffer, with_virtual_padding = true },
+              function(image)
+                if not image then return end
+                render_image(image)
+              end
+            )
+          else
+            -- local
+            local path = resolve_absolute_path(file_path, match.url)
+            local ok, image = pcall(ctx.api.from_file, path, {
+              id = id,
+              window = window.id,
+              buffer = window.buffer,
+              with_virtual_padding = true,
+            })
+            if ok then render_image(image) end
+          end
         end
 
-        -- remote
-        if is_remote_url(match.url) then
-          if not ctx.options.download_remote_images then return end
-
-          ctx.api.from_url(
-            match.url,
-            { id = id, window = window.id, buffer = window.buffer, with_virtual_padding = true },
-            function(image)
-              if not image then return end
-              render_image(image)
-            end
-          )
-        else
-          -- local
-          local path = resolve_absolute_path(file_path, match.url)
-          local ok, image = pcall(ctx.api.from_file, path, {
-            id = id,
-            window = window.id,
-            buffer = window.buffer,
-            with_virtual_padding = true,
-          })
-          if ok then render_image(image) end
+        -- clear previous images
+        for _, image in ipairs(previous_images) do
+          if not vim.tbl_contains(new_image_ids, image.id) then image:clear() end
         end
-      end
-
-      -- clear previous images
-      for _, image in ipairs(previous_images) do
-        if not vim.tbl_contains(new_image_ids, image.id) then image:clear() end
       end
     end
   end
-end)
+)
 
 ---@type fun(ctx: IntegrationContext)
 local setup_autocommands = function(ctx)
@@ -173,12 +181,13 @@ local setup_autocommands = function(ctx)
   end
 end
 
----@type fun(api: API, options: MarkdownIntegrationOptions)
-local setup = function(api, options)
+---@type fun(api: API, options: MarkdownIntegrationOptions, state: State)
+local setup = function(api, options, state)
   local opts = options or {} --[[@as MarkdownIntegrationOptions]]
   local context = {
     api = api,
     options = opts,
+    state = state,
   }
 
   vim.defer_fn(function()

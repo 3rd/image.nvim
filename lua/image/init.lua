@@ -24,6 +24,8 @@ local default_options = {
   max_height_window_percentage = 50,
   kitty_method = "normal",
   kitty_tmux_write_delay = 10,
+  window_overlap_clear_enabled = false,
+  window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "" },
 }
 
 ---@type State
@@ -54,7 +56,7 @@ api.setup = function(options)
   for integration_name, integration_options in pairs(opts.integrations) do
     if integration_options.enabled then
       local integration = require("image/integrations/" .. integration_name)
-      if type(integration.setup) == "function" then integration.setup(api, integration_options) end
+      if type(integration.setup) == "function" then integration.setup(api, integration_options, state) end
     end
   end
 
@@ -68,9 +70,48 @@ api.setup = function(options)
   ---@type table<number, { topline: number, botline: number, bufnr: number, height: number; folded_lines: number }>
   local window_history = {}
   vim.api.nvim_set_decoration_provider(state.extmarks_namespace, {
-    on_win = function(_, winid, bufnr, topline, botline)
-      -- utils.debug("on_win", { winid = winid })
+    on_win = vim.schedule_wrap(function(_, winid, bufnr, topline, botline)
+      -- get current window
+      local window = nil
+      local windows = {}
+      if state.options.window_overlap_clear_enabled then
+        windows = utils.window.get_windows({
+          normal = true,
+          floating = true,
+          with_masks = state.options.window_overlap_clear_enabled,
+          ignore_masking_filetypes = state.options.window_overlap_clear_ft_ignore,
+        })
+        for _, w in ipairs(windows) do
+          if w.id == winid then
+            window = w
+            break
+          end
+        end
+      else
+        window = utils.window.get_window(winid)
+      end
+      if not window then return end
 
+      -- toggle images in overlapped windows
+      if state.options.window_overlap_clear_enabled then
+        for _, current_window in ipairs(windows) do
+          local images = api.get_images({ window = current_window.id, buffer = bufnr })
+          if #current_window.masks > 0 then
+            for _, current_image in ipairs(images) do
+              current_image:clear(true)
+            end
+          else
+            for _, current_image in ipairs(images) do
+              current_image:render()
+            end
+          end
+        end
+      end
+
+      -- all handling below is only for non-floating windows
+      if window.is_floating then return end
+
+      -- get history entry or init
       local prev = window_history[winid]
       if not prev then
         window_history[winid] = { topline = topline, botline = botline, bufnr = bufnr }
@@ -106,8 +147,7 @@ api.setup = function(options)
         { topline = topline, botline = botline, bufnr = bufnr, height = height, folded_lines = folded_lines }
 
       -- execute deferred clear / rerender
-      utils.debug("needs_clear", needs_clear, "needs_rerender", needs_rerender)
-      if needs_rerender then utils.debug("window", winid, "needs rerender") end
+      -- utils.debug("needs_clear", needs_clear, "needs_rerender", needs_rerender)
       local images = (needs_clear and api.get_images({ window = winid, buffer = prev.bufnr }))
         or (needs_rerender and api.get_images({ window = winid, buffer = bufnr }))
         or {}
@@ -122,7 +162,7 @@ api.setup = function(options)
           end
         end
       end, 0)
-    end,
+    end),
   })
 
   -- setup autocommands
