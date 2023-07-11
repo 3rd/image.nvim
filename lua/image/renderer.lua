@@ -1,14 +1,27 @@
 local utils = require("image/utils")
 local magick = require("image/magick")
 
+---@param window_id number
 ---@return { x: number, y: number }
-local get_global_offsets = function()
+local get_global_offsets = function(window_id)
   local x = 0
   local y = 0
-  if vim.opt.number then x = x + vim.opt.numberwidth:get() end
-  if vim.opt.signcolumn ~= "no" then x = x + 2 end
+  -- if vim.opt.number then x = x + vim.opt.numberwidth:get() end
+  -- if vim.opt.signcolumn ~= "no" then x = x + 2 end
+
+  local opts = vim.wo[window_id]
+  if not opts then return { x = x, y = y } end
+
+  -- tabline
   if vim.opt.showtabline == 2 then y = y + 1 end
-  if vim.opt.winbar ~= "none" then y = y + 1 end
+
+  -- winbar
+  if opts.winbar ~= "" then y = y + 1 end
+
+  -- gutters
+  local wininfo = vim.fn.getwininfo(window_id)
+  if wininfo and wininfo[1] then x = x + wininfo[1].textoff end
+
   return { x = x, y = y }
 end
 
@@ -104,9 +117,9 @@ local render = function(image)
     end
 
     -- global offsets
-    local global_offsets = get_global_offsets()
+    local global_offsets = get_global_offsets(window.id)
     x_offset = global_offsets.x - window.scroll_x
-    y_offset = global_offsets.y + 1 - window.scroll_y
+    y_offset = global_offsets.y - window.scroll_y
 
     -- window offsets
     window_offset_x = window.x
@@ -224,6 +237,7 @@ local render = function(image)
     -- folds
     local offset = 0
     local current_win = vim.api.nvim_get_current_win()
+    -- TODO: can this be done without switching windows?
     vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. image.window .. ")")
 
     if vim.wo.foldenable then
@@ -248,10 +262,10 @@ local render = function(image)
 
   -- clear out of bounds images
   if
-    absolute_y + height < bounds.top
-    or absolute_y > bounds.bottom
-    or absolute_x + width < bounds.left
-    or absolute_x > bounds.right
+    absolute_y + height <= bounds.top
+    or absolute_y >= bounds.bottom
+    or absolute_x + width <= bounds.left
+    or absolute_x >= bounds.right
   then
     if image.is_rendered then
       -- utils.debug("deleting out of bounds image", { id = image.id, x = absolute_x, y = absolute_y, width = width, height = height, bounds = bounds })
@@ -349,10 +363,10 @@ local render = function(image)
     image.crop_hash = nil
   end
 
-  -- utils.debug("render", image)
   image.bounds = bounds
   state.backend.render(image, absolute_x, absolute_y, width, height)
   image.rendered_geometry = rendered_geometry
+  -- utils.debug("rendered", image)
 
   return true
 end

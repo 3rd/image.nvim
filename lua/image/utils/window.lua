@@ -12,7 +12,7 @@ local get_windows = function(opts)
     local buffer_filetype = vim.bo[buffer].filetype
     local buffer_is_listed = #bufinfo == 1 and bufinfo[1].listed == 1
     local scroll_x = 0 -- TODO
-    local scroll_y = tonumber(vim.fn.win_execute(id, "echo line('w0')"))
+    local scroll_y = tonumber(vim.fn.win_execute(id, "echo line('w0')")) - 1
     local is_visible = true
 
     local window = {

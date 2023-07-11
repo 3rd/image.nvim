@@ -71,7 +71,6 @@ local render = vim.schedule_wrap(
 
           ---@param image Image
           local render_image = function(image)
-            -- utils.debug("[markdown] rendering image", id, window)
             if ctx.options.sizing_strategy == "height-from-empty-lines" then
               local empty_line_count = -1
               local lines = vim.api.nvim_buf_get_lines(window.buffer, 0, -1, false)
@@ -84,6 +83,7 @@ local render = vim.schedule_wrap(
               end
               height = math.max(1, empty_line_count)
             end
+            -- utils.debug(("[markdown] rendering image %s at x=%d y=%d"):format( match.url, match.range.start_col, match.range.start_row + 1))
             image:render({
               height = height,
               x = match.range.start_col,
