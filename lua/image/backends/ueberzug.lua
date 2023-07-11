@@ -75,7 +75,7 @@ backend.render = function(image, x, y, width, height)
     identifier = image.id,
     path = image.cropped_path,
     x = x,
-    y = y,
+    y = y - 1,
     width = width,
     height = height,
   })
