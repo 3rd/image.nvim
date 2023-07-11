@@ -5,8 +5,19 @@ local magick = require("image/magick")
 local get_global_offsets = function()
   local x = 0
   local y = 0
-  if vim.opt.number then x = x + vim.opt.numberwidth:get() end
-  if vim.opt.signcolumn ~= "no" then x = x + 2 end
+
+  local numberwidth = math.max(
+      vim.opt.numberwidth:get(),
+      ('' .. vim.api.nvim_buf_line_count(0)):len()
+        + (vim.opt.relativenumber:get() and 1 or 0))
+
+  if vim.opt.number then x = x + numberwidth end
+
+  local signcolumn = vim.opt.signcolumn:get()
+  if signcolumn ~= "no" then
+      x = x + math.max(0, 2 - (signcolumn == "number" and numberwidth or 0))
+  end
+
   if vim.opt.showtabline == 2 then y = y + 1 end
   if vim.opt.winbar ~= "none" then y = y + 1 end
   return { x = x, y = y }
@@ -106,7 +117,7 @@ local render = function(image)
     -- global offsets
     local global_offsets = get_global_offsets()
     x_offset = global_offsets.x - window.scroll_x
-    y_offset = global_offsets.y + 1 - window.scroll_y
+    y_offset = global_offsets.y - window.scroll_y
 
     -- window offsets
     window_offset_x = window.x
