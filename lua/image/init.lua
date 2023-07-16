@@ -1,5 +1,6 @@
 local utils = require("image/utils")
 local image = require("image/image")
+local magick = require("image/magick")
 
 ---@type Options
 local default_options = {
@@ -46,6 +47,12 @@ local api = {}
 api.setup = function(options)
   local opts = vim.tbl_deep_extend("force", default_options, options or {})
   state.options = opts
+
+  -- check that magick is available
+  if not magick.has_magick then
+    vim.api.nvim_err_writeln("image.nvim: magick rock not found, please install and restart your editor")
+    return
+  end
 
   -- load backend
   local backend = require("image/backends/" .. opts.backend)
