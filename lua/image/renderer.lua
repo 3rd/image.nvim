@@ -278,15 +278,15 @@ local render = function(image)
 
   -- compute final geometry and prevent useless rerendering
   local rendered_geometry = { x = absolute_x, y = absolute_y, width = width, height = height }
-  if
-    image.is_rendered
-    and image.rendered_geometry.x == rendered_geometry.x
-    and image.rendered_geometry.y == rendered_geometry.y
-    and image.rendered_geometry.width == rendered_geometry.width
-    and image.rendered_geometry.height == rendered_geometry.height
-  then
-    return true
-  end
+  -- if
+  --   image.is_rendered
+  --   and image.rendered_geometry.x == rendered_geometry.x
+  --   and image.rendered_geometry.y == rendered_geometry.y
+  --   and image.rendered_geometry.width == rendered_geometry.width
+  --   and image.rendered_geometry.height == rendered_geometry.height
+  -- then
+  --   return true
+  -- end
 
   -- handle crop/resize
   local pixel_width = width * term_size.cell_width

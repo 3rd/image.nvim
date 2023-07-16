@@ -97,7 +97,8 @@ api.setup = function(options)
       else
         window = utils.window.get_window(winid)
       end
-      if not window then return end
+      -- utils.debug("on_win", { winid = winid, bufnr = bufnr })
+      if not window then return false end
 
       -- toggle images in overlapped windows
       if state.options.window_overlap_clear_enabled then
@@ -116,13 +117,18 @@ api.setup = function(options)
       end
 
       -- all handling below is only for non-floating windows
-      if window.is_floating then return end
+      if window.is_floating then return false end
 
       -- get history entry or init
       local prev = window_history[winid]
       if not prev then
+        -- new window, rerender all existing images
+        local images = api.get_images()
+        for _, current_image in ipairs(images) do
+          current_image:render()
+        end
         window_history[winid] = { topline = topline, botline = botline, bufnr = bufnr }
-        return
+        return false
       end
 
       local height = vim.api.nvim_win_get_height(winid)
@@ -169,6 +175,8 @@ api.setup = function(options)
           end
         end
       end, 0)
+
+      return false
     end),
   })
 
@@ -182,7 +190,11 @@ api.setup = function(options)
       vim.schedule(function()
         local images = api.get_images()
         for _, current_image in ipairs(images) do
-          if not vim.api.nvim_win_is_valid(current_image.window) then current_image:clear() end
+          if vim.api.nvim_win_is_valid(current_image.window) then
+            current_image:render()
+          else
+            current_image:clear()
+          end
         end
       end)
     end,
