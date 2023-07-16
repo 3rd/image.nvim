@@ -178,11 +178,13 @@ api.setup = function(options)
   -- auto-clear on window close
   vim.api.nvim_create_autocmd("WinClosed", {
     group = group,
-    callback = function(au) -- auto-clear images when windows and buffers change
-      local images = api.get_images({ window = tonumber(au.file) })
-      for _, current_image in ipairs(images) do
-        current_image:clear()
-      end
+    callback = function() -- auto-clear images when windows and buffers change
+      vim.schedule(function()
+        local images = api.get_images()
+        for _, current_image in ipairs(images) do
+          if not vim.api.nvim_win_is_valid(current_image.window) then current_image:clear() end
+        end
+      end)
     end,
   })
 
