@@ -30,10 +30,10 @@ end
 function Image:render(geometry)
   if geometry then self.geometry = vim.tbl_deep_extend("force", self.geometry, geometry) end
 
-  -- utils.debug(("\n\n---------------- %s ----------------"):format(self.id))
+  -- utils.debug(("---------------- %s ----------------"):format(self.id))
   local was_rendered = renderer.render(self)
 
-  -- utils.debug(("[image] render: %s, success: %s x: %s, y: %s, width: %s, height: %s"):format( self.id, was_rendered, self.geometry.x, self.geometry.y, self.geometry.width, self.geometry.height))
+  -- utils.debug( ("[image] render: %s, success: %s x: %s, y: %s, width: %s, height: %s"):format( self.id, was_rendered, self.geometry.x, self.geometry.y, self.geometry.width, self.geometry.height))
 
   -- clear if render was prevented
   if self.is_rendered and not was_rendered then self.global_state.backend.clear(self.id, true) end

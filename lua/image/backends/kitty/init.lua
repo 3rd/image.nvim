@@ -143,6 +143,7 @@ backend.render = function(image, x, y, width, height)
   helpers.restore_cursor()
 
   -- utils.debug("[kitty] rendered image", image.id, "(" .. image.internal_id .. ")")
+  -- utils.debug("path:", image.cropped_path, display_payload)
 end
 
 backend.clear = function(image_id, shallow)

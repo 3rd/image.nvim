@@ -278,15 +278,6 @@ local render = function(image)
 
   -- compute final geometry and prevent useless rerendering
   local rendered_geometry = { x = absolute_x, y = absolute_y, width = width, height = height }
-  -- if
-  --   image.is_rendered
-  --   and image.rendered_geometry.x == rendered_geometry.x
-  --   and image.rendered_geometry.y == rendered_geometry.y
-  --   and image.rendered_geometry.width == rendered_geometry.width
-  --   and image.rendered_geometry.height == rendered_geometry.height
-  -- then
-  --   return true
-  -- end
 
   -- handle crop/resize
   local pixel_width = width * term_size.cell_width
@@ -295,23 +286,23 @@ local render = function(image)
   local cropped_pixel_height = height * term_size.cell_height
   local needs_crop = false
   local needs_resize = false
+  local initial_crop_hash = image.crop_hash
+  local initial_resize_hash = image.resize_hash
 
   -- compute crop top/bottom
-  if not state.backend.features.crop then
-    -- crop top
-    if absolute_y < bounds.top then
-      local visible_rows = height - (bounds.top - absolute_y)
-      cropped_pixel_height = visible_rows * term_size.cell_height
-      crop_offset_top = (bounds.top - absolute_y) * term_size.cell_height
-      absolute_y = bounds.top
-      needs_crop = true
-    end
+  -- crop top
+  if absolute_y < bounds.top then
+    local visible_rows = height - (bounds.top - absolute_y)
+    cropped_pixel_height = visible_rows * term_size.cell_height
+    crop_offset_top = (bounds.top - absolute_y) * term_size.cell_height
+    if not state.backend.features.crop then absolute_y = bounds.top end
+    needs_crop = true
+  end
 
-    -- crop bottom
-    if absolute_y + height > bounds.bottom then
-      cropped_pixel_height = (bounds.bottom - absolute_y + 1) * term_size.cell_height
-      needs_crop = true
-    end
+  -- crop bottom
+  if absolute_y + height > bounds.bottom then
+    cropped_pixel_height = (bounds.bottom - absolute_y + 1) * term_size.cell_height
+    needs_crop = true
   end
 
   -- compute resize
@@ -343,25 +334,48 @@ local render = function(image)
   end
 
   -- crop
+  local crop_hash = ("%d-%d-%d-%d"):format(0, crop_offset_top, pixel_width, cropped_pixel_height)
   if needs_crop then
-    local crop_hash = ("%d-%d-%d-%d"):format(0, crop_offset_top, pixel_width, cropped_pixel_height)
     if (needs_resize and image.resize_hash ~= resize_hash) or image.crop_hash ~= crop_hash then
-      local cropped_image = magick.load_image(image.resized_path or image.path)
-      cropped_image:set_format("png")
+      if not state.backend.features.crop then
+        local cropped_image = magick.load_image(image.resized_path or image.path)
+        cropped_image:set_format("png")
 
-      -- utils.debug(("cropping image %s to %dx%d"):format(image.path, pixel_width, cropped_pixel_height))
-      cropped_image:crop(pixel_width, cropped_pixel_height, 0, crop_offset_top)
-      local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-cropped.png"
-      cropped_image:write(tmp_path)
-      cropped_image:destroy()
-
-      image.cropped_path = tmp_path
+        -- utils.debug(("cropping image %s to %dx%d"):format(image.path, pixel_width, cropped_pixel_height))
+        cropped_image:crop(pixel_width, cropped_pixel_height, 0, crop_offset_top)
+        local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-cropped.png"
+        cropped_image:write(tmp_path)
+        cropped_image:destroy()
+        image.cropped_path = tmp_path
+      end
       image.crop_hash = crop_hash
     end
   else
     image.cropped_path = image.resized_path
     image.crop_hash = nil
   end
+
+  if
+    image.is_rendered
+    and image.rendered_geometry.x == rendered_geometry.x
+    and image.rendered_geometry.y == rendered_geometry.y
+    and image.rendered_geometry.width == rendered_geometry.width
+    and image.rendered_geometry.height == rendered_geometry.height
+    and image.crop_hash == initial_crop_hash
+    and image.resize_hash == initial_resize_hash
+  then
+    -- utils.debug("skipping render", image.id)
+    return true
+  end
+
+  -- utils.debug("redering to backend", image.id, {
+  --   x = absolute_x,
+  --   y = absolute_y,
+  --   width = width,
+  --   height = height,
+  --   resize_hash = image.resize_hash,
+  --   crop_hash = image.crop_hash,
+  -- })
 
   image.bounds = bounds
   state.backend.render(image, absolute_x, absolute_y, width, height)
