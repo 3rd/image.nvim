@@ -17,17 +17,26 @@ These are things you have to setup on your own:
 - [ueberzugpp](https://github.com/jstkdng/ueberzugpp) - for the `ueberzug` backend
 - [curl](https://github.com/curl/curl) - for remote images
 
+<details>
+<summary>Dealing with magick can't find libMagickWand.so (NixOS)</summary>
+
 On some distros, like NixOS, you will find that the `magick` LuaRock cannot find `libMagickWand.so`.
 
 One way to fix it is to patch `~/.luarocks/share/lua/5.1/magick/wand/lib.lua` and change the first argument of the `try_to_load`
 function to your `"/nix/store/xxxxxxxxxxxxxxxx-imagemagick-7.*.*-**/lib/libMagickWand-7.****.so"`.
 
-After installing the `magick` LuaRock, you need to change your Neovim config to load it.
+```sh
+# look for libMagickWand-7.*.so in this directory
+cd (dirname (which magick))/../lib
+```
+</details>
+
+After installing the `magick` LuaRock, you need to change your config to load it.
 
 ```lua
 -- make sure that this happens before `image.nvim` is loaded:
-package.path = package.path .. ";/home/you/.luarocks/share/lua/5.1/?/init.lua;"
-package.path = package.path .. ";/home/you/.luarocks/share/lua/5.1/?.lua;"
+package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/share/lua/5.1/?/init.lua;"
+package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/share/lua/5.1/?.lua;"
 ```
 
 ## Configuration
@@ -142,7 +151,7 @@ It's helped me control my ADHD and be productive long before I was diagnosed, an
 
 One thing Emacs and Org-mode had that I liked was the ability to embed images in the document. Of course, we don't *"need"* it, but... I really wanted to have images in my documents.
 
-About 3 years ago, I made my [first attempt](https://github.com/3rd/vimage.nvim/tree/master) at solving this problem but didn't get far.
+About 3 years ago, I made my [first attempt](https://www.reddit.com/r/neovim/comments/ieh7l4/im_building_an_image_plugin_and_need_some_help/) at solving this problem but didn't get far.
 If you have similar interests, you might have seen the [vimage.nvim demo video](https://www.youtube.com/watch?v=cnt9mPOjrLg) on YouTube.
 
 It was using [ueberzug](https://github.com/seebye/ueberzug), which is now dead. It was buggy and didn't handle things like window-relative positioning, attaching images to windows and buffers, folds, etc.
