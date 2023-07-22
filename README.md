@@ -17,26 +17,43 @@ These are things you have to setup on your own:
 - [ueberzugpp](https://github.com/jstkdng/ueberzugpp) - for the `ueberzug` backend
 - [curl](https://github.com/curl/curl) - for remote images
 
-<details>
-<summary>Dealing with magick can't find libMagickWand.so (NixOS)</summary>
-
-On some distros, like NixOS, you will find that the `magick` LuaRock cannot find `libMagickWand.so`.
-
-One way to fix it is to patch `~/.luarocks/share/lua/5.1/magick/wand/lib.lua` and change the first argument of the `try_to_load`
-function to your `"/nix/store/xxxxxxxxxxxxxxxx-imagemagick-7.*.*-**/lib/libMagickWand-7.****.so"`.
-
-```sh
-# look for libMagickWand-7.*.so in this directory
-cd (dirname (which magick))/../lib
-```
-</details>
-
 After installing the `magick` LuaRock, you need to change your config to load it.
 
 ```lua
--- make sure that this happens before `image.nvim` is loaded:
+-- Example for configuring Neovim to load user-installed installed Lua rocks:
 package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/share/lua/5.1/?/init.lua;"
 package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/share/lua/5.1/?.lua;"
+```
+
+**NixOS** users need to install `imageMagick` and `luajitPackages.magick` ([thanks](https://github.com/NixOS/nixpkgs/pull/243687) to [@donovanglover](https://github.com/donovanglover)).
+\
+If you don't want to deal with setting up LuaRocks, you can just build your Neovim with the rock installed:
+
+```nix
+# https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/editors/neovim/utils.nix#L27
+{ pkgs, neovimUtils, wrapNeovimUnstable, ... }:
+
+let
+  config = pkgs.neovimUtils.makeNeovimConfig {
+    extraLuaPackages = p: [ p.luarocks p.magick ];
+    withNodeJs = false;
+    withRuby = false;
+    withPython3 = false;
+    # https://github.com/NixOS/nixpkgs/issues/211998
+    customRC = "luafile ~/.config/nvim/init.lua";
+  };
+in {
+  nixpkgs.overlays = [
+    (_: super: {
+      neovim-custom = pkgs.wrapNeovimUnstable
+        (super.neovim-unwrapped.overrideAttrs (oldAttrs: {
+          version = "master";
+          buildInputs = oldAttrs.buildInputs ++ [ super.tree-sitter ];
+        })) config;
+    })
+  ];
+  environment.systemPackages = with pkgs; [ neovim-custom ];
+}
 ```
 
 ## Configuration
@@ -162,4 +179,3 @@ Now, things have changed, and I'm happy to announce that rendering images using 
 
 My plan for this plugin is to support multiple backends, provide a few core integrations, and an easy-to-use API for other plugin authors to build on top of. There is a lot of logic that deals with positioning, cropping, bounds,
 folds, extmarks, etc. that is painful and unrealistic to write from scratch for every plugin that wants to use images.
-
