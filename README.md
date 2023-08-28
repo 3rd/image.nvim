@@ -29,6 +29,31 @@ package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/shar
 \
 If you don't want to deal with setting up LuaRocks, you can just build your Neovim with the rock installed:
 
+<details>
+<summary>With home-manager (thanks @wuliuqii https://github.com/3rd/image.nvim/issues/13)</summary>
+
+```nix
+{ pkgs, ... }:
+
+{
+  nixpkgs.overlays = [
+    (import (builtins.fetchTarball {
+      url =
+        "https://github.com/nix-community/neovim-nightly-overlay/archive/master.tar.gz";
+    }))
+  ];
+  programs.neovim = {
+    enable = true;
+    package = pkgs.neovim-nightly;
+    extraLuaPackages = ps: [ ps.magick ];
+  };
+}
+```
+</details>
+
+<details>
+<summary>Without home-manager</summary>
+
 ```nix
 # https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/editors/neovim/utils.nix#L27
 { pkgs, neovimUtils, wrapNeovimUnstable, ... }:
@@ -55,6 +80,7 @@ in {
   environment.systemPackages = with pkgs; [ neovim-custom ];
 }
 ```
+</details>
 
 ## Configuration
 
