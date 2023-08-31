@@ -20,11 +20,13 @@
 ---@field sizing_strategy "auto"|"height-from-empty-lines"
 ---@field download_remote_images boolean
 ---@field clear_in_insert_mode boolean
+---@field only_render_image_at_cursor? boolean
 
 ---@class NeorgIntegrationOptions
 ---@field enabled boolean
 ---@field download_remote_images boolean
 ---@field clear_in_insert_mode boolean
+---@field only_render_image_at_cursor? boolean
 
 ---@alias IntegrationOptions MarkdownIntegrationOptions|NeorgIntegrationOptions
 

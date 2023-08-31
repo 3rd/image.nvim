@@ -23,6 +23,7 @@ local query_buffer_images = function(buffer)
   local images = {}
   local current_image = nil
 
+  ---@diagnostic disable-next-line: missing-parameter
   for id, node in query:iter_captures(root, 0) do
     local key = query.captures[id]
     local value = vim.treesitter.get_node_text(node, buf)
@@ -33,7 +34,7 @@ local query_buffer_images = function(buffer)
         node = node,
         range = { start_row = start_row, start_col = start_col, end_row = end_row, end_col = end_col },
       }
-    elseif key == "url" then
+    elseif current_image and key == "url" then
       current_image.url = value
       table.insert(images, current_image)
       current_image = nil
@@ -64,10 +65,15 @@ local render = vim.schedule_wrap(
         local new_image_ids = {}
 
         local file_path = vim.api.nvim_buf_get_name(window.buffer)
+        local cursor_row = vim.api.nvim_win_get_cursor(window.id)
 
         for _, match in ipairs(matches) do
           local id = string.format("%d:%d:%d:%s", window.id, window.buffer, match.range.start_row, match.url)
           local height = nil
+
+          if ctx.options.only_render_image_at_cursor then
+            if match.range.start_row ~= cursor_row[1] - 1 then goto continue end
+          end
 
           ---@param image Image
           local render_image = function(image)
@@ -115,6 +121,8 @@ local render = vim.schedule_wrap(
             })
             if ok then render_image(image) end
           end
+
+          ::continue::
         end
 
         -- clear previous images
@@ -154,6 +162,18 @@ local setup_autocommands = function(ctx)
     end,
   })
 
+  if ctx.options.only_render_image_at_cursor then
+    vim.api.nvim_create_autocmd({
+      "CursorMoved",
+    }, {
+      group = group,
+      callback = function(args)
+        if vim.bo[args.buf].filetype ~= "markdown" then return end
+        render(ctx)
+      end,
+    })
+  end
+
   if ctx.options.clear_in_insert_mode then
     vim.api.nvim_create_autocmd({
       "InsertEnter",
@@ -183,6 +203,7 @@ end
 
 ---@type fun(api: API, options: MarkdownIntegrationOptions, state: State)
 local setup = function(api, options, state)
+  ---@diagnostic disable-next-line: missing-fields
   local opts = options or {} --[[@as MarkdownIntegrationOptions]]
   local context = {
     api = api,

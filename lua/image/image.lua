@@ -6,7 +6,7 @@ local magick = require("image/magick")
 ---@type table<string, { id: number, height: number }>
 local buf_extmark_map = {}
 
----@type Image
+---@class Image
 local Image = {
   next_internal_id = 1,
 }
