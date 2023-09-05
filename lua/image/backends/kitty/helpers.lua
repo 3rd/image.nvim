@@ -26,10 +26,10 @@ local write = function(data)
   -- vim.fn.chansend(vim.v.stderr, data)
 end
 
-local move_cursor = function(x, y, save, tmux_delay)
+local move_cursor = function(x, y, save)
   if save then write("\x1b[s") end
   write("\x1b[" .. y .. ";" .. x .. "H")
-  if is_tmux and tmux_delay then vim.loop.sleep(tmux_delay) end
+  vim.loop.sleep(1)
 end
 
 local restore_cursor = function()

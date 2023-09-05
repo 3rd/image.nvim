@@ -27,7 +27,6 @@ local default_options = {
   max_width_window_percentage = nil,
   max_height_window_percentage = 50,
   kitty_method = "normal",
-  kitty_tmux_write_delay = 10,
   window_overlap_clear_enabled = false,
   window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "" },
 }
@@ -194,7 +193,9 @@ api.setup = function(options)
       vim.schedule(function()
         local images = api.get_images()
         for _, current_image in ipairs(images) do
-          if vim.api.nvim_win_is_valid(current_image.window) then
+          local ok, is_valid = pcall(vim.api.nvim_win_is_valid, current_image.window)
+          if not ok then return end
+          if is_valid then
             current_image:render()
           else
             current_image:clear()

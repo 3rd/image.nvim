@@ -136,7 +136,7 @@ backend.render = function(image, x, y, width, height)
     display_payload.display_y = pixel_top
   end
 
-  helpers.move_cursor(x + 1, y + 1, true, backend.state.options.kitty_tmux_write_delay)
+  helpers.move_cursor(x + 1, y + 1, true)
   helpers.write_graphics(display_payload)
   image.is_rendered = true
   backend.state.images[image.id] = image

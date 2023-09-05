@@ -39,7 +39,6 @@
 ---@field max_width_window_percentage? number
 ---@field max_height_window_percentage? number
 ---@field kitty_method "normal"|"unicode-placeholders"
----@field kitty_tmux_write_delay? number
 ---@field window_overlap_clear_enabled? boolean
 ---@field window_overlap_clear_ft_ignore? string[]
 
