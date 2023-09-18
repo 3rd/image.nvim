@@ -21,6 +21,7 @@
 ---@field download_remote_images boolean
 ---@field clear_in_insert_mode boolean
 ---@field only_render_image_at_cursor? boolean
+---@field filetypes string[]
 
 ---@class NeorgIntegrationOptions
 ---@field enabled boolean

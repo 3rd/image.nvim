@@ -95,6 +95,7 @@ require("image").setup({
       download_remote_images = true,
       clear_in_insert_mode = false,
       only_render_image_at_cursor = false,
+      filetypes = { "markdown" }, -- markdown extensions (ie. quarto) can go here
     },
     neorg = {
       enabled = true,
