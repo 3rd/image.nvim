@@ -1,10 +1,11 @@
 # 🖼️ image.nvim
 
-> **Warning**
->\
-> This is very much a **work in progress**, **there are many bugs**, and there's lots to improve, but... we're getting there!
+This plugin attempts to add image support to Neovim.
 
-**image.nvim** is an attempt to add image support to Neovim.
+It works wonderfully with Kitty + Tmux, and it handles painful things like rendering an image
+at a given position in a buffer, scrolling, windows, etc.
+
+It has built-in Markdown and Neorg integrations that you can use right now.
 
 https://github.com/3rd/image.nvim/assets/59587503/9a9a1792-6476-4d96-8b8e-d3cdd7f5759e
 
@@ -91,24 +92,23 @@ require("image").setup({
   integrations = {
     markdown = {
       enabled = true,
-      sizing_strategy = "auto",
-      download_remote_images = true,
       clear_in_insert_mode = false,
+      download_remote_images = true,
       only_render_image_at_cursor = false,
-      filetypes = { "markdown" }, -- markdown extensions (ie. quarto) can go here
+      filetypes = { "markdown", "vimwiki" }, -- markdown extensions (ie. quarto) can go here
     },
     neorg = {
       enabled = true,
-      download_remote_images = true,
       clear_in_insert_mode = false,
+      download_remote_images = true,
       only_render_image_at_cursor = false,
+      filetypes = { "norg" },
     },
   },
   max_width = nil,
   max_height = nil,
   max_width_window_percentage = nil,
   max_height_window_percentage = 50,
-  kitty_method = "normal",
   window_overlap_clear_enabled = false, -- toggles images when windows are overlapped
   window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "" },
 })
@@ -127,18 +127,14 @@ nvim --clean -c ":luafile minimal-setup.lua"
 
 All the backends support rendering inside Tmux.
 
-- `kitty` - best in class
-    - Works great, is snappy and has very few artifacts (on my machine, at least).
-    - Use the default mode, the unicode placeholder method is buggy for now.
-- `ueberzug` - backed by [ueberzugpp](https://github.com/jstkdng/ueberzugpp)
-    - More genera, on-par with Kitty in terms of features, but slower.
+- `kitty` - best in class, works great and is very snappy
+- `ueberzug` - backed by [ueberzugpp](https://github.com/jstkdng/ueberzugpp), supports any terminal, but has lower performance
     - Supports multiple images thanks to [@jstkdng](https://github.com/jstkdng/ueberzugpp/issues/74).
-- `sixels` - not implemented yet
 
 ### Integrations
 
-- Markdown
-- Neorg (https://github.com/nvim-neorg/neorg/issues/971)
+- `markdown` - uses [tree-sitter-markdown](https://github.com/MDeiml/tree-sitter-markdown) and supports any Markdown-based grammars (Quarto, VimWiki Markdown)
+- `neorg` - uses [tree-sitter-norg](https://github.com/nvim-neorg/tree-sitter-norg) (also check https://github.com/nvim-neorg/neorg/issues/971)
 
 ## API
 
@@ -185,6 +181,7 @@ image:hue(value) -- change hue
 - [@jstkdng](https://github.com/jstkdng) for [ueberzugpp](https://github.com/jstkdng/ueberzugpp) - the revived version of ueberzug.
 
 ### The story behind
+
 Some years ago, I took a trip to Emacs land for a few months to learn Elisp and also research what Org-mode is, how it works,
 and look for features of interest for my workflow.
 I already had my own document syntax, albeit a very simple one, hacked together with Vimscript and a lot

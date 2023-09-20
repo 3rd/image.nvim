@@ -15,25 +15,18 @@
 ---@field remote_cache { [string]: string }
 ---@field tmp_dir string
 
----@class MarkdownIntegrationOptions
----@field enabled boolean
----@field sizing_strategy "auto"|"height-from-empty-lines"
----@field download_remote_images boolean
----@field clear_in_insert_mode boolean
+---@class DocumentIntegrationOptions
+---@field enabled? boolean
+---@field download_remote_images? boolean
+---@field clear_in_insert_mode? boolean
 ---@field only_render_image_at_cursor? boolean
----@field filetypes string[]
+---@field filetypes? string[]
 
----@class NeorgIntegrationOptions
----@field enabled boolean
----@field download_remote_images boolean
----@field clear_in_insert_mode boolean
----@field only_render_image_at_cursor? boolean
-
----@alias IntegrationOptions MarkdownIntegrationOptions|NeorgIntegrationOptions
+---@alias IntegrationOptions DocumentIntegrationOptions
 
 ---@class Options
 ---@field backend "kitty"|"ueberzug"
----@field integrations { markdown: MarkdownIntegrationOptions, neorg: NeorgIntegrationOptions }
+---@field integrations table<string, IntegrationOptions>
 ---@field max_width? number
 ---@field max_height? number
 ---@field max_width_window_percentage? number
@@ -141,27 +134,27 @@
 
 ---@class KittyControlConfig
 ---@field action "t"|"T"|"p"|"d"|"f"|"c"|"a"|"q"
----@field image_id string|number
----@field image_number number
----@field placement_id string|number
----@field quiet 0|1|2
----@field transmit_format 32|24|100
----@field transmit_medium "d"|"f"|"t"|"s"
----@field transmit_more 0|1
----@field transmit_width number
----@field transmit_height number
----@field transmit_file_size number
----@field transmit_file_offset number
----@field transmit_compression 0|1
----@field display_x number
----@field display_y number
----@field display_width number
----@field display_height number
----@field display_x_offset number
----@field display_y_offset number
----@field display_columns number
----@field display_rows number
----@field display_cursor_policy 0|1
----@field display_virtual_placeholder 0|1
----@field display_zindex number
----@field display_delete "a"|"A"|"i"|"I"|"p"
+---@field image_id? string|number
+---@field image_number? number
+---@field placement_id? string|number
+---@field quiet? 0|1|2
+---@field transmit_format? 32|24|100
+---@field transmit_medium? "d"|"f"|"t"|"s"
+---@field transmit_more? 0|1
+---@field transmit_width? number
+---@field transmit_height? number
+---@field transmit_file_size? number
+---@field transmit_file_offset? number
+---@field transmit_compression? 0|1
+---@field display_x? number
+---@field display_y? number
+---@field display_width? number
+---@field display_height? number
+---@field display_x_offset? number
+---@field display_y_offset? number
+---@field display_columns? number
+---@field display_rows? number
+---@field display_cursor_policy? 0|1
+---@field display_virtual_placeholder? 0|1
+---@field display_zindex? number
+---@field display_delete? "a"|"A"|"i"|"I"|"p"

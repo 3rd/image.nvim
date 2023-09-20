@@ -1,19 +1,19 @@
 local document = require("image/utils/document")
 
 return document.create_document_integration({
-  name = "markdown",
+  name = "syslang",
   default_options = {
     clear_in_insert_mode = false,
     download_remote_images = true,
     only_render_image_at_cursor = false,
-    filetypes = { "markdown", "vimwiki" },
+    filetypes = { "syslang" },
   },
   query_buffer_images = function(buffer)
     local buf = buffer or vim.api.nvim_get_current_buf()
 
-    local parser = vim.treesitter.get_parser(buf, "markdown_inline")
+    local parser = vim.treesitter.get_parser(buf, "syslang")
     local root = parser:parse()[1]:root()
-    local query = vim.treesitter.query.parse("markdown_inline", "(image (link_destination) @url) @image")
+    local query = vim.treesitter.query.parse("syslang", "(image (image_url) @url) @image")
 
     local images = {}
     local current_image = nil
