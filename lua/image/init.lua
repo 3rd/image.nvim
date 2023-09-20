@@ -32,7 +32,7 @@ local state = {
   backend = nil,
   options = default_options,
   images = {},
-  extmarks_namespace = nil,
+  extmarks_namespace = vim.api.nvim_create_namespace("image.nvim"),
   remote_cache = {},
   tmp_dir = vim.fn.tempname(),
 }
@@ -68,14 +68,14 @@ api.setup = function(options)
   -- create tmp dir
   vim.fn.mkdir(state.tmp_dir, "p")
 
-  -- setup namespaces
-  state.extmarks_namespace = vim.api.nvim_create_namespace("image.nvim")
-
   -- handle folds / scroll extra
   ---@type table<number, { topline: number, botline: number, bufnr: number, height: number; folded_lines: number }>
   local window_history = {}
   vim.api.nvim_set_decoration_provider(state.extmarks_namespace, {
     on_win = vim.schedule_wrap(function(_, winid, bufnr, topline, botline)
+      if not vim.api.nvim_win_is_valid(winid) then return false end
+      if not vim.api.nvim_buf_is_valid(bufnr) then return false end
+
       -- get current window
       local window = nil
       local windows = {}
