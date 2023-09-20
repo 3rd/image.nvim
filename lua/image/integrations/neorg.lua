@@ -152,7 +152,7 @@ local setup_autocommands = function(ctx)
     }, {
       group = group,
       callback = function(args)
-        if vim.bo[args.buf].filetype ~= "markdown" then return end
+        if vim.bo[args.buf].filetype ~= "norg" then return end
         render(ctx)
       end,
     })

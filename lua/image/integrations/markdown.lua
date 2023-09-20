@@ -2,6 +2,7 @@ local utils = require("image/utils")
 
 local resolve_absolute_path = function(document_file_path, image_path)
   if string.sub(image_path, 1, 1) == "/" then return image_path end
+  if string.sub(image_path, 1, 1) == "~" then return vim.fn.fnamemodify(image_path, ":p") end
   local document_dir = vim.fn.fnamemodify(document_file_path, ":h")
   local absolute_image_path = document_dir .. "/" .. image_path
   absolute_image_path = vim.fn.fnamemodify(absolute_image_path, ":p")
@@ -44,6 +45,15 @@ local query_buffer_images = function(buffer)
   return images
 end
 
+---used to determine if a file is a "markdown" file as defined by the user. This allows this
+---integration to work in other markdown adjacent filetypes
+---@param ctx IntegrationContext
+---@param filetype string
+---@return boolean
+local markdown_filetype = function(ctx, filetype)
+  return vim.tbl_contains(ctx.options.filetypes, filetype)
+end
+
 local render = vim.schedule_wrap(
   ---@param ctx IntegrationContext
   function(ctx)
@@ -55,7 +65,7 @@ local render = vim.schedule_wrap(
     -- utils.debug("[markdown] render", { windows = windows })
 
     for _, window in ipairs(windows) do
-      if window.buffer_filetype == "markdown" then
+      if markdown_filetype(ctx, window.buffer_filetype) then
         local matches = query_buffer_images(window.buffer)
 
         local previous_images = ctx.api.get_images({
@@ -145,7 +155,7 @@ local setup_autocommands = function(ctx)
   }, {
     group = group,
     callback = function(args)
-      if vim.bo[args.buf].filetype ~= "markdown" then return end
+      if not markdown_filetype(ctx, vim.bo[args.buf].filetype) then return end
       render(ctx)
     end,
   })
@@ -156,7 +166,7 @@ local setup_autocommands = function(ctx)
   }, {
     group = group,
     callback = function(args)
-      if vim.bo[args.buf].filetype ~= "markdown" then return end
+      if not markdown_filetype(ctx, vim.bo[args.buf].filetype) then return end
       if args.event == "TextChangedI" and ctx.options.clear_in_insert_mode then return end
       render(ctx)
     end,
@@ -168,7 +178,7 @@ local setup_autocommands = function(ctx)
     }, {
       group = group,
       callback = function(args)
-        if vim.bo[args.buf].filetype ~= "markdown" then return end
+        if not markdown_filetype(ctx, vim.bo[args.buf].filetype) then return end
         render(ctx)
       end,
     })
@@ -180,7 +190,7 @@ local setup_autocommands = function(ctx)
     }, {
       group = group,
       callback = function(args)
-        if vim.bo[args.buf].filetype ~= "markdown" then return end
+        if not markdown_filetype(ctx, vim.bo[args.buf].filetype) then return end
         local current_window = vim.api.nvim_get_current_win()
         local images = ctx.api.get_images({ window = current_window })
         for _, image in ipairs(images) do
@@ -194,7 +204,7 @@ local setup_autocommands = function(ctx)
     }, {
       group = group,
       callback = function(args)
-        if vim.bo[args.buf].filetype ~= "markdown" then return end
+        if not markdown_filetype(ctx, vim.bo[args.buf].filetype) then return end
         render(ctx)
       end,
     })
