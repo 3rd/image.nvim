@@ -9,17 +9,12 @@ local default_options = {
   integrations = {
     markdown = {
       enabled = true,
-      sizing_strategy = "auto",
-      download_remote_images = true,
-      clear_in_insert_mode = false,
-      only_render_image_at_cursor = false,
-      filetypes = { "markdown" },
     },
     neorg = {
       enabled = true,
-      download_remote_images = true,
-      clear_in_insert_mode = false,
-      only_render_image_at_cursor = false,
+    },
+    syslang = {
+      enabled = true,
     },
   },
   max_width = nil,
@@ -100,6 +95,7 @@ api.setup = function(options)
       else
         window = utils.window.get_window(winid)
       end
+
       -- utils.debug("on_win", { winid = winid, bufnr = bufnr })
       if not window then return false end
 

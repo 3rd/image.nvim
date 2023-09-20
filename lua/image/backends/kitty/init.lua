@@ -11,6 +11,7 @@ if is_tmux then
 end
 
 ---@type Backend
+---@diagnostic disable-next-line: missing-fields
 local backend = {
   ---@diagnostic disable-next-line: assign-type-mismatch
   state = nil,
