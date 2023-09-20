@@ -34,7 +34,9 @@ local adjust_to_aspect_ratio = function(term_size, image_width, image_height, wi
   local aspect_ratio = image_width / image_height
   local pixel_width = width * term_size.cell_width
   local pixel_height = height * term_size.cell_height
-  if width > height then
+  local percent_orig_width = pixel_width / image_width
+  local percent_orig_height = pixel_height / image_height
+  if percent_orig_height > percent_orig_width then
     local new_height = math.ceil(pixel_width / aspect_ratio / term_size.cell_height)
     return width, new_height
   else
