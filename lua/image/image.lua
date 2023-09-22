@@ -16,7 +16,7 @@ Image.__index = Image
 ---@param global_state State
 ---@return Image
 local createImage = function(template, global_state)
-  local instance = template or {}
+  local instance = template or { geometry = { x = 0, y = 0 } }
   instance.global_state = global_state
 
   instance.internal_id = Image.next_internal_id
@@ -66,7 +66,7 @@ function Image:render(geometry)
       for _ = 0, height - 1 do
         filler[#filler + 1] = { { text, "" } }
       end
-      vim.api.nvim_buf_set_extmark(self.buffer, self.global_state.extmarks_namespace, row - 1, 0, {
+      vim.api.nvim_buf_set_extmark(self.buffer, self.global_state.extmarks_namespace, row > 0 and row - 1 or 0, 0, {
         id = self.internal_id,
         virt_lines = filler,
       })
@@ -221,8 +221,8 @@ local from_file = function(path, options, state)
     window = opts.window or nil,
     buffer = opts.buffer or nil,
     geometry = {
-      x = opts.x or nil,
-      y = opts.y or nil,
+      x = opts.x or 0,
+      y = opts.y or 0,
       width = opts.width or nil,
       height = opts.height or nil,
     },

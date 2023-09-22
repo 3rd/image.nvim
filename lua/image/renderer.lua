@@ -52,8 +52,8 @@ local render = function(image)
   local image_rows = math.floor(image.image_height / term_size.cell_height)
   local image_columns = math.floor(image.image_width / term_size.cell_width)
 
-  local x = image.geometry.x or 0
-  local y = image.geometry.y or 0
+  local original_x = image.geometry.x or 0
+  local original_y = image.geometry.y or 0
   local x_offset = 0
   local y_offset = 0
   local width = image.geometry.width or 0
@@ -109,7 +109,7 @@ local render = function(image)
     local current_win = vim.api.nvim_get_current_win()
     vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. image.window .. ")")
     topfill = vim.fn.winsaveview().topfill
-    local is_folded = vim.fn.foldclosed(image.geometry.y) ~= -1
+    local is_folded = vim.fn.foldclosed(original_y) ~= -1
     vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. current_win .. ")")
 
     -- bail if the image is inside a fold
@@ -136,8 +136,8 @@ local render = function(image)
     }
 
     -- w/h can take at most 100% of the window
-    width = math.min(width, window.width - x - x_offset)
-    height = math.min(height, window.height - y - y_offset)
+    width = math.min(width, window.width - original_x - x_offset)
+    height = math.min(height, window.height - original_y - y_offset)
 
     -- global max window width/height percentage
     if type(state.options.max_width_window_percentage) == "number" then
@@ -160,8 +160,8 @@ local render = function(image)
 
   -- utils.debug(("(3) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
 
-  local absolute_x = x + x_offset + window_offset_x
-  local absolute_y = y + y_offset + window_offset_y
+  local absolute_x = original_x + x_offset + window_offset_x
+  local absolute_y = original_y + y_offset + window_offset_y
   local prevent_rendering = false
 
   -- utils.debug(("(4) x: %d, y: %d, width: %d, height: %d y_offset: %d absolute_x: %d absolute_y: %d"):format( x, y, width, height, y_offset, absolute_x, absolute_y))
@@ -173,7 +173,7 @@ local render = function(image)
     local botline = win_info.botline
 
     -- bail if out of bounds
-    if image.geometry.y + 1 < topline or image.geometry.y > botline then
+    if original_y + 1 < topline or original_y > botline then
       -- utils.debug("prevent rendering 1", image.id)
       prevent_rendering = true
     end
@@ -181,15 +181,15 @@ local render = function(image)
     -- extmark offsets
     if image.with_virtual_padding then
       -- bail if the image is above the top of the window at least by one line
-      if topfill == 0 and image.geometry.y < topline then
+      if topfill == 0 and original_y < topline then
         -- utils.debug("prevent rendering 2", image.id)
         prevent_rendering = true
       end
 
       -- bail if the image + its height is above the top of the window + topfill
-      -- if image.geometry.y + height + 1 < topline + topfill then
+      -- if y + height + 1 < topline + topfill then
       --   utils.debug("prevent rendering 3", image.id, {
-      --     y = image.geometry.y,
+      --     y = y,
       --     height = height,
       --     topline = topline,
       --     topfill = topfill,
@@ -198,14 +198,14 @@ local render = function(image)
       -- end
 
       -- bail if the image is below the bottom of the window
-      if image.geometry.y > botline then
+      if original_y > botline then
         -- utils.debug("prevent rendering 4", image.id)
         prevent_rendering = true
       end
 
       -- offset by topfill if the image started above the top of the window
       if not prevent_rendering then
-        if topfill > 0 and image.geometry.y < topline then
+        if topfill > 0 and original_y < topline then
           --
           absolute_y = absolute_y - (height - topfill)
         else
@@ -221,14 +221,14 @@ local render = function(image)
               image.buffer,
               -1,
               { topline - 1, 0 },
-              { image.geometry.y - 1, 0 },
+              { original_y - 1, 0 },
               { details = true }
             )
           )
 
           local offset = topfill
           for _, mark in ipairs(extmarks) do
-            if mark.row + 1 ~= image.geometry.y then offset = offset + mark.height end
+            if mark.row + 1 ~= original_y then offset = offset + mark.height end
           end
 
           absolute_y = absolute_y + offset
@@ -244,7 +244,7 @@ local render = function(image)
 
     if vim.wo.foldenable then
       local i = topline
-      while i <= image.geometry.y do
+      while i <= original_y do
         local fold_start, fold_end = vim.fn.foldclosed(i), vim.fn.foldclosedend(i)
         if fold_start ~= -1 and fold_end ~= -1 then
           -- utils.debug(("i: %d fold start: %d, fold end: %d"):format(i, fold_start, fold_end))
