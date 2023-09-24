@@ -187,6 +187,7 @@ end
 ---@return Image
 local from_file = function(path, options, state)
   local opts = options or {}
+
   if options and options.id then
     local existing_image = state.images[options.id] ---@type Image
     if existing_image then return existing_image end
@@ -194,6 +195,41 @@ local from_file = function(path, options, state)
 
   local absolute_path = vim.fn.fnamemodify(path, ":p")
   if not vim.loop.fs_stat(absolute_path) then utils.throw(("image.nvim: file not found: %s"):format(absolute_path)) end
+
+  -- bypass magick processing if already processed
+  for _, instance in pairs(state.images) do
+    if instance.original_path == absolute_path then
+      local clone = createImage({
+        id = opts.id or utils.random.id(),
+        path = instance.path,
+        resized_path = instance.path,
+        cropped_path = instance.path,
+        original_path = instance.original_path,
+        image_width = instance.image_width,
+        image_height = instance.image_height,
+        window = opts.window or nil,
+        buffer = opts.buffer or nil,
+        geometry = {
+          x = opts.x or 0,
+          y = opts.y or 0,
+          width = opts.width or nil,
+          height = opts.height or nil,
+        },
+        rendered_geometry = {
+          x = nil,
+          y = nil,
+          width = nil,
+          height = nil,
+        },
+        with_virtual_padding = opts.with_virtual_padding or false,
+        is_rendered = false,
+        crop_hash = nil,
+        resize_hash = nil,
+      }, state)
+      -- utils.debug(("image.nvim: cloned image %s from %s"):format(clone.id, instance.id))
+      return clone
+    end
+  end
 
   local id = opts.id or utils.random.id()
 

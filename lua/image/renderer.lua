@@ -45,6 +45,15 @@ local adjust_to_aspect_ratio = function(term_size, image_width, image_height, wi
   end
 end
 
+-- Images get resized and cropped to fit in the context they are rendered in.
+-- Each of these versions are written to the temp directory and cleared on reboot (on Linux at least).
+-- This is where we keep track of the hashes of the resized and cropped versions of the images so we
+-- can avoid processing and writing the same cropped/resized image variant multiple times.
+local cache = {
+  resized = {}, -- { [`${original_path}:${resize_hash}`]: string }
+  cropped = {}, -- { [`${original_path}:${crop_hash}`]: string }
+}
+
 ---@param image Image
 local render = function(image)
   local state = image.global_state
@@ -316,18 +325,31 @@ local render = function(image)
   -- resize
   if needs_resize then
     if image.resize_hash ~= resize_hash then
-      local resized_image = magick.load_image(image.path)
-      if resized_image then
-        resized_image:set_format("png")
+      local cached_path = cache.resized[image.path .. ":" .. resize_hash]
 
-        -- utils.debug(("resizing image %s to %dx%d"):format(image.path, pixel_width, pixel_height))
-        resized_image:scale(pixel_width, pixel_height)
-        local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-resized.png"
-        resized_image:write(tmp_path)
-        resized_image:destroy()
-
-        image.resized_path = tmp_path
+      -- try cache
+      if cached_path then
+        -- utils.debug(("using cached resized image %s"):format(cached_path))
+        image.resized_path = cached_path
         image.resize_hash = resize_hash
+      else
+        -- perform resize
+        local resized_image = magick.load_image(image.path)
+        if resized_image then
+          -- utils.debug(("resizing image %s to %dx%d"):format(image.path, pixel_width, pixel_height))
+          --
+          resized_image:set_format("png")
+          resized_image:scale(pixel_width, pixel_height)
+
+          local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-resized.png"
+          resized_image:write(tmp_path)
+          resized_image:destroy()
+
+          image.resized_path = tmp_path
+          image.resize_hash = resize_hash
+
+          cache.resized[image.path .. ":" .. resize_hash] = tmp_path
+        end
       end
     end
   else
@@ -339,18 +361,32 @@ local render = function(image)
   local crop_hash = ("%d-%d-%d-%d"):format(0, crop_offset_top, pixel_width, cropped_pixel_height)
   if needs_crop then
     if (needs_resize and image.resize_hash ~= resize_hash) or image.crop_hash ~= crop_hash then
-      if not state.backend.features.crop then
-        local cropped_image = magick.load_image(image.resized_path or image.path)
-        cropped_image:set_format("png")
+      local cached_path = cache.cropped[image.path .. ":" .. crop_hash]
 
-        -- utils.debug(("cropping image %s to %dx%d"):format(image.path, pixel_width, cropped_pixel_height))
-        cropped_image:crop(pixel_width, cropped_pixel_height, 0, crop_offset_top)
-        local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-cropped.png"
-        cropped_image:write(tmp_path)
-        cropped_image:destroy()
-        image.cropped_path = tmp_path
+      -- try cache;
+      if cached_path then
+        -- utils.debug(("using cached cropped image %s"):format(cached_path))
+        image.cropped_path = cached_path
+        image.crop_hash = crop_hash
+      else
+        -- perform crop
+        if not state.backend.features.crop then
+          -- utils.debug(("cropping image %s to %dx%d"):format(image.path, pixel_width, cropped_pixel_height))
+
+          local cropped_image = magick.load_image(image.resized_path or image.path)
+          cropped_image:set_format("png")
+          cropped_image:crop(pixel_width, cropped_pixel_height, 0, crop_offset_top)
+
+          local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-cropped.png"
+          cropped_image:write(tmp_path)
+          cropped_image:destroy()
+
+          image.cropped_path = tmp_path
+        end
+        image.crop_hash = crop_hash
+
+        cache.cropped[image.path .. ":" .. crop_hash] = image.cropped_path
       end
-      image.crop_hash = crop_hash
     end
   else
     image.cropped_path = image.resized_path
@@ -370,14 +406,7 @@ local render = function(image)
     return true
   end
 
-  -- utils.debug("redering to backend", image.id, {
-  --   x = absolute_x,
-  --   y = absolute_y,
-  --   width = width,
-  --   height = height,
-  --   resize_hash = image.resize_hash,
-  --   crop_hash = image.crop_hash,
-  -- })
+  -- utils.debug("redering to backend", image.id, { x = absolute_x, y = absolute_y, width = width, height = height, resize_hash = image.resize_hash, crop_hash = image.crop_hash, })
 
   image.bounds = bounds
   state.backend.render(image, absolute_x, absolute_y, width, height)

@@ -12,9 +12,18 @@ local is_func = function(value)
   return type(value) == "function"
 end
 
+local base_hrtime = vim.loop.hrtime()
+local get_highres_time = function()
+  local elapsed_ns = vim.loop.hrtime() - base_hrtime
+  local elapsed_s = elapsed_ns / 1e9
+  local time_s = os.time() + math.floor(elapsed_s)
+  local frac_s = elapsed_s % 1
+  return string.format("%s.%06d", os.date("%H:%M:%S", time_s), math.floor(frac_s * 1e6))
+end
+
 local default_log_formatter = function(opts, ...)
   local parts = {}
-  parts[#parts + 1] = os.date("%H:%M:%S")
+  parts[#parts + 1] = get_highres_time()
   if opts.prefix then parts[#parts + 1] = opts.prefix end
   for _, v in ipairs({ ... }) do
     local format_handler = nil
