@@ -164,6 +164,12 @@ local render = function(image)
 
   -- utils.debug(("(4) x: %d, y: %d, width: %d, height: %d y_offset: %d absolute_x: %d absolute_y: %d"):format( x, y, width, height, y_offset, absolute_x, absolute_y))
 
+  -- try to get a window if there is a buffer without a window
+  if image.buffer and not image.window then
+    local buf_win = vim.fn.getbufinfo(image.buffer)[1].windows
+    if #buf_win > 0 then image.window = buf_win[1] end
+  end
+
   if image.window and image.buffer then
     local win_info = vim.fn.getwininfo(image.window)[1]
     if not win_info then return false end
