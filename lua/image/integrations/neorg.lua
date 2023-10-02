@@ -13,24 +13,25 @@ return document.create_document_integration({
 
     local parser = vim.treesitter.get_parser(buf, "norg")
     local root = parser:parse()[1]:root()
-    local query =
-      vim.treesitter.query.parse("norg", '(infirm_tag (tag_name) @name (tag_parameters) @path (#eq? name "image"))')
+    local query = vim.treesitter.query.parse("norg", '(infirm_tag (tag_name) @name (#eq? name "image"))')
 
     local images = {}
 
     ---@diagnostic disable-next-line: missing-parameter
     for id, node in query:iter_captures(root, 0) do
       local capture = query.captures[id]
-      if capture == "path" then
-        local path = vim.treesitter.get_node_text(node, buffer)
-        if path then
-          local start_row, start_col, end_row, end_col = node:range()
-          table.insert(images, {
-            node = node,
-            range = { start_row = start_row, start_col = start_col, end_row = end_row, end_col = end_col },
-            url = path,
-          })
-        end
+
+      -- assume that everything after the tag + one space is the path/url and trim it
+      if capture == "name" then
+        local start_row, start_col, end_row, end_col = node:range()
+        local line = vim.api.nvim_buf_get_lines(buf, end_row, end_row + 1, false)[1]
+        local path = line:sub(end_col + 1):gsub("^%s*(.-)%s*$", "%1")
+
+        table.insert(images, {
+          node = node,
+          range = { start_row = start_row, start_col = start_col, end_row = end_row, end_col = end_col },
+          url = path,
+        })
       end
     end
 
