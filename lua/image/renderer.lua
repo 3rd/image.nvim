@@ -22,6 +22,15 @@ local get_global_offsets = function(window_id)
   local wininfo = vim.fn.getwininfo(window_id)
   if wininfo and wininfo[1] then x = x + wininfo[1].textoff end
 
+  -- border
+  local border = vim.api.nvim_win_get_config(window_id).border
+  -- a list of 8 or any divisor of 8. if it's less than 8 long, it's repeated
+  -- here we care about the top and the left, so positions 2 and 8
+  if border ~= nil then
+    if border[(1 % #border) + 1] then y = y + 1 end
+    if border[(7 % #border) + 1] then x = x + 1 end
+  end
+
   return { x = x, y = y }
 end
 
@@ -284,10 +293,10 @@ local render = function(image)
 
   -- clear out of bounds images
   if
-    absolute_y + height <= bounds.top
-    or absolute_y >= bounds.bottom
-    or absolute_x + width <= bounds.left
-    or absolute_x >= bounds.right
+      absolute_y + height <= bounds.top
+      or absolute_y >= bounds.bottom
+      or absolute_x + width <= bounds.left
+      or absolute_x >= bounds.right
   then
     if image.is_rendered then
       -- utils.debug("deleting out of bounds image", { id = image.id, x = absolute_x, y = absolute_y, width = width, height = height, bounds = bounds })
@@ -405,13 +414,13 @@ local render = function(image)
   end
 
   if
-    image.is_rendered
-    and image.rendered_geometry.x == rendered_geometry.x
-    and image.rendered_geometry.y == rendered_geometry.y
-    and image.rendered_geometry.width == rendered_geometry.width
-    and image.rendered_geometry.height == rendered_geometry.height
-    and image.crop_hash == initial_crop_hash
-    and image.resize_hash == initial_resize_hash
+      image.is_rendered
+      and image.rendered_geometry.x == rendered_geometry.x
+      and image.rendered_geometry.y == rendered_geometry.y
+      and image.rendered_geometry.width == rendered_geometry.width
+      and image.rendered_geometry.height == rendered_geometry.height
+      and image.crop_hash == initial_crop_hash
+      and image.resize_hash == initial_resize_hash
   then
     -- utils.debug("skipping render", image.id)
     return true
