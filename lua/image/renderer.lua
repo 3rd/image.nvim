@@ -27,8 +27,8 @@ local get_global_offsets = function(window_id)
   -- a list of 8 or any divisor of 8. if it's less than 8 long, it's repeated
   -- here we care about the top and the left, so positions 2 and 8
   if border ~= nil then
-    if border[(1 % #border) + 1] then y = y + 1 end
-    if border[(7 % #border) + 1] then x = x + 1 end
+    if #border[(1 % #border) + 1] > 0 then y = y + 1 end
+    if #border[(7 % #border) + 1] > 0 then x = x + 1 end
   end
 
   return { x = x, y = y }
