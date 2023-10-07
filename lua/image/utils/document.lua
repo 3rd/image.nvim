@@ -64,7 +64,9 @@ local create_document_integration = function(config)
 
             ---@param image Image
             local render_image = function(image)
-              trace("rendering image %s at x=%d y=%d", match.url, match.range.start_col, match.range.start_row + 1)
+              trace(
+                ("rendering image %s at x=%d y=%d"):format(match.url, match.range.start_col, match.range.start_row + 1)
+              )
 
               image:render({
                 height = height,

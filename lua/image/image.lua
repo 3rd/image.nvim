@@ -55,22 +55,26 @@ function Image:render(geometry)
       return
     end
 
-    -- create extmark if outdated or it doesn't exist
-    if was_rendered and previous_extmark then
-      if previous_extmark.height == height then return end
-      vim.api.nvim_buf_del_extmark(self.buffer, self.global_state.extmarks_namespace, previous_extmark.id)
-    end
+    -- create extmark
     if was_rendered then
-      local text = string.rep(" ", width)
-      local filler = {}
-      for _ = 0, height - 1 do
-        filler[#filler + 1] = { { text, "" } }
+      local has_up_to_date_extmark = previous_extmark and previous_extmark.height == height
+
+      if not has_up_to_date_extmark then
+        if previous_extmark ~= nil then
+          vim.api.nvim_buf_del_extmark(self.buffer, self.global_state.extmarks_namespace, previous_extmark.id)
+        end
+
+        local text = string.rep(" ", width)
+        local filler = {}
+        for _ = 0, height - 1 do
+          filler[#filler + 1] = { { text, "" } }
+        end
+        vim.api.nvim_buf_set_extmark(self.buffer, self.global_state.extmarks_namespace, row > 0 and row - 1 or 0, 0, {
+          id = self.internal_id,
+          virt_lines = filler,
+        })
+        buf_extmark_map[self.buffer .. ":" .. row] = { id = self.internal_id, height = height }
       end
-      vim.api.nvim_buf_set_extmark(self.buffer, self.global_state.extmarks_namespace, row > 0 and row - 1 or 0, 0, {
-        id = self.internal_id,
-        virt_lines = filler,
-      })
-      buf_extmark_map[self.buffer .. ":" .. row] = { id = self.internal_id, height = height }
     end
 
     -- TODO: chain rerendering only the next affected image after this one

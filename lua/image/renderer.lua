@@ -72,6 +72,8 @@ local render = function(image)
   local image_rows = math.floor(image.image_height / term_size.cell_height)
   local image_columns = math.floor(image.image_width / term_size.cell_width)
 
+  -- utils.debug(("renderer.render() %s"):format(image.original_path))
+
   local original_x = image.geometry.x or 0
   local original_y = image.geometry.y or 0
   local x_offset = 0
@@ -114,7 +116,10 @@ local render = function(image)
       with_masks = state.options.window_overlap_clear_enabled,
       ignore_masking_filetypes = state.options.window_overlap_clear_ft_ignore,
     })
-    if window == nil then return false end
+    if window == nil then
+      utils.debug("invalid window", image.id)
+      return false
+    end
 
     -- bail if the window is not visible
     if not window.is_visible then return false end
@@ -134,7 +139,9 @@ local render = function(image)
 
     -- bail if the image is inside a fold
     if image.buffer and is_folded then
-      -- utils.debug("inside fold", image.id)
+      -- utils.debug("image is inside a fold", image.id)
+      state.images[image.id] = image
+      image:clear(true)
       return false
     end
 
