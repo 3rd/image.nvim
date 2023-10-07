@@ -36,6 +36,14 @@ local restore_cursor = function()
   write("\x1b[u")
 end
 
+local update_sync_start = function()
+  write("\x1b[?2026h")
+end
+
+local update_sync_end = function()
+  write("\x1b[?2026l")
+end
+
 ---@param config KittyControlConfig
 ---@param data? string
 -- https://github.com/edluffy/hologram.nvim/blob/main/lua/hologram/terminal.lua#L52
@@ -89,4 +97,6 @@ return {
   write = write,
   write_graphics = write_graphics,
   write_placeholder = write_placeholder,
+  update_sync_start = update_sync_start,
+  update_sync_end = update_sync_end,
 }

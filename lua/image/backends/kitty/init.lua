@@ -137,13 +137,15 @@ backend.render = function(image, x, y, width, height)
     display_payload.display_y = pixel_top
   end
 
+  helpers.update_sync_start()
   helpers.move_cursor(x + 1, y + 1, true)
   helpers.write_graphics(display_payload)
-  image.is_rendered = true
-  backend.state.images[image.id] = image
   helpers.restore_cursor()
+  helpers.update_sync_end()
 
-  -- utils.debug("[kitty] rendered image", image.id, "(" .. image.internal_id .. ")")
+  backend.state.images[image.id] = image
+  image.is_rendered = true
+
   -- utils.debug("path:", image.cropped_path, display_payload)
 end
 
