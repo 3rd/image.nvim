@@ -5,7 +5,7 @@
 local ffi = require("ffi")
 local base64 = {}
 
-local b64 = ffi.new("unsigned const char[65]", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/")
+local b64 = ffi.new("unsigned const char[65]", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-")
 
 function base64.encode(str)
   ---@diagnostic disable-next-line: undefined-global
