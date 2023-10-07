@@ -36,6 +36,17 @@ local adjust_to_aspect_ratio = function(term_size, image_width, image_height, wi
   local pixel_height = height * term_size.cell_height
   local percent_orig_width = pixel_width / image_width
   local percent_orig_height = pixel_height / image_height
+
+  if width == 0 and height ~= 0 then
+    width = math.floor(height * aspect_ratio)
+    return width, height
+  end
+
+  if height == 0 and width ~= 0 then
+    height = math.floor(width / aspect_ratio)
+    return width, height
+  end
+
   if percent_orig_height > percent_orig_width then
     local new_height = math.ceil(pixel_width / aspect_ratio / term_size.cell_height)
     return width, new_height
@@ -95,7 +106,7 @@ local render = function(image)
   width = math.min(width, term_size.screen_cols)
   height = math.min(height, term_size.screen_rows)
 
-  -- utils.debug(("(1) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
+  -- utils.debug(("(1) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset))
 
   if image.window ~= nil then
     -- bail if the window is invalid
@@ -157,7 +168,7 @@ local render = function(image)
     end
   end
 
-  -- utils.debug(("(2) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
+  -- utils.debug(("(2) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset))
 
   -- global max width/height
   if type(state.options.max_width) == "number" then width = math.min(width, state.options.max_width) end
@@ -167,13 +178,13 @@ local render = function(image)
 
   if width <= 0 or height <= 0 then return false end
 
-  -- utils.debug(("(3) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(x, y, width, height, y_offset))
+  -- utils.debug(("(3) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset))
 
   local absolute_x = original_x + x_offset + window_offset_x
   local absolute_y = original_y + y_offset + window_offset_y
   local prevent_rendering = false
 
-  -- utils.debug(("(4) x: %d, y: %d, width: %d, height: %d y_offset: %d absolute_x: %d absolute_y: %d"):format( x, y, width, height, y_offset, absolute_x, absolute_y))
+  -- utils.debug(("(4) x: %d, y: %d, width: %d, height: %d y_offset: %d absolute_x: %d absolute_y: %d"):format( original_x, original_y, width, height, y_offset, absolute_x, absolute_y))
 
   if image.window and image.buffer then
     local win_info = vim.fn.getwininfo(image.window)[1]
