@@ -14,8 +14,8 @@ local cache = {
 local render = function(image)
   local state = image.global_state
   local term_size = utils.term.get_size()
-  local image_rows = math.ceil(image.image_height / term_size.cell_height)
-  local image_columns = math.ceil(image.image_width / term_size.cell_width)
+  local image_rows = math.floor(image.image_height / term_size.cell_height)
+  local image_columns = math.floor(image.image_width / term_size.cell_width)
 
   -- utils.debug(("renderer.render() %s"):format(image.original_path))
 
