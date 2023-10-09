@@ -324,8 +324,9 @@ local render = function(image)
   end
 
   -- crop
-  local crop_hash = ("%d-%d-%d-%d"):format(0, crop_offset_top, pixel_width, cropped_pixel_height)
-  if needs_crop then
+  if needs_crop and not state.backend.features.crop then
+    local crop_hash = ("%d-%d-%d-%d"):format(0, crop_offset_top, pixel_width, cropped_pixel_height)
+
     if (needs_resize and image.resize_hash ~= resize_hash) or image.crop_hash ~= crop_hash then
       local cached_path = cache.cropped[image.path .. ":" .. crop_hash]
 
@@ -336,19 +337,18 @@ local render = function(image)
         image.crop_hash = crop_hash
       else
         -- perform crop
-        if not state.backend.features.crop then
-          -- utils.debug(("cropping image %s to %dx%d"):format(image.path, pixel_width, cropped_pixel_height))
+        -- utils.debug(("cropping image %s to %dx%d"):format(image.path, pixel_width, cropped_pixel_height))
 
-          local cropped_image = magick.load_image(image.resized_path or image.path)
-          cropped_image:set_format("png")
-          cropped_image:crop(pixel_width, cropped_pixel_height, 0, crop_offset_top)
+        local cropped_image = magick.load_image(image.resized_path or image.path)
+        cropped_image:set_format("png")
+        cropped_image:crop(pixel_width, cropped_pixel_height, 0, crop_offset_top)
 
-          local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-cropped.png"
-          cropped_image:write(tmp_path)
-          cropped_image:destroy()
+        local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-cropped-" .. crop_hash .. ".png"
+        cropped_image:write(tmp_path)
+        cropped_image:destroy()
 
-          image.cropped_path = tmp_path
-        end
+        image.cropped_path = tmp_path
+
         image.crop_hash = crop_hash
 
         cache.cropped[image.path .. ":" .. crop_hash] = image.cropped_path
