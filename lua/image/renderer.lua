@@ -307,7 +307,7 @@ local render = function(image)
           resized_image:set_format("png")
           resized_image:scale(pixel_width, pixel_height)
 
-          local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-resized.png"
+          local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-resized-" .. resize_hash .. ".png"
           resized_image:write(tmp_path)
           resized_image:destroy()
 
