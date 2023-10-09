@@ -14,7 +14,7 @@ https://github.com/3rd/image.nvim/assets/59587503/9a9a1792-6476-4d96-8b8e-d3cdd7
 These are things you have to setup on your own:
 - [ImageMagick](https://github.com/ImageMagick/ImageMagick) - mandatory
 - [magick LuaRock](https://github.com/leafo/magick) - mandatory (`luarocks --local install magick` or through your [package manager](https://github.com/vhyrro/hologram.nvim#install))
-- [Kitty](https://sw.kovidgoyal.net/kitty/) - for the `kitty` backend
+- [Kitty](https://sw.kovidgoyal.net/kitty/) >= 28.0 - for the `kitty` backend
 - [ueberzugpp](https://github.com/jstkdng/ueberzugpp) - for the `ueberzug` backend
 - [curl](https://github.com/curl/curl) - for remote images
 
