@@ -24,6 +24,7 @@ local default_options = {
   kitty_method = "normal",
   window_overlap_clear_enabled = false,
   window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "" },
+  editor_only_render_when_focused = false,
 }
 
 ---@type State
@@ -211,6 +212,36 @@ api.setup = function(options)
       end
     end,
   })
+
+  -- auto-toggle on editor focus change
+  if state.options.editor_only_render_when_focused then
+    local images_to_restore_on_focus = {}
+    vim.api.nvim_create_autocmd("FocusLost", {
+      group = group,
+      callback = function() -- auto-clear images when windows and buffers change
+        vim.schedule(function()
+          local images = api.get_images()
+          for _, current_image in ipairs(images) do
+            if current_image.is_rendered then
+              table.insert(images_to_restore_on_focus, current_image)
+              current_image:clear(true)
+            end
+          end
+        end)
+      end,
+    })
+    vim.api.nvim_create_autocmd("FocusGained", {
+      group = group,
+      callback = function() -- auto-clear images when windows and buffers change
+        vim.schedule(function()
+          for _, current_image in ipairs(images_to_restore_on_focus) do
+            current_image:render()
+          end
+          images_to_restore_on_focus = {}
+        end)
+      end,
+    })
+  end
 end
 
 local guard_setup = function()

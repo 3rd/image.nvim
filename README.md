@@ -111,6 +111,7 @@ require("image").setup({
   max_height_window_percentage = 50,
   window_overlap_clear_enabled = false, -- toggles images when windows are overlapped
   window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "" },
+  editor_only_render_when_focused = false, -- hide/show images when the editor looses/gains focus
 })
 ```
 
