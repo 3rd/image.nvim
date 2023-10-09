@@ -159,3 +159,4 @@
 ---@field display_virtual_placeholder? 0|1
 ---@field display_zindex? number
 ---@field display_delete? "a"|"A"|"i"|"I"|"p"
+---@field tty? string

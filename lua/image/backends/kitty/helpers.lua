@@ -1,10 +1,6 @@
 local utils = require("image/utils")
 local codes = require("image/backends/kitty/codes")
 
-local stdout = vim.loop.new_tty(1, false)
-if not stdout then error("failed to open stdout") end
-local is_tmux = vim.env.TMUX ~= nil
-
 -- https://github.com/edluffy/hologram.nvim/blob/main/lua/hologram/terminal.lua#L77
 local get_chunked = function(str)
   local chunks = {}
@@ -15,16 +11,25 @@ local get_chunked = function(str)
   return chunks
 end
 
-local encode = function(data)
-  if is_tmux then return "\x1bPtmux;" .. data:gsub("\x1b", "\x1b\x1b") .. "\x1b\\" end
-  return data
-end
-
-local write = function(data)
+---@param data string
+---@param tty? string
+---@param escape? boolean
+local write = function(data, tty, escape)
   if data == "" then return end
-  -- utils.debug("write:", vim.inspect(data))
-  stdout:write(data)
-  -- vim.fn.chansend(vim.v.stderr, data)
+  vim.fn.chansend(vim.v.stderr, data)
+
+  local payload = data
+  if escape and utils.tmux.is_tmux then payload = utils.tmux.escape(data) end
+  -- utils.debug("write:", vim.inspect(payload), tty)
+
+  if tty then
+    local handle = io.open(tty, "w")
+    if not handle then error("failed to open tty") end
+    handle:write(payload)
+    handle:close()
+  else
+    vim.fn.chansend(vim.v.stderr, payload)
+  end
 end
 
 local move_cursor = function(x, y, save)
@@ -56,7 +61,7 @@ local write_graphics = function(config, data)
   for k, v in pairs(config) do
     if v ~= nil then
       local key = codes.control.keys[k]
-      control_payload = control_payload .. key .. "=" .. v .. ","
+      if key then control_payload = control_payload .. key .. "=" .. v .. "," end
     end
   end
   control_payload = control_payload:sub(0, -2)
@@ -65,7 +70,7 @@ local write_graphics = function(config, data)
     if config.transmit_medium ~= codes.control.transmit_medium.direct then data = utils.base64.encode(data) end
     local chunks = get_chunked(data)
     for i = 1, #chunks do
-      write(encode("\x1b_G" .. control_payload .. ";" .. chunks[i] .. "\x1b\\"))
+      write("\x1b_G" .. control_payload .. ";" .. chunks[i] .. "\x1b\\", config.tty, true)
       if i == #chunks - 1 then
         control_payload = "m=0"
       else
@@ -74,7 +79,7 @@ local write_graphics = function(config, data)
     end
   else
     -- utils.debug("kitty control payload:", control_payload)
-    write(encode("\x1b_G" .. control_payload .. "\x1b\\"))
+    write("\x1b_G" .. control_payload .. "\x1b\\", config.tty, true)
   end
 end
 

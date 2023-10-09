@@ -5,6 +5,7 @@ local window = require("image/utils/window")
 local term = require("image/utils/term")
 local math = require("image/utils/math")
 local offsets = require("image/utils/offsets")
+local tmux = require("image/utils/tmux")
 
 local log = logger.create_logger({
   prefix = "[image.nvim]",
@@ -37,4 +38,5 @@ return {
   term = term,
   math = math,
   offsets = offsets,
+  tmux = tmux,
 }

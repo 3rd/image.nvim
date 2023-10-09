@@ -115,6 +115,11 @@ require("image").setup({
 })
 ```
 
+## Tmux
+
+- You must set: `set -gq allow-passthrough on`
+- If you want the images to be automatically hidden/shown when you switch windows, set: `set -g visual-activity off`
+
 ### Try it out with a minimal setup
 
 Download [minimal-setup.lua](./minimal-setup.lua) from the root of this repository and run the demo with:

@@ -2,13 +2,7 @@ local utils = require("image/utils")
 local codes = require("image/backends/kitty/codes")
 local helpers = require("image/backends/kitty/helpers")
 
-local is_tmux = vim.env.TMUX ~= nil
-local tmux_has_passthrough = false
-
-if is_tmux then
-  local ok, result = pcall(vim.fn.system, "tmux show -Apv allow-passthrough")
-  if ok and result == "on\n" then tmux_has_passthrough = true end
-end
+local editor_tty = utils.term.get_tty()
 
 ---@type Backend
 ---@diagnostic disable-next-line: missing-fields
@@ -24,7 +18,7 @@ local backend = {
 local transmitted_images = {}
 backend.setup = function(state)
   backend.state = state
-  if is_tmux and not tmux_has_passthrough then
+  if utils.tmux.is_tmux and not utils.tmux.has_passthrough then
     utils.throw("tmux does not have allow-passthrough enabled")
     return
   end
@@ -159,16 +153,26 @@ backend.render = function(image, x, y, width, height)
   -- utils.debug("path:", image.cropped_path, display_payload)
 end
 
+local get_clear_tty_override = function()
+  if not utils.tmux.is_tmux then return nil end
+  local current_tmux_tty = utils.tmux.get_pane_tty()
+  if current_tmux_tty == editor_tty then return nil end
+  return current_tmux_tty
+end
+
 backend.clear = function(image_id, shallow)
   -- one
   if image_id then
     local image = backend.state.images[image_id]
     if not image then return end
+    if not image.is_rendered then return end
+
     helpers.write_graphics({
       action = codes.control.action.delete,
       display_delete = "i",
       image_id = image.internal_id,
       quiet = 2,
+      tty = get_clear_tty_override(),
     })
     image.is_rendered = false
     if not shallow then
@@ -184,7 +188,9 @@ backend.clear = function(image_id, shallow)
     action = codes.control.action.delete,
     display_delete = "a",
     quiet = 2,
+    tty = get_clear_tty_override(),
   })
+
   -- utils.debug("[kitty] cleared all")
   for id, image in pairs(backend.state.images) do
     image.is_rendered = false

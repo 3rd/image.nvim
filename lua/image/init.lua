@@ -214,31 +214,43 @@ api.setup = function(options)
   })
 
   -- auto-toggle on editor focus change
-  if state.options.editor_only_render_when_focused then
+  if state.options.editor_only_render_when_focused or utils.tmux.is_tmux then
     local images_to_restore_on_focus = {}
+    local initial_tmux_window_id = utils.is_tmux and utils.tmux.get_window_id() or nil
+
     vim.api.nvim_create_autocmd("FocusLost", {
       group = group,
       callback = function() -- auto-clear images when windows and buffers change
         vim.schedule(function()
-          local images = api.get_images()
-          for _, current_image in ipairs(images) do
-            if current_image.is_rendered then
-              table.insert(images_to_restore_on_focus, current_image)
-              current_image:clear(true)
+          -- utils.debug("FocusLost")
+
+          if
+            state.options.editor_only_render_when_focused
+            or (utils.tmux.is_tmux and utils.tmux.get_window_id() ~= initial_tmux_window_id)
+          then
+            local images = api.get_images()
+            for _, current_image in ipairs(images) do
+              if current_image.is_rendered then
+                table.insert(images_to_restore_on_focus, current_image)
+                current_image:clear(true)
+              end
             end
           end
         end)
       end,
     })
+
     vim.api.nvim_create_autocmd("FocusGained", {
       group = group,
       callback = function() -- auto-clear images when windows and buffers change
-        vim.schedule(function()
+        -- utils.debug("FocusGained")
+
+        vim.schedule_wrap(function()
           for _, current_image in ipairs(images_to_restore_on_focus) do
             current_image:render()
           end
           images_to_restore_on_focus = {}
-        end)
+        end)()
       end,
     })
   end
