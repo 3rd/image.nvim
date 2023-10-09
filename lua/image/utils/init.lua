@@ -3,6 +3,8 @@ local logger = require("image/utils/logger")
 local random = require("image/utils/random")
 local window = require("image/utils/window")
 local term = require("image/utils/term")
+local math = require("image/utils/math")
+local offsets = require("image/utils/offsets")
 
 local log = logger.create_logger({
   prefix = "[image.nvim]",
@@ -33,4 +35,6 @@ return {
   random = random,
   window = window,
   term = term,
+  math = math,
+  offsets = offsets,
 }

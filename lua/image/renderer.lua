@@ -1,70 +1,6 @@
 local utils = require("image/utils")
 local magick = require("image/magick")
 
----@param window_id number
----@return { x: number, y: number }
-local get_global_offsets = function(window_id)
-  local x = 0
-  local y = 0
-  -- if vim.opt.number then x = x + vim.opt.numberwidth:get() end
-  -- if vim.opt.signcolumn ~= "no" then x = x + 2 end
-
-  local opts = vim.wo[window_id]
-  if not opts then return { x = x, y = y } end
-
-  -- tabline
-  if vim.opt.showtabline == 2 then y = y + 1 end
-
-  -- winbar
-  if opts.winbar ~= "" then y = y + 1 end
-
-  -- gutters
-  local wininfo = vim.fn.getwininfo(window_id)
-  if wininfo and wininfo[1] then x = x + wininfo[1].textoff end
-
-  -- border
-  local border = vim.api.nvim_win_get_config(window_id).border
-  -- a list of 8 or any divisor of 8. if it's less than 8 long, it's repeated
-  -- here we care about the top and the left, so positions 2 and 8
-  if border ~= nil then
-    if #border[(1 % #border) + 1] > 0 then y = y + 1 end
-    if #border[(7 % #border) + 1] > 0 then x = x + 1 end
-  end
-
-  return { x = x, y = y }
-end
-
----@param term_size { cell_width: number, cell_height: number }
----@param image_width number
----@param image_height number
----@param width number
----@param height number
-local adjust_to_aspect_ratio = function(term_size, image_width, image_height, width, height)
-  local aspect_ratio = image_width / image_height
-  local pixel_width = width * term_size.cell_width
-  local pixel_height = height * term_size.cell_height
-  local percent_orig_width = pixel_width / image_width
-  local percent_orig_height = pixel_height / image_height
-
-  if width == 0 and height ~= 0 then
-    width = math.floor(height * aspect_ratio)
-    return width, height
-  end
-
-  if height == 0 and width ~= 0 then
-    height = math.floor(width / aspect_ratio)
-    return width, height
-  end
-
-  if percent_orig_height > percent_orig_width then
-    local new_height = math.ceil(pixel_width / aspect_ratio / term_size.cell_height)
-    return width, new_height
-  else
-    local new_width = math.ceil(pixel_height * aspect_ratio / term_size.cell_width)
-    return new_width, height
-  end
-end
-
 -- Images get resized and cropped to fit in the context they are rendered in.
 -- Each of these versions are written to the temp directory and cleared on reboot (on Linux at least).
 -- This is where we keep track of the hashes of the resized and cropped versions of the images so we
@@ -155,7 +91,7 @@ local render = function(image)
     end
 
     -- global offsets
-    local global_offsets = get_global_offsets(window.id)
+    local global_offsets = utils.offsets.get_global_offsets(window.id)
     x_offset = global_offsets.x - window.scroll_x
     y_offset = global_offsets.y - window.scroll_y
 
@@ -190,7 +126,7 @@ local render = function(image)
   if type(state.options.max_width) == "number" then width = math.min(width, state.options.max_width) end
   if type(state.options.max_height) == "number" then height = math.min(height, state.options.max_height) end
 
-  width, height = adjust_to_aspect_ratio(term_size, image.image_width, image.image_height, width, height)
+  width, height = utils.math.adjust_to_aspect_ratio(term_size, image.image_width, image.image_height, width, height)
 
   if width <= 0 or height <= 0 then return false end
 
@@ -300,10 +236,10 @@ local render = function(image)
 
   -- clear out of bounds images
   if
-      absolute_y + height <= bounds.top
-      or absolute_y >= bounds.bottom
-      or absolute_x + width <= bounds.left
-      or absolute_x >= bounds.right
+    absolute_y + height <= bounds.top
+    or absolute_y >= bounds.bottom
+    or absolute_x + width <= bounds.left
+    or absolute_x >= bounds.right
   then
     if image.is_rendered then
       -- utils.debug("deleting out of bounds image", { id = image.id, x = absolute_x, y = absolute_y, width = width, height = height, bounds = bounds })
@@ -421,13 +357,13 @@ local render = function(image)
   end
 
   if
-      image.is_rendered
-      and image.rendered_geometry.x == rendered_geometry.x
-      and image.rendered_geometry.y == rendered_geometry.y
-      and image.rendered_geometry.width == rendered_geometry.width
-      and image.rendered_geometry.height == rendered_geometry.height
-      and image.crop_hash == initial_crop_hash
-      and image.resize_hash == initial_resize_hash
+    image.is_rendered
+    and image.rendered_geometry.x == rendered_geometry.x
+    and image.rendered_geometry.y == rendered_geometry.y
+    and image.rendered_geometry.width == rendered_geometry.width
+    and image.rendered_geometry.height == rendered_geometry.height
+    and image.crop_hash == initial_crop_hash
+    and image.resize_hash == initial_resize_hash
   then
     -- utils.debug("skipping render", image.id)
     return true
@@ -444,6 +380,5 @@ local render = function(image)
 end
 
 return {
-  get_global_offsets = get_global_offsets,
   render = render,
 }
