@@ -106,6 +106,15 @@ local render = function(image)
     bounds = window.rect
     bounds.bottom = bounds.bottom - 1
 
+    -- this is ugly, and if get_global_offsets() is changed this could break
+    bounds.top = bounds.top + global_offsets.y
+    bounds.bottom = bounds.bottom + global_offsets.y
+    bounds.left = bounds.left + global_offsets.x
+    bounds.right = bounds.right
+    if utils.offsets.get_border_shape(window.id).left > 0 then
+      bounds.right = bounds.right + 1
+    end
+
     -- global max window width/height percentage
     if type(state.options.max_width_window_percentage) == "number" then
       width = math.min(width, math.floor(window.width * state.options.max_width_window_percentage / 100))
