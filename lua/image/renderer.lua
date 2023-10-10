@@ -325,9 +325,8 @@ local render = function(image)
   end
 
   -- crop
+  local crop_hash = ("%d-%d-%d-%d"):format(0, crop_offset_top, pixel_width, cropped_pixel_height)
   if needs_crop and not state.backend.features.crop then
-    local crop_hash = ("%d-%d-%d-%d"):format(0, crop_offset_top, pixel_width, cropped_pixel_height)
-
     if (needs_resize and image.resize_hash ~= resize_hash) or image.crop_hash ~= crop_hash then
       local cached_path = cache.cropped[image.path .. ":" .. crop_hash]
 
@@ -355,6 +354,9 @@ local render = function(image)
         cache.cropped[image.path .. ":" .. crop_hash] = image.cropped_path
       end
     end
+  elseif needs_crop then
+    image.cropped_path = image.resized_path
+    image.crop_hash = crop_hash
   else
     image.cropped_path = image.resized_path
     image.crop_hash = nil
@@ -370,6 +372,7 @@ local render = function(image)
       and image.resize_hash == initial_resize_hash
   then
     -- utils.debug("skipping render", image.id)
+    print("skipping render")
     return true
   end
 
