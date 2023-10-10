@@ -206,7 +206,6 @@ api.setup = function(options)
   vim.api.nvim_create_autocmd({"WinScrolled", "WinResized"}, {
     group = group,
     callback = function(au)
-      P(au)
       local images = api.get_images({ window = tonumber(au.file) })
       for _, current_image in ipairs(images) do
         current_image:render()
