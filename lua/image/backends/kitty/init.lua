@@ -117,6 +117,7 @@ backend.render = function(image, x, y, width, height)
     local pixel_width = width * term_size.cell_width
     local pixel_height = height * term_size.cell_height
     local pixel_top = 0
+    local pixel_left = 0
 
     -- crop top
     if y < image.bounds.top then
@@ -130,11 +131,20 @@ backend.render = function(image, x, y, width, height)
     if y + height > image.bounds.bottom then pixel_height = (image.bounds.bottom - y + 1) * term_size.cell_height end
 
     -- crop right
-    -- if x + width > image.bounds.right then pixel_width = (image.bounds.right - x) * term_size.cell_width end
+    if x + width > image.bounds.right then pixel_width = (image.bounds.right - x) * term_size.cell_width end
+
+    -- crop left
+    if x < image.bounds.left then
+      local visible_columns = width - (image.bounds.left - x)
+      pixel_width = visible_columns * term_size.cell_width
+      pixel_left = (image.bounds.left - x) * term_size.cell_width
+      x = image.bounds.left
+    end
 
     display_payload.display_width = pixel_width
     display_payload.display_height = pixel_height
     display_payload.display_y = pixel_top
+    display_payload.display_x = pixel_left
   end
 
   helpers.update_sync_start()

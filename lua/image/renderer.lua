@@ -103,16 +103,8 @@ local render = function(image)
     window_offset_y = window.y
 
     -- window bounds
-    bounds = {
-      top = window.y + global_offsets.y,
-      right = window.x + window.width - global_offsets.x,
-      bottom = window.y + window.height - global_offsets.y,
-      left = window.x + global_offsets.x,
-    }
-
-    -- w/h can take at most 100% of the window
-    width = math.min(width, window.width - original_x - x_offset)
-    height = math.min(height, window.height - original_y - y_offset)
+    bounds = window.rect
+    bounds.bottom = bounds.bottom - 1
 
     -- global max window width/height percentage
     if type(state.options.max_width_window_percentage) == "number" then
