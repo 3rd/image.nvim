@@ -8,6 +8,7 @@ end
 
 local create_dm_getter = function(name)
   return function()
+    if not is_tmux then return nil end
     local result = vim.fn.system("tmux display-message -p '#{" .. name .. "}'")
     return vim.fn.trim(result)
   end

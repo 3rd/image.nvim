@@ -216,7 +216,7 @@ api.setup = function(options)
   -- auto-toggle on editor focus change
   if state.options.editor_only_render_when_focused or utils.tmux.is_tmux then
     local images_to_restore_on_focus = {}
-    local initial_tmux_window_id = utils.is_tmux and utils.tmux.get_window_id() or nil
+    local initial_tmux_window_id = utils.tmux.get_window_id()
 
     vim.api.nvim_create_autocmd("FocusLost", {
       group = group,
@@ -231,8 +231,8 @@ api.setup = function(options)
             local images = api.get_images()
             for _, current_image in ipairs(images) do
               if current_image.is_rendered then
-                table.insert(images_to_restore_on_focus, current_image)
                 current_image:clear(true)
+                table.insert(images_to_restore_on_focus, current_image)
               end
             end
           end
