@@ -372,7 +372,6 @@ local render = function(image)
       and image.resize_hash == initial_resize_hash
   then
     -- utils.debug("skipping render", image.id)
-    print("skipping render")
     return true
   end
 
