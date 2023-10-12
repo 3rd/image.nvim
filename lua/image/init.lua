@@ -25,6 +25,7 @@ local default_options = {
   window_overlap_clear_enabled = false,
   window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "" },
   editor_only_render_when_focused = false,
+  tmux_show_only_in_active_window = false,
 }
 
 ---@type State
@@ -214,7 +215,10 @@ api.setup = function(options)
   })
 
   -- auto-toggle on editor focus change
-  if state.options.editor_only_render_when_focused or utils.tmux.is_tmux then
+  if
+    state.options.editor_only_render_when_focused
+    or (state.options.tmux_show_only_in_active_window and utils.tmux.is_tmux)
+  then
     local images_to_restore_on_focus = {}
     local initial_tmux_window_id = utils.tmux.get_window_id()
 

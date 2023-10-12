@@ -1,6 +1,9 @@
 local utils = require("image/utils")
 local codes = require("image/backends/kitty/codes")
 
+local stdout = vim.loop.new_tty(1, false)
+if not stdout then error("failed to open stdout") end
+
 -- https://github.com/edluffy/hologram.nvim/blob/main/lua/hologram/terminal.lua#L77
 local get_chunked = function(str)
   local chunks = {}
@@ -16,10 +19,10 @@ end
 ---@param escape? boolean
 local write = function(data, tty, escape)
   if data == "" then return end
-  vim.fn.chansend(vim.v.stderr, data)
 
   local payload = data
   if escape and utils.tmux.is_tmux then payload = utils.tmux.escape(data) end
+
   -- utils.debug("write:", vim.inspect(payload), tty)
 
   if tty then
@@ -28,7 +31,8 @@ local write = function(data, tty, escape)
     handle:write(payload)
     handle:close()
   else
-    vim.fn.chansend(vim.v.stderr, payload)
+    -- vim.fn.chansend(vim.v.stderr, payload)
+    stdout:write(payload)
   end
 end
 

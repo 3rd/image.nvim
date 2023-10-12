@@ -35,6 +35,7 @@
 ---@field window_overlap_clear_enabled? boolean
 ---@field window_overlap_clear_ft_ignore? string[]
 ---@field editor_only_render_when_focused? boolean
+---@field tmux_show_only_in_active_window? boolean
 
 ---@class BackendFeatures
 ---@field crop boolean
