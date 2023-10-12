@@ -117,7 +117,7 @@ local create_document_integration = function(config)
     local group_name = ("image.nvim:%s"):format(config.name)
     local group = vim.api.nvim_create_augroup(group_name, { clear = true })
 
-    vim.api.nvim_create_autocmd({ "WinNew", "BufWinEnter", "WinResized" }, {
+    vim.api.nvim_create_autocmd({ "WinNew", "BufWinEnter" }, {
       group = group,
       callback = function(args)
         if not has_valid_filetype(ctx, vim.bo[args.buf].filetype) then return end
