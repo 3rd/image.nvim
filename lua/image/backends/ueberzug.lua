@@ -22,13 +22,8 @@ local spawn = function()
     end
   end)
 
-  vim.loop.read_start(stdout, function(err, _)
-    assert(not err, err)
-  end)
-
-  vim.loop.read_start(stderr, function(err, _)
-    assert(not err, err)
-  end)
+  if not handle then error("image: failed to spawn ueberzug") end
+  if not stdin then error("image: failed to open stdin") end
 
   local write = function(data)
     local serialized = vim.fn.json_encode(data)
@@ -38,7 +33,7 @@ local spawn = function()
 
   local shutdown = function()
     should_be_alive = false
-    vim.loop.shutdown(handle, function()
+    vim.loop.shutdown(stdin, function()
       vim.loop.close(handle, function() end)
     end)
   end
@@ -47,8 +42,6 @@ local spawn = function()
     handle = handle,
     pid = pid,
     stdin = stdin,
-    stdout = stdout,
-    stderr = stderr,
     write = write,
     shutdown = shutdown,
   }

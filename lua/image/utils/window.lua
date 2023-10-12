@@ -8,9 +8,9 @@ local get_windows = function(opts)
     local rows = vim.api.nvim_win_get_height(id)
     local pos = vim.api.nvim_win_get_position(id)
     local config = vim.api.nvim_win_get_config(id)
-    local bufinfo = vim.fn.getbufinfo(buffer)
     local buffer_filetype = vim.bo[buffer].filetype
-    local buffer_is_listed = #bufinfo == 1 and bufinfo[1].listed == 1
+    local bufinfo = vim.fn.getbufinfo(buffer)[1]
+    local buffer_is_listed = bufinfo and bufinfo.listed == 1
     local scroll_x = 0 -- TODO
     local scroll_y = tonumber(vim.fn.win_execute(id, "echo line('w0')")) - 1
     local is_visible = true

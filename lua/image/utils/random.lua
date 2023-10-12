@@ -1,4 +1,4 @@
-math.randomseed(tonumber(tostring(os.time()):reverse():sub(1, 9)))
+math.randomseed(tonumber(tostring(os.time()):reverse():sub(1, 9)) or 0)
 
 -- https://gist.github.com/jrus/3197011
 local id = function()

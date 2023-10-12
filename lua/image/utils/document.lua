@@ -1,3 +1,4 @@
+---@diagnostic disable: duplicate-doc-field
 local utils = require("image/utils")
 
 local resolve_absolute_path = function(document_file_path, image_path)

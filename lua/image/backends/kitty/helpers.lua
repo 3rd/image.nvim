@@ -2,6 +2,7 @@ local utils = require("image/utils")
 local codes = require("image/backends/kitty/codes")
 
 local stdout = vim.loop.new_tty(1, false)
+if not stdout then error("failed to open stdout") end
 local is_tmux = vim.env.TMUX ~= nil
 
 -- https://github.com/edluffy/hologram.nvim/blob/main/lua/hologram/terminal.lua#L77
