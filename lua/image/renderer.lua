@@ -103,16 +103,17 @@ local render = function(image)
     window_offset_y = window.y
 
     -- window bounds
-    bounds = {
-      top = window.y + global_offsets.y,
-      right = window.x + window.width - global_offsets.x,
-      bottom = window.y + window.height - global_offsets.y,
-      left = window.x + global_offsets.x,
-    }
+    bounds = window.rect
+    bounds.bottom = bounds.bottom - 1
 
-    -- w/h can take at most 100% of the window
-    width = math.min(width, window.width - original_x - x_offset)
-    height = math.min(height, window.height - original_y - y_offset)
+    -- this is ugly, and if get_global_offsets() is changed this could break
+    bounds.top = bounds.top + global_offsets.y
+    bounds.bottom = bounds.bottom + global_offsets.y
+    bounds.left = bounds.left + global_offsets.x
+    bounds.right = bounds.right
+    if utils.offsets.get_border_shape(window.id).left > 0 then
+      bounds.right = bounds.right + 1
+    end
 
     -- global max window width/height percentage
     if type(state.options.max_width_window_percentage) == "number" then
@@ -324,9 +325,8 @@ local render = function(image)
   end
 
   -- crop
+  local crop_hash = ("%d-%d-%d-%d"):format(0, crop_offset_top, pixel_width, cropped_pixel_height)
   if needs_crop and not state.backend.features.crop then
-    local crop_hash = ("%d-%d-%d-%d"):format(0, crop_offset_top, pixel_width, cropped_pixel_height)
-
     if (needs_resize and image.resize_hash ~= resize_hash) or image.crop_hash ~= crop_hash then
       local cached_path = cache.cropped[image.path .. ":" .. crop_hash]
 
@@ -354,6 +354,9 @@ local render = function(image)
         cache.cropped[image.path .. ":" .. crop_hash] = image.cropped_path
       end
     end
+  elseif needs_crop then
+    image.cropped_path = image.resized_path
+    image.crop_hash = crop_hash
   else
     image.cropped_path = image.resized_path
     image.crop_hash = nil

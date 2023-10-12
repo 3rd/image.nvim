@@ -202,8 +202,8 @@ api.setup = function(options)
     end,
   })
 
-  -- rerender on scroll
-  vim.api.nvim_create_autocmd("WinScrolled", {
+  -- rerender on scroll or resize
+  vim.api.nvim_create_autocmd({"WinScrolled", "WinResized"}, {
     group = group,
     callback = function(au)
       local images = api.get_images({ window = tonumber(au.file) })
