@@ -25,6 +25,7 @@ local default_options = {
   window_overlap_clear_enabled = false,
   window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "" },
   editor_only_render_when_focused = false,
+  tmux_show_only_in_active_window = false,
 }
 
 ---@type State
@@ -36,6 +37,7 @@ local state = {
   extmarks_namespace = vim.api.nvim_create_namespace("image.nvim"),
   remote_cache = {},
   tmp_dir = vim.fn.tempname(),
+  disable_decorator_handling = false,
 }
 
 ---@type API
@@ -74,6 +76,8 @@ api.setup = function(options)
   local window_history = {}
   vim.api.nvim_set_decoration_provider(state.extmarks_namespace, {
     on_win = vim.schedule_wrap(function(_, winid, bufnr, topline, botline)
+      if state.disable_decorator_handling then return false end
+
       if not vim.api.nvim_win_is_valid(winid) then return false end
       if not vim.api.nvim_buf_is_valid(bufnr) then return false end
 
@@ -214,31 +218,50 @@ api.setup = function(options)
   })
 
   -- auto-toggle on editor focus change
-  if state.options.editor_only_render_when_focused then
+  if
+    state.options.editor_only_render_when_focused
+    or (state.options.tmux_show_only_in_active_window and utils.tmux.is_tmux)
+  then
     local images_to_restore_on_focus = {}
+    local initial_tmux_window_id = utils.tmux.get_window_id()
+
     vim.api.nvim_create_autocmd("FocusLost", {
       group = group,
       callback = function() -- auto-clear images when windows and buffers change
         vim.schedule(function()
-          local images = api.get_images()
-          for _, current_image in ipairs(images) do
-            if current_image.is_rendered then
-              table.insert(images_to_restore_on_focus, current_image)
-              current_image:clear(true)
+          -- utils.debug("FocusLost")
+
+          if
+            state.options.editor_only_render_when_focused
+            or (utils.tmux.is_tmux and utils.tmux.get_window_id() ~= initial_tmux_window_id)
+          then
+            state.disable_decorator_handling = true
+
+            local images = api.get_images()
+            for _, current_image in ipairs(images) do
+              if current_image.is_rendered then
+                current_image:clear(true)
+                table.insert(images_to_restore_on_focus, current_image)
+              end
             end
           end
         end)
       end,
     })
+
     vim.api.nvim_create_autocmd("FocusGained", {
       group = group,
       callback = function() -- auto-clear images when windows and buffers change
-        vim.schedule(function()
+        -- utils.debug("FocusGained")
+
+        state.disable_decorator_handling = false
+
+        vim.schedule_wrap(function()
           for _, current_image in ipairs(images_to_restore_on_focus) do
             current_image:render()
           end
           images_to_restore_on_focus = {}
-        end)
+        end)()
       end,
     })
   end

@@ -14,6 +14,7 @@
 ---@field extmarks_namespace any
 ---@field remote_cache { [string]: string }
 ---@field tmp_dir string
+---@field disable_decorator_handling boolean
 
 ---@class DocumentIntegrationOptions
 ---@field enabled? boolean
@@ -35,6 +36,7 @@
 ---@field window_overlap_clear_enabled? boolean
 ---@field window_overlap_clear_ft_ignore? string[]
 ---@field editor_only_render_when_focused? boolean
+---@field tmux_show_only_in_active_window? boolean
 
 ---@class BackendFeatures
 ---@field crop boolean
@@ -159,3 +161,4 @@
 ---@field display_virtual_placeholder? 0|1
 ---@field display_zindex? number
 ---@field display_delete? "a"|"A"|"i"|"I"|"p"
+---@field tty? string

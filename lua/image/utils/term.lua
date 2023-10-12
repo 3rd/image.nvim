@@ -48,8 +48,19 @@ vim.api.nvim_create_autocmd("VimResized", {
   callback = update_size,
 })
 
+local get_tty = function()
+  local handle = io.popen("tty 2>/dev/null")
+  if not handle then return nil end
+  local result = handle:read("*a")
+  handle:close()
+  result = vim.fn.trim(result)
+  if result == "" then return nil end
+  return result
+end
+
 return {
   get_size = function()
     return cached_size
   end,
+  get_tty = get_tty,
 }
