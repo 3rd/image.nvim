@@ -17,7 +17,7 @@ local render = function(image)
   local image_rows = math.floor(image.image_height / term_size.cell_height)
   local image_columns = math.floor(image.image_width / term_size.cell_width)
 
-  -- utils.debug(("renderer.render() %s"):format(image.original_path))
+  -- utils.debug(("renderer.render() %s %d"):format(image.id, image.internal_id))
 
   local original_x = image.geometry.x or 0
   local original_y = image.geometry.y or 0
@@ -111,9 +111,7 @@ local render = function(image)
     bounds.bottom = bounds.bottom + global_offsets.y
     bounds.left = bounds.left + global_offsets.x
     bounds.right = bounds.right
-    if utils.offsets.get_border_shape(window.id).left > 0 then
-      bounds.right = bounds.right + 1
-    end
+    if utils.offsets.get_border_shape(window.id).left > 0 then bounds.right = bounds.right + 1 end
 
     -- global max window width/height percentage
     if type(state.options.max_width_window_percentage) == "number" then
@@ -240,10 +238,10 @@ local render = function(image)
 
   -- clear out of bounds images
   if
-      absolute_y + height <= bounds.top
-      or absolute_y >= bounds.bottom
-      or absolute_x + width <= bounds.left
-      or absolute_x >= bounds.right
+    absolute_y + height <= bounds.top
+    or absolute_y >= bounds.bottom
+    or absolute_x + width <= bounds.left
+    or absolute_x >= bounds.right
   then
     if image.is_rendered then
       -- utils.debug("deleting out of bounds image", { id = image.id, x = absolute_x, y = absolute_y, width = width, height = height, bounds = bounds })
@@ -363,13 +361,13 @@ local render = function(image)
   end
 
   if
-      image.is_rendered
-      and image.rendered_geometry.x == rendered_geometry.x
-      and image.rendered_geometry.y == rendered_geometry.y
-      and image.rendered_geometry.width == rendered_geometry.width
-      and image.rendered_geometry.height == rendered_geometry.height
-      and image.crop_hash == initial_crop_hash
-      and image.resize_hash == initial_resize_hash
+    image.is_rendered
+    and image.rendered_geometry.x == rendered_geometry.x
+    and image.rendered_geometry.y == rendered_geometry.y
+    and image.rendered_geometry.width == rendered_geometry.width
+    and image.rendered_geometry.height == rendered_geometry.height
+    and image.crop_hash == initial_crop_hash
+    and image.resize_hash == initial_resize_hash
   then
     -- utils.debug("skipping render", image.id)
     return true

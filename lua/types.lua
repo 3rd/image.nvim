@@ -14,6 +14,7 @@
 ---@field extmarks_namespace any
 ---@field remote_cache { [string]: string }
 ---@field tmp_dir string
+---@field disable_decorator_handling boolean
 
 ---@class DocumentIntegrationOptions
 ---@field enabled? boolean

@@ -37,6 +37,7 @@ local state = {
   extmarks_namespace = vim.api.nvim_create_namespace("image.nvim"),
   remote_cache = {},
   tmp_dir = vim.fn.tempname(),
+  disable_decorator_handling = false,
 }
 
 ---@type API
@@ -75,6 +76,8 @@ api.setup = function(options)
   local window_history = {}
   vim.api.nvim_set_decoration_provider(state.extmarks_namespace, {
     on_win = vim.schedule_wrap(function(_, winid, bufnr, topline, botline)
+      if state.disable_decorator_handling then return false end
+
       if not vim.api.nvim_win_is_valid(winid) then return false end
       if not vim.api.nvim_buf_is_valid(bufnr) then return false end
 
@@ -232,6 +235,8 @@ api.setup = function(options)
             state.options.editor_only_render_when_focused
             or (utils.tmux.is_tmux and utils.tmux.get_window_id() ~= initial_tmux_window_id)
           then
+            state.disable_decorator_handling = true
+
             local images = api.get_images()
             for _, current_image in ipairs(images) do
               if current_image.is_rendered then
@@ -248,6 +253,8 @@ api.setup = function(options)
       group = group,
       callback = function() -- auto-clear images when windows and buffers change
         -- utils.debug("FocusGained")
+
+        state.disable_decorator_handling = false
 
         vim.schedule_wrap(function()
           for _, current_image in ipairs(images_to_restore_on_focus) do
