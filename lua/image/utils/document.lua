@@ -42,72 +42,72 @@ local create_document_integration = function(config)
         ignore_masking_filetypes = ctx.state.options.window_overlap_clear_ft_ignore,
       })
 
+      local image_queue = {}
+
       for _, window in ipairs(windows) do
         if has_valid_filetype(ctx, window.buffer_filetype) then
           local matches = config.query_buffer_images(window.buffer)
-
           local previous_images = ctx.api.get_images({
             window = window.id,
             buffer = window.buffer,
           })
           local new_image_ids = {}
-
           local file_path = vim.api.nvim_buf_get_name(window.buffer)
-          local cursor_row = vim.api.nvim_win_get_cursor(window.id)
+          local cursor_row = vim.api.nvim_win_get_cursor(window.id)[1] - 1 -- 0-indexed row
 
           for _, match in ipairs(matches) do
             local id = string.format("%d:%d:%d:%s", window.id, window.buffer, match.range.start_row, match.url)
-            local height = nil
 
-            if ctx.options.only_render_image_at_cursor then
-              if match.range.start_row ~= cursor_row[1] - 1 then goto continue end
-            end
+            if ctx.options.only_render_image_at_cursor and match.range.start_row ~= cursor_row then goto continue end
 
-            ---@param image Image
-            local render_image = function(image)
-              trace(
-                ("rendering image %s at x=%d y=%d"):format(match.url, match.range.start_col, match.range.start_row + 1)
-              )
-
-              image:render({
-                height = height,
-                x = match.range.start_col,
-                y = match.range.start_row + 1,
-              })
-              table.insert(new_image_ids, id)
-            end
-
-            -- remote
-            if is_remote_url(match.url) then
-              if not ctx.options.download_remote_images then return end
-
-              ctx.api.from_url(
-                match.url,
-                { id = id, window = window.id, buffer = window.buffer, with_virtual_padding = true },
-                function(image)
-                  if not image then return end
-                  render_image(image)
-                end
-              )
-            else
-              -- local
-              local path = resolve_absolute_path(file_path, match.url)
-              local ok, image = pcall(ctx.api.from_file, path, {
-                id = id,
-                window = window.id,
-                buffer = window.buffer,
-                with_virtual_padding = true,
-              })
-              if ok then render_image(image) end
-            end
+            local to_render = {
+              id = id,
+              match = match,
+              window = window,
+              file_path = file_path,
+            }
+            table.insert(image_queue, to_render)
+            table.insert(new_image_ids, id)
 
             ::continue::
           end
 
-          -- clear previous images
+          -- clear old images
           for _, image in ipairs(previous_images) do
             if not vim.tbl_contains(new_image_ids, image.id) then image:clear() end
           end
+        end
+      end
+
+      -- render images from queue
+      for _, item in ipairs(image_queue) do
+        local render_image = function(image)
+          image:render({
+            x = item.match.range.start_col,
+            y = item.match.range.start_row + 1,
+          })
+        end
+
+        if is_remote_url(item.match.url) then
+          if ctx.options.download_remote_images then
+            ctx.api.from_url(
+              item.match.url,
+              { id = item.id, window = item.window.id, buffer = item.window.buffer, with_virtual_padding = true },
+              function(image)
+                if not image then return end
+                render_image(image)
+              end
+            )
+          end
+        else
+          local path = resolve_absolute_path(item.file_path, item.match.url)
+          local ok, image = pcall(ctx.api.from_file, path, {
+            id = item.id,
+            window = item.window.id,
+            buffer = item.window.buffer,
+            with_virtual_padding = true,
+          })
+          if ok then render_image(image) end
         end
       end
     end
@@ -118,7 +118,9 @@ local create_document_integration = function(config)
     if vim.tbl_contains(text_change_watched_buffers, buffer) then return end
     vim.api.nvim_buf_attach(buffer, false, {
       on_lines = function()
-        render(ctx)
+        vim.schedule(function()
+          render(ctx)
+        end)
       end,
     })
     table.insert(text_change_watched_buffers, buffer)
