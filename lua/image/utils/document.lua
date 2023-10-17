@@ -113,11 +113,23 @@ local create_document_integration = function(config)
     end
   )
 
+  local text_change_watched_buffers = {}
+  local setup_text_change_watcher = function(ctx, buffer)
+    if vim.tbl_contains(text_change_watched_buffers, buffer) then return end
+    vim.api.nvim_buf_attach(buffer, false, {
+      on_lines = function()
+        render(ctx)
+      end,
+    })
+    table.insert(text_change_watched_buffers, buffer)
+  end
+
   ---@type fun(ctx: IntegrationContext)
   local setup_autocommands = function(ctx)
     local group_name = ("image.nvim:%s"):format(config.name)
     local group = vim.api.nvim_create_augroup(group_name, { clear = true })
 
+    -- watch for window changes
     vim.api.nvim_create_autocmd({ "WinNew", "BufWinEnter" }, {
       group = group,
       callback = function(args)
@@ -126,14 +138,17 @@ local create_document_integration = function(config)
       end,
     })
 
-    vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
+    -- watch for text changes
+    vim.api.nvim_create_autocmd({ "BufAdd", "BufNew", "BufNewFile" }, {
       group = group,
       callback = function(args)
         if not has_valid_filetype(ctx, vim.bo[args.buf].filetype) then return end
-        if args.event == "TextChangedI" and ctx.options.clear_in_insert_mode then return end
+
+        setup_text_change_watcher(ctx, args.buf)
         render(ctx)
       end,
     })
+    if has_valid_filetype(ctx, vim.bo.filetype) then setup_text_change_watcher(ctx, vim.api.nvim_get_current_buf()) end
 
     if ctx.options.only_render_image_at_cursor then
       vim.api.nvim_create_autocmd({ "CursorMoved" }, {
@@ -178,10 +193,10 @@ local create_document_integration = function(config)
       state = state,
     }
 
-    vim.defer_fn(function()
+    vim.schedule(function()
       setup_autocommands(context)
       render(context)
-    end, 0)
+    end)
   end
 
   return { setup = setup }
