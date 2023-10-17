@@ -75,11 +75,19 @@ api.setup = function(options)
   ---@type table<number, { topline: number, botline: number, bufnr: number, height: number; folded_lines: number }>
   local window_history = {}
   vim.api.nvim_set_decoration_provider(state.extmarks_namespace, {
-    on_win = vim.schedule_wrap(function(_, winid, bufnr, topline, botline)
+    on_win = function(_, winid, bufnr, topline, botline)
+      -- bail if decorator handling is disabled
       if state.disable_decorator_handling then return false end
+
+      -- bail if not in normal mode, there's a weird behavior where in visual mode this callback gets called CONTINUOUSLY
+      if vim.api.nvim_get_mode().mode ~= "n" then return false end
 
       if not vim.api.nvim_win_is_valid(winid) then return false end
       if not vim.api.nvim_buf_is_valid(bufnr) then return false end
+
+      -- bail if there are no images tied to this window and buffer pair
+      local images = api.get_images({ window = winid, buffer = bufnr })
+      if #images == 0 then return false end
 
       -- get current window
       local window = nil
@@ -106,18 +114,19 @@ api.setup = function(options)
 
       -- toggle images in overlapped windows
       if state.options.window_overlap_clear_enabled then
-        for _, current_window in ipairs(windows) do
-          local images = api.get_images({ window = current_window.id, buffer = bufnr })
-          if #current_window.masks > 0 then
-            for _, current_image in ipairs(images) do
-              current_image:clear(true)
-            end
-          else
-            for _, current_image in ipairs(images) do
-              current_image:render()
+        vim.schedule(function()
+          for _, current_window in ipairs(windows) do
+            if #current_window.masks > 0 then
+              for _, current_image in ipairs(images) do
+                current_image:clear(true)
+              end
+            else
+              for _, current_image in ipairs(images) do
+                if not current_image.is_rendered then current_image:render() end
+              end
             end
           end
-        end
+        end)
       end
 
       -- all handling below is only for non-floating windows
@@ -126,11 +135,6 @@ api.setup = function(options)
       -- get history entry or init
       local prev = window_history[winid]
       if not prev then
-        -- new window, rerender all existing images
-        local images = api.get_images()
-        for _, current_image in ipairs(images) do
-          current_image:render()
-        end
         window_history[winid] = { topline = topline, botline = botline, bufnr = bufnr }
         return false
       end
@@ -165,23 +169,20 @@ api.setup = function(options)
 
       -- execute deferred clear / rerender
       -- utils.debug("needs_clear", needs_clear, "needs_rerender", needs_rerender)
-      local images = (needs_clear and api.get_images({ window = winid, buffer = prev.bufnr }))
-        or (needs_rerender and api.get_images({ window = winid, buffer = bufnr }))
-        or {}
-      vim.defer_fn(function()
+      vim.schedule(function()
         if needs_clear then
-          for _, curr in ipairs(images) do
+          for _, curr in ipairs(api.get_images({ window = winid, buffer = prev.bufnr })) do
             curr:clear(true)
           end
         else
-          for _, curr in ipairs(images) do
+          for _, curr in ipairs(api.get_images({ window = winid, buffer = bufnr })) do
             curr:render()
           end
         end
-      end, 0)
+      end)
 
       return false
-    end),
+    end,
   })
 
   -- setup autocommands
