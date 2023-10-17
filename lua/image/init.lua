@@ -174,7 +174,7 @@ api.setup = function(options)
           for _, curr in ipairs(api.get_images({ window = winid, buffer = prev.bufnr })) do
             curr:clear(true)
           end
-        else
+        elseif needs_rerender then
           for _, curr in ipairs(api.get_images({ window = winid, buffer = bufnr })) do
             curr:render()
           end
@@ -188,16 +188,15 @@ api.setup = function(options)
   -- setup autocommands
   local group = vim.api.nvim_create_augroup("image.nvim", { clear = true })
 
-  -- auto-clear on window close
-  vim.api.nvim_create_autocmd("WinClosed", {
+  -- auto-clear on buffer / window close
+  vim.api.nvim_create_autocmd("BufLeave", {
     group = group,
     callback = function() -- auto-clear images when windows and buffers change
       vim.schedule(function()
         local images = api.get_images()
         for _, current_image in ipairs(images) do
           local ok, is_valid = pcall(vim.api.nvim_win_is_valid, current_image.window)
-          if not ok then return end
-          if is_valid then
+          if ok and is_valid then
             current_image:render()
           else
             current_image:clear()
