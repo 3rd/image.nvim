@@ -249,7 +249,7 @@ local render = function(image)
     else
       state.images[image.id] = image
     end
-    return true
+    return false
   end
 
   -- compute final geometry and prevent useless rerendering

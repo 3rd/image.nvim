@@ -35,26 +35,19 @@ function Image:render(geometry)
 
   -- utils.debug( ("[image] render: %s, success: %s x: %s, y: %s, width: %s, height: %s"):format( self.id, was_rendered, self.geometry.x, self.geometry.y, self.geometry.width, self.geometry.height))
 
-  -- clear if render was prevented
-  if self.is_rendered and not was_rendered then self.global_state.backend.clear(self.id, true) end
+  -- clear if already rendered but rendering this should be prevented
+  if self.is_rendered and not was_rendered then
+    self.global_state.backend.clear(self.id, true)
+    return
+  end
 
   -- virtual padding
-  if self.buffer and self.with_virtual_padding then
+  if was_rendered and self.buffer and self.with_virtual_padding then
     local row = self.geometry.y
-    local width = self.rendered_geometry.width or 1
-    local height = self.rendered_geometry.height or 1
+    local height = self.rendered_geometry.height
 
-    local previous_extmark = buf_extmark_map[self.buffer .. ":" .. row]
-
-    -- clear previous extmark if rendering was prevented
-    if not was_rendered and previous_extmark then
-      -- utils.debug(("(image.render) clearing extmark %s"):format(previous_extmark.id))
-      if vim.api.nvim_buf_is_valid(self.buffer) then
-        vim.api.nvim_buf_del_extmark(self.buffer, self.global_state.extmarks_namespace, previous_extmark.id)
-      end
-      buf_extmark_map[self.buffer .. ":" .. row] = nil
-      return
-    end
+    local extmark_key = self.buffer .. ":" .. row
+    local previous_extmark = buf_extmark_map[extmark_key]
 
     -- create extmark
     if was_rendered then
@@ -64,12 +57,12 @@ function Image:render(geometry)
         if previous_extmark ~= nil then
           -- utils.debug(("(image.render) clearing extmark %s"):format(previous_extmark.id))
           vim.api.nvim_buf_del_extmark(self.buffer, self.global_state.extmarks_namespace, previous_extmark.id)
+          buf_extmark_map[extmark_key] = nil
         end
 
-        local text = string.rep(" ", width)
         local filler = {}
         for _ = 0, height - 1 do
-          filler[#filler + 1] = { { text, "" } }
+          filler[#filler + 1] = { { " ", "" } }
         end
 
         -- utils.debug(("(image.render) creating extmark %s"):format(self.internal_id))
@@ -84,7 +77,7 @@ function Image:render(geometry)
             virt_lines = filler,
           }
         )
-        if ok then buf_extmark_map[self.buffer .. ":" .. row] = { id = self.internal_id, height = height } end
+        if ok then buf_extmark_map[extmark_key] = { id = self.internal_id, height = height } end
       end
     end
 
@@ -115,6 +108,7 @@ end
 function Image:clear(shallow)
   -- utils.debug(("[image] clear %s, shallow: %s"):format(self.id, shallow))
   self.global_state.backend.clear(self.id, shallow or false)
+
   self.rendered_geometry = {
     x = nil,
     y = nil,

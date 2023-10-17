@@ -24,6 +24,7 @@ return document.create_document_integration({
       local key = query.captures[id]
       local value = vim.treesitter.get_node_text(node, buf)
 
+      -- TODO: fix node:range() taking into account the extmarks for SOME FKING REASON
       if key == "image" then
         local start_row, start_col, end_row, end_col = node:range()
         current_image = {
