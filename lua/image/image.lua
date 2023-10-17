@@ -48,6 +48,7 @@ function Image:render(geometry)
 
     -- clear previous extmark if rendering was prevented
     if not was_rendered and previous_extmark then
+      -- utils.debug(("(image.render) clearing extmark %s"):format(previous_extmark.id))
       if vim.api.nvim_buf_is_valid(self.buffer) then
         vim.api.nvim_buf_del_extmark(self.buffer, self.global_state.extmarks_namespace, previous_extmark.id)
       end
@@ -61,6 +62,7 @@ function Image:render(geometry)
 
       if not has_up_to_date_extmark then
         if previous_extmark ~= nil then
+          -- utils.debug(("(image.render) clearing extmark %s"):format(previous_extmark.id))
           vim.api.nvim_buf_del_extmark(self.buffer, self.global_state.extmarks_namespace, previous_extmark.id)
         end
 
@@ -69,8 +71,8 @@ function Image:render(geometry)
         for _ = 0, height - 1 do
           filler[#filler + 1] = { { text, "" } }
         end
-        vim.api.nvim_buf_set_extmark(self.buffer, self.global_state.extmarks_namespace, row > 0 and row - 1 or 0, 0, {
 
+        -- utils.debug(("(image.render) creating extmark %s"):format(self.internal_id))
         local ok = pcall(
           vim.api.nvim_buf_set_extmark,
           self.buffer,
