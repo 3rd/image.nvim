@@ -70,10 +70,19 @@ function Image:render(geometry)
           filler[#filler + 1] = { { text, "" } }
         end
         vim.api.nvim_buf_set_extmark(self.buffer, self.global_state.extmarks_namespace, row > 0 and row - 1 or 0, 0, {
-          id = self.internal_id,
-          virt_lines = filler,
-        })
-        buf_extmark_map[self.buffer .. ":" .. row] = { id = self.internal_id, height = height }
+
+        local ok = pcall(
+          vim.api.nvim_buf_set_extmark,
+          self.buffer,
+          self.global_state.extmarks_namespace,
+          row > 0 and row - 1 or 0,
+          0,
+          {
+            id = self.internal_id,
+            virt_lines = filler,
+          }
+        )
+        if ok then buf_extmark_map[self.buffer .. ":" .. row] = { id = self.internal_id, height = height } end
       end
     end
 
