@@ -189,7 +189,7 @@ api.setup = function(options)
   local group = vim.api.nvim_create_augroup("image.nvim", { clear = true })
 
   -- auto-clear on buffer / window close
-  vim.api.nvim_create_autocmd("BufLeave", {
+  vim.api.nvim_create_autocmd({ "BufLeave", "WinClosed" }, {
     group = group,
     callback = function() -- auto-clear images when windows and buffers change
       vim.schedule(function()
