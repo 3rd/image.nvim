@@ -131,7 +131,7 @@ local create_document_integration = function(config)
       callback = function(args)
         if not has_valid_filetype(ctx, vim.bo[args.buf].filetype) then return end
         if args.event == "TextChangedI" and ctx.options.clear_in_insert_mode then return end
-        if args.event == "TextChanged" then render(ctx) end
+        render(ctx)
       end,
     })
 
