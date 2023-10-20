@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.1.0](https://github.com/3rd/image.nvim/compare/v1.0.0...v1.1.0) (2023-10-20)
+
+
+### Features
+
+* add editor_only_render_when_focused option ([133926c](https://github.com/3rd/image.nvim/commit/133926c01bb5160b6ff26c37891e7d8a1d73528f))
+* add tmux_show_only_in_active_window option ([60d7fc6](https://github.com/3rd/image.nvim/commit/60d7fc61ff41ca9951101c245505b3a03e3eb8cb))
+* auto-handle hiding/showing the images on tmux window switch ([3fbe47d](https://github.com/3rd/image.nvim/commit/3fbe47d7e1b5d18eff5fb118ee232047ac3f823d))
+
+
+### Bug Fixes
+
+* better text change handling using nvim_buf_attach ([33f7234](https://github.com/3rd/image.nvim/commit/33f72342df52af2864ec6e4a14099267cdc01b61))
+* bug causing double extmark clearing weirdness ([a3e0b9f](https://github.com/3rd/image.nvim/commit/a3e0b9f0395f32d6e6c1fd8a032600ab07f8ff2b))
+* clear / rerender images on BufLeave ([471eca9](https://github.com/3rd/image.nvim/commit/471eca9a895e065a16761f708ba46911987516d1))
+* clear images when closing a twin window ([bd95cc9](https://github.com/3rd/image.nvim/commit/bd95cc9c13ae61b8e2453a0234250ea782b84ce7))
+* commit error ([aa3004e](https://github.com/3rd/image.nvim/commit/aa3004e3e695f16166cd6c866e25a0a9ea1a51da))
+* disable decoration provider handling on focus lost (when needed) ([725eccb](https://github.com/3rd/image.nvim/commit/725eccb7f50c82c9b028b3fbb461b0d2b198ef01))
+* document integrations shouldn't care about resizing ([7234469](https://github.com/3rd/image.nvim/commit/7234469ce44dca9d3a3124c17daea0e9810f0ff9))
+* **document:** queue images for rendering after clearing the old ones ([ae351ca](https://github.com/3rd/image.nvim/commit/ae351ca5134450b64d81e02c3d57580016b1a40b))
+* **document:** rerender images when text changes in insert mode ([fb929d0](https://github.com/3rd/image.nvim/commit/fb929d0fd5a0db2983c1ad0c537e4f063ef06c45))
+* guard against extmark creation errors in decoration provider ([9bf46c1](https://github.com/3rd/image.nvim/commit/9bf46c14fa1b3318e99213df5ec01272584a5010))
+* plugin breaking visual mode actions and decorator optimizations ([440aee9](https://github.com/3rd/image.nvim/commit/440aee9071697b5ac1ac2e69a61c1187311c2cce))
+* rendering width/height inference bug ([6e597f8](https://github.com/3rd/image.nvim/commit/6e597f84b5242e18133627c26743bcd0734de1ca))
+* tmux same-window check ([2db85d0](https://github.com/3rd/image.nvim/commit/2db85d0b84dffde074622be1989a4d234b307577))
+
 ## 1.0.0 (2023-10-08)
 
 
