@@ -12,6 +12,7 @@ https://github.com/3rd/image.nvim/assets/59587503/9a9a1792-6476-4d96-8b8e-d3cdd7
 ## Requirements
 
 These are things you have to setup on your own:
+
 - [ImageMagick](https://github.com/ImageMagick/ImageMagick) - mandatory
 - [magick LuaRock](https://github.com/leafo/magick) - mandatory (`luarocks --local install magick` or through your [package manager](https://github.com/vhyrro/hologram.nvim#install))
 - [Kitty](https://sw.kovidgoyal.net/kitty/) >= 28.0 - for the `kitty` backend
@@ -28,7 +29,7 @@ package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/shar
 
 **NixOS** users need to install `imageMagick` and `luajitPackages.magick` ([thanks](https://github.com/NixOS/nixpkgs/pull/243687) to [@donovanglover](https://github.com/donovanglover)).
 \
-If you don't want to deal with setting up LuaRocks, you can just build your Neovim with the rock installed:
+If you don't want to deal with setting up LuaRocks, you can build your Neovim with the rock installed:
 
 <details>
 <summary>With home-manager (thanks @wuliuqii https://github.com/3rd/image.nvim/issues/13)</summary>
@@ -50,6 +51,7 @@ If you don't want to deal with setting up LuaRocks, you can just build your Neov
   };
 }
 ```
+
 </details>
 
 <details>
@@ -81,6 +83,7 @@ in {
   environment.systemPackages = with pkgs; [ neovim-custom ];
 }
 ```
+
 </details>
 
 ## Configuration
@@ -129,14 +132,13 @@ Download [minimal-setup.lua](./minimal-setup.lua) from the root of this reposito
 nvim --clean -c ":luafile minimal-setup.lua"
 ```
 
-
 ### Backends
 
 All the backends support rendering inside Tmux.
 
 - `kitty` - best in class, works great and is very snappy
 - `ueberzug` - backed by [ueberzugpp](https://github.com/jstkdng/ueberzugpp), supports any terminal, but has lower performance
-    - Supports multiple images thanks to [@jstkdng](https://github.com/jstkdng/ueberzugpp/issues/74).
+  - Supports multiple images thanks to [@jstkdng](https://github.com/jstkdng/ueberzugpp/issues/74).
 
 ### Integrations
 
@@ -182,10 +184,11 @@ image:hue(value) -- change hue
 
 ### Thanks
 
-- [@edluffy](https://github.com/edluffy) for [hologram.nvim](https://github.com/edluffy/hologram.nvim) - of which I borrowed a lot of code.
-- [@vhyrro](https://github.com/vhyrro) for his great ideas and [hologram.nvim fork](https://github.com/vhyrro/hologram.nvim) changes.
-- [@kovidgoyal](https://github.com/kovidgoyal) for [Kitty](https://github.com/kovidgoyal/kitty) - the program I spend most of my time in.
-- [@jstkdng](https://github.com/jstkdng) for [ueberzugpp](https://github.com/jstkdng/ueberzugpp) - the revived version of ueberzug.
+- [@benlubas](https://github.com/benlubas) for their countless amazing contributions
+- [@edluffy](https://github.com/edluffy) for [hologram.nvim](https://github.com/edluffy/hologram.nvim) - of which I borrowed a lot of code
+- [@vhyrro](https://github.com/vhyrro) for their great ideas and [hologram.nvim fork](https://github.com/vhyrro/hologram.nvim) changes
+- [@kovidgoyal](https://github.com/kovidgoyal) for [Kitty](https://github.com/kovidgoyal/kitty) - the program I spend most of my time in
+- [@jstkdng](https://github.com/jstkdng) for [ueberzugpp](https://github.com/jstkdng/ueberzugpp) - the revived version of ueberzug
 
 ### The story behind
 
@@ -198,7 +201,7 @@ I kept working on my [syntax](https://github.com/3rd/syslang) over the years, re
 that I use for all my needs, from second braining to managing my tasks and time.
 It's helped me control my ADHD and be productive long before I was diagnosed, and it's still helping me be so much better than I'd be without it today.
 
-One thing Emacs and Org-mode had that I liked was the ability to embed images in the document. Of course, we don't *"need"* it, but... I really wanted to have images in my documents.
+One thing Emacs and Org-mode had that I liked was the ability to embed images in the document. Of course, we don't _"need"_ it, but... I really wanted to have images in my documents.
 
 About 3 years ago, I made my [first attempt](https://www.reddit.com/r/neovim/comments/ieh7l4/im_building_an_image_plugin_and_need_some_help/) at solving this problem but didn't get far.
 If you have similar interests, you might have seen the [vimage.nvim demo video](https://www.youtube.com/watch?v=cnt9mPOjrLg) on YouTube.
