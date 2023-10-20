@@ -116,12 +116,13 @@ api.setup = function(options)
       if state.options.window_overlap_clear_enabled then
         vim.schedule(function()
           for _, current_window in ipairs(windows) do
+            local cur_win_images = api.get_images({ window = current_window.id, buffer = bufnr })
             if #current_window.masks > 0 then
-              for _, current_image in ipairs(images) do
+              for _, current_image in ipairs(cur_win_images) do
                 current_image:clear(true)
               end
             else
-              for _, current_image in ipairs(images) do
+              for _, current_image in ipairs(cur_win_images) do
                 if not current_image.is_rendered then current_image:render() end
               end
             end
