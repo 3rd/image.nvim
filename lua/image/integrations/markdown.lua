@@ -14,6 +14,7 @@ return document.create_document_integration({
 
     local lang = vim.treesitter.language.get_lang(vim.bo[buf].filetype) or vim.bo[buf].filetype
     local parser = vim.treesitter.get_parser(buf, lang)
+    parser:parse(true)
     local inline_lang = "markdown_inline"
     local inlines = parser:children()[inline_lang]
     local inline_query = vim.treesitter.query.parse(inline_lang, "(image (link_destination) @url) @image")
