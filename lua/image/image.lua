@@ -244,13 +244,26 @@ local from_file = function(path, options, state)
 
   -- convert non-png images to png and read the dimensions
   local source_path = absolute_path
-  local magick_image = magick.load_image(absolute_path)
-  if not magick_image then error(("image.nvim: magick failed to load image: %s"):format(absolute_path)) end
-  if magick_image:get_format():lower() ~= "png" then
-    magick_image:set_format("png")
-    source_path = state.tmp_dir .. "/" .. utils.base64.encode(id) .. "-source.png"
-    magick_image:write(source_path)
+  local converted_path = state.tmp_dir .. "/" .. utils.base64.encode(id) .. "-source.png"
+  local magick_image = nil
+
+  -- case 1: non-png, already converted
+  if vim.fn.filereadable(converted_path) == 1 and vim.fn.getftime(converted_path) > vim.fn.getftime(absolute_path) then
+    magick_image = magick.load_image(converted_path)
+    source_path = converted_path
+  else
+    -- case 2: png
+    magick_image = magick.load_image(absolute_path)
+
+    -- case 3: non-png, not converted
+    if magick_image:get_format():lower() ~= "png" then
+      magick_image:set_format("png")
+      magick_image:write(converted_path)
+      source_path = converted_path
+    end
   end
+
+  if not magick_image then error(("image.nvim: magick failed to load image: %s"):format(absolute_path)) end
   local image_width = magick_image:get_width()
   local image_height = magick_image:get_height()
   magick_image:destroy()
