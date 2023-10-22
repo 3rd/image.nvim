@@ -19,6 +19,8 @@ return document.create_document_integration({
     local inlines = parser:children()[inline_lang]
     local inline_query = vim.treesitter.query.parse(inline_lang, "(image (link_destination) @url) @image")
 
+    if not inlines then return {} end
+
     local images = {}
     local function get_inline_images(tree)
       local root = tree:root()
