@@ -86,36 +86,16 @@ api.setup = function(options)
       if not vim.api.nvim_win_is_valid(winid) then return false end
       if not vim.api.nvim_buf_is_valid(bufnr) then return false end
 
-      -- bail if there are no images tied to this window and buffer pair
-      local images = api.get_images({ window = winid, buffer = bufnr })
-      if #images == 0 then return false end
-
-      -- get current window
-      local window = nil
-      local windows = {}
-      if state.options.window_overlap_clear_enabled then
-        windows = utils.window.get_windows({
-          normal = true,
-          floating = true,
-          with_masks = state.options.window_overlap_clear_enabled,
-          ignore_masking_filetypes = state.options.window_overlap_clear_ft_ignore,
-        })
-        for _, w in ipairs(windows) do
-          if w.id == winid then
-            window = w
-            break
-          end
-        end
-      else
-        window = utils.window.get_window(winid)
-      end
-
-      -- utils.debug("on_win", { winid = winid, bufnr = bufnr })
-      if not window then return false end
-
       -- toggle images in overlapped windows
       if state.options.window_overlap_clear_enabled then
         vim.schedule(function()
+          local windows = utils.window.get_windows({
+            normal = true,
+            floating = true,
+            with_masks = true,
+            ignore_masking_filetypes = state.options.window_overlap_clear_ft_ignore,
+          })
+
           for _, current_window in ipairs(windows) do
             local cur_win_images = api.get_images({ window = current_window.id, buffer = bufnr })
             if #current_window.masks > 0 then
@@ -131,8 +111,13 @@ api.setup = function(options)
         end)
       end
 
-      -- all handling below is only for non-floating windows
-      if window.is_floating then return false end
+      -- bail if there are no images tied to this window and buffer pair
+      local images = api.get_images({ window = winid, buffer = bufnr })
+      if #images == 0 then return false end
+
+      -- get current window
+      local window = utils.window.get_window(winid)
+      if not window then return false end
 
       -- get history entry or init
       local prev = window_history[winid]
