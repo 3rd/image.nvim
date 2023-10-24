@@ -39,6 +39,7 @@ local state = {
   remote_cache = {},
   tmp_dir = vim.fn.tempname(),
   disable_decorator_handling = false,
+  hijacked_win_buf_images = {},
 }
 
 ---@type API
@@ -255,8 +256,6 @@ api.setup = function(options)
 
   -- hijack image filetypes
   if state.options.hijack_file_patterns and #state.options.hijack_file_patterns > 0 then
-    local hijacked_win_buf_pairs = {}
-
     vim.api.nvim_create_autocmd({ "BufRead", "WinEnter" }, {
       group = group,
       pattern = state.options.hijack_file_patterns,
@@ -265,22 +264,7 @@ api.setup = function(options)
         local win = vim.api.nvim_get_current_win()
         local path = vim.api.nvim_buf_get_name(buf)
 
-        local key = ("%s:%s"):format(win, buf)
-        if hijacked_win_buf_pairs[key] then return end
-        hijacked_win_buf_pairs[key] = true
-
-        vim.bo[buf].modifiable = true
-        vim.api.nvim_buf_set_lines(buf, 0, -1, true, { "" })
-
-        vim.bo[buf].modifiable = false
-        vim.bo[buf].buftype = "nowrite"
-        vim.opt_local.colorcolumn = "0"
-        vim.opt_local.cursorline = false
-        vim.opt_local.number = false
-        vim.opt_local.signcolumn = "no"
-
-        local img = api.from_file(path, { window = win, buffer = buf })
-        img:render()
+        api.hijack_buffer(path, win, buf)
       end,
     })
   end
@@ -288,6 +272,39 @@ end
 
 local guard_setup = function()
   if not state.backend then utils.throw("image.nvim is not setup. Call setup() first.") end
+end
+
+---@param path string
+---@param win number? if nil or 0, uses current window
+---@param buf number? if nil or 0, uses current buffer
+---@param options ImageOptions?
+api.hijack_buffer = function(path, win, buf, options)
+  if not win or win == 0 then win = vim.api.nvim_get_current_win() end
+  if not buf or buf == 0 then buf = vim.api.nvim_get_current_buf() end
+
+  local key = ("%s:%s"):format(win, buf)
+  if state.hijacked_win_buf_images[key] then return state.hijacked_win_buf_images[key] end
+
+  vim.bo[buf].modifiable = true
+  vim.api.nvim_buf_set_lines(buf, 0, -1, true, { "" })
+
+  vim.bo[buf].modifiable = false
+  vim.bo[buf].buftype = "nowrite"
+  vim.bo[buf].filetype = "image_nvim"
+  vim.opt_local.colorcolumn = "0"
+  vim.opt_local.cursorline = false
+  vim.opt_local.number = false
+  vim.opt_local.signcolumn = "no"
+
+  local opts = options or {}
+  opts.window = win
+  opts.buffer = buf
+
+  local img = api.from_file(path, opts)
+  img:render()
+
+  state.hijacked_win_buf_images[key] = img
+  return img
 end
 
 ---@param path string

@@ -6,6 +6,7 @@
 ---@field from_url fun(url: string, options?: ImageOptions, callback: fun(image: Image|nil))
 ---@field clear fun(id?: string)
 ---@field get_images fun(opts?: { window?: number, buffer?: number }): Image[]
+---@field hijack_buffer fun(path: string, window?: number, buffer?: number, options?: ImageOptions): Image|nil
 
 ---@class State
 ---@field backend Backend
@@ -15,6 +16,7 @@
 ---@field remote_cache { [string]: string }
 ---@field tmp_dir string
 ---@field disable_decorator_handling boolean
+---@field hijacked_win_buf_images { [string]: Image }
 
 ---@class DocumentIntegrationOptions
 ---@field enabled? boolean
