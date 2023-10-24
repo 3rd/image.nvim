@@ -58,4 +58,22 @@ end
 return {
   create_logger = create_logger,
   default_log_formatter = default_log_formatter,
+  log = create_logger({
+    prefix = "[image.nvim]",
+    formatter = default_log_formatter,
+    handler = print,
+    output_file = "/tmp/nvim-image.txt",
+  }),
+  throw = create_logger({
+    prefix = "[image.nvim]",
+    formatter = default_log_formatter,
+    handler = error,
+    output_file = "/tmp/nvim-image.txt",
+  }),
+  debug = create_logger({
+    prefix = "[image.nvim]",
+    formatter = default_log_formatter,
+    handler = nil,
+    output_file = "/tmp/nvim-image.txt",
+  }),
 }

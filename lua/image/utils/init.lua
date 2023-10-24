@@ -7,31 +7,10 @@ local math = require("image/utils/math")
 local offsets = require("image/utils/offsets")
 local tmux = require("image/utils/tmux")
 
-local log = logger.create_logger({
-  prefix = "[image.nvim]",
-  formatter = logger.default_log_formatter,
-  handler = print,
-  output_file = "/tmp/nvim-image.txt",
-})
-
-local throw = logger.create_logger({
-  prefix = "[image.nvim]",
-  formatter = logger.default_log_formatter,
-  handler = error,
-  output_file = "/tmp/nvim-image.txt",
-})
-
-local debug = logger.create_logger({
-  prefix = "[image.nvim]",
-  formatter = logger.default_log_formatter,
-  handler = nil,
-  output_file = "/tmp/nvim-image.txt",
-})
-
 return {
-  log = log,
-  throw = throw,
-  debug = debug,
+  log = logger.log,
+  throw = logger.throw,
+  debug = logger.debug,
   base64 = base64,
   random = random,
   window = window,
