@@ -254,28 +254,36 @@ api.setup = function(options)
   end
 
   -- hijack image filetypes
-  vim.api.nvim_create_autocmd({ "BufRead" }, {
-    group = group,
-    pattern = state.options.hijack_file_patterns,
-    callback = function(event)
-      local buf = event.buf
-      local win = vim.api.nvim_get_current_win()
-      local path = vim.api.nvim_buf_get_name(buf)
+  if state.options.hijack_file_patterns and #state.options.hijack_file_patterns > 0 then
+    local hijacked_win_buf_pairs = {}
 
-      vim.bo[buf].modifiable = true
-      vim.api.nvim_buf_set_lines(buf, 0, -1, true, { "" })
+    vim.api.nvim_create_autocmd({ "BufRead", "WinEnter" }, {
+      group = group,
+      pattern = state.options.hijack_file_patterns,
+      callback = function(event)
+        local buf = event.buf
+        local win = vim.api.nvim_get_current_win()
+        local path = vim.api.nvim_buf_get_name(buf)
 
-      vim.bo[buf].modifiable = false
-      vim.bo[buf].buftype = "nowrite"
-      vim.opt_local.colorcolumn = "0"
-      vim.opt_local.cursorline = false
-      vim.opt_local.number = false
-      vim.opt_local.signcolumn = "no"
+        local key = ("%s:%s"):format(win, buf)
+        if hijacked_win_buf_pairs[key] then return end
+        hijacked_win_buf_pairs[key] = true
 
-      local img = api.from_file(path, { window = win, buffer = buf })
-      img:render()
-    end,
-  })
+        vim.bo[buf].modifiable = true
+        vim.api.nvim_buf_set_lines(buf, 0, -1, true, { "" })
+
+        vim.bo[buf].modifiable = false
+        vim.bo[buf].buftype = "nowrite"
+        vim.opt_local.colorcolumn = "0"
+        vim.opt_local.cursorline = false
+        vim.opt_local.number = false
+        vim.opt_local.signcolumn = "no"
+
+        local img = api.from_file(path, { window = win, buffer = buf })
+        img:render()
+      end,
+    })
+  end
 end
 
 local guard_setup = function()
