@@ -11,12 +11,12 @@ local adjust_to_aspect_ratio = function(term_size, image_width, image_height, wi
   local percent_orig_height = pixel_height / image_height
 
   if width == 0 and height ~= 0 then
-    width = math.floor(height * aspect_ratio)
+    width = math.floor(pixel_height / term_size.cell_width * aspect_ratio)
     return width, height
   end
 
   if height == 0 and width ~= 0 then
-    height = math.floor(width / aspect_ratio)
+    height = math.floor(pixel_width / term_size.cell_height / aspect_ratio)
     return width, height
   end
 

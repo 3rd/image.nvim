@@ -17,7 +17,13 @@ local render = function(image)
   local image_rows = math.floor(image.image_height / term_size.cell_height)
   local image_columns = math.floor(image.image_width / term_size.cell_width)
 
-  -- utils.debug(("renderer.render() %s %d"):format(image.id, image.internal_id))
+  -- utils.debug(("renderer.render() %s"):format(image.id), {
+  --   id = image.id,
+  --   x = image.geometry.x,
+  --   y = image.geometry.y,
+  --   width = image.geometry.width,
+  --   height = image.geometry.height,
+  -- })
 
   local original_x = image.geometry.x or 0
   local original_y = image.geometry.y or 0
@@ -115,10 +121,11 @@ local render = function(image)
 
     -- global max window width/height percentage
     if type(state.options.max_width_window_percentage) == "number" then
-      width = math.min(width, math.floor(window.width * state.options.max_width_window_percentage / 100))
+      width = math.min(width, math.floor((window.width - x_offset) * state.options.max_width_window_percentage / 100))
     end
     if type(state.options.max_height_window_percentage) == "number" then
-      height = math.min(height, math.floor(window.height * state.options.max_height_window_percentage / 100))
+      height =
+        math.min(height, math.floor((window.height - y_offset) * state.options.max_height_window_percentage / 100))
     end
   end
 
@@ -254,6 +261,7 @@ local render = function(image)
 
   -- compute final geometry and prevent useless rerendering
   local rendered_geometry = { x = absolute_x, y = absolute_y, width = width, height = height }
+  -- utils.debug("rendered_geometry", rendered_geometry)
 
   -- handle crop/resize
   local pixel_width = width * term_size.cell_width

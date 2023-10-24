@@ -25,20 +25,6 @@ backend.setup = function(state)
 
   if state.options.kitty_method == "unicode-placeholders" then backend.features.crop = false end
 
-  vim.api.nvim_create_autocmd("VimResized", {
-    callback = function()
-      transmitted_images = {}
-      vim.defer_fn(function()
-        for _, image in pairs(backend.state.images) do
-          if image.is_rendered then
-            image.is_rendered = false
-            image:render()
-          end
-        end
-      end, 0)
-    end,
-  })
-
   vim.api.nvim_create_autocmd("VimLeavePre", {
     callback = function()
       backend.clear()

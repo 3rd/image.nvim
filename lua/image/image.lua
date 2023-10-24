@@ -33,7 +33,16 @@ function Image:render(geometry)
   -- utils.debug(("---------------- %s ----------------"):format(self.id))
   local was_rendered = renderer.render(self)
 
-  -- utils.debug( ("[image] render: %s, success: %s x: %s, y: %s, width: %s, height: %s"):format( self.id, was_rendered, self.geometry.x, self.geometry.y, self.geometry.width, self.geometry.height))
+  -- utils.debug(
+  --   ("[image] render: %s, success: %s x: %s, y: %s, width: %s, height: %s"):format(
+  --     self.id,
+  --     was_rendered,
+  --     self.geometry.x,
+  --     self.geometry.y,
+  --     self.geometry.width,
+  --     self.geometry.height
+  --   )
+  -- )
 
   -- clear if already rendered but rendering this should be prevented
   if self.is_rendered and not was_rendered then
