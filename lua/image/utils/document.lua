@@ -90,14 +90,15 @@ local create_document_integration = function(config)
 
         if is_remote_url(item.match.url) then
           if ctx.options.download_remote_images then
-            ctx.api.from_url(
-              item.match.url,
-              { id = item.id, window = item.window.id, buffer = item.window.buffer, with_virtual_padding = true },
-              function(image)
-                if not image then return end
-                render_image(image)
-              end
-            )
+            pcall(ctx.api.from_url, item.match.url, {
+              id = item.id,
+              window = item.window.id,
+              buffer = item.window.buffer,
+              with_virtual_padding = true,
+            }, function(image)
+              if not image then return end
+              render_image(image)
+            end)
           end
         else
           local path = resolve_absolute_path(item.file_path, item.match.url)
