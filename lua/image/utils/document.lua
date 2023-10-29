@@ -36,11 +36,7 @@ local create_document_integration = function(config)
   local render = vim.schedule_wrap(
     ---@param ctx IntegrationContext
     function(ctx)
-      local windows = utils.window.get_windows({
-        normal = true,
-        with_masks = ctx.state.options.window_overlap_clear_enabled,
-        ignore_masking_filetypes = ctx.state.options.window_overlap_clear_ft_ignore,
-      })
+      local windows = utils.window.get_windows({ normal = true })
 
       local image_queue = {}
 
@@ -119,9 +115,7 @@ local create_document_integration = function(config)
     if vim.tbl_contains(text_change_watched_buffers, buffer) then return end
     vim.api.nvim_buf_attach(buffer, false, {
       on_lines = function()
-        vim.schedule(function()
-          render(ctx)
-        end)
+        render(ctx)
       end,
     })
     table.insert(text_change_watched_buffers, buffer)

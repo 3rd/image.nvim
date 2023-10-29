@@ -1,6 +1,6 @@
-local utils = require("image/utils")
 local codes = require("image/backends/kitty/codes")
 local helpers = require("image/backends/kitty/helpers")
+local utils = require("image/utils")
 
 local editor_tty = utils.term.get_tty()
 
@@ -151,15 +151,17 @@ backend.clear = function(image_id, shallow)
   if image_id then
     local image = backend.state.images[image_id]
     if not image then return end
-    if not image.is_rendered then return end
 
-    helpers.write_graphics({
-      action = codes.control.action.delete,
-      display_delete = "i",
-      image_id = image.internal_id,
-      quiet = 2,
-      tty = get_clear_tty_override(),
-    })
+    if image.is_rendered then
+      helpers.write_graphics({
+        action = codes.control.action.delete,
+        display_delete = "i",
+        image_id = image.internal_id,
+        quiet = 2,
+        tty = get_clear_tty_override(),
+      })
+    end
+
     image.is_rendered = false
     if not shallow then
       backend.state.images[image_id] = nil
