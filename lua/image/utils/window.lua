@@ -1,3 +1,5 @@
+local debug = require("image.utils.logger").debug
+
 ---@param opts { normal: boolean, floating: boolean, with_masks: boolean, ignore_masking_filetypes: string[] }
 ---@return Window[]
 local get_windows = function(opts)
@@ -50,30 +52,29 @@ local get_windows = function(opts)
       if not window.is_normal then goto continue end
 
       for _, other_window in ipairs(windows) do
-        if window.id == other_window.id then goto continue_inner end
-        if not other_window.is_floating then goto continue_inner end
+        if window.id == other_window.id or not other_window.is_floating then goto continue_inner end
         if vim.tbl_contains(ignore_masking_filetypes, other_window.buffer_filetype) then goto continue_inner end
 
-        local is_overlapping = (
-          other_window.zindex > window.zindex
-          and other_window.rect.left < window.rect.right
-          and other_window.rect.right > window.rect.left
-          and other_window.rect.top < window.rect.bottom
-          and other_window.rect.bottom > window.rect.top
-        )
-        if is_overlapping then
+        debug("comparing windows", ("\n  %s\n  %s"):format(vim.inspect(window), vim.inspect(other_window)))
+
+        local left = math.max(window.rect.left, other_window.rect.left)
+        local right = math.min(window.rect.right, other_window.rect.right)
+        local top = math.max(window.rect.top, other_window.rect.top)
+        local bottom = math.min(window.rect.bottom, other_window.rect.bottom)
+
+        if other_window.zindex > window.zindex and left < right and top < bottom then
           table.insert(masks, {
-            x = other_window.rect.left - window.rect.left,
-            y = other_window.rect.top - window.rect.top,
-            width = other_window.width - (other_window.rect.left - window.rect.left),
-            height = other_window.height - (other_window.rect.top - window.rect.top),
+            x = left - window.rect.left,
+            y = top - window.rect.top,
+            width = right - left,
+            height = bottom - top,
           })
         end
+
         ::continue_inner::
       end
 
       for _, mask in ipairs(masks) do
-        -- flag fully-masked windows
         if mask.x == 0 and mask.y == 0 and mask.width == window.width and mask.height == window.height then
           window.is_visible = false
           goto continue

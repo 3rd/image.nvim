@@ -62,7 +62,9 @@ local render = function(image)
   width = math.min(width, term_size.screen_cols)
   height = math.min(height, term_size.screen_rows)
 
-  -- utils.debug(("(1) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset))
+  utils.debug(
+    ("(1) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset)
+  )
 
   if image.window ~= nil then
     -- bail if the window is invalid
@@ -76,10 +78,10 @@ local render = function(image)
     end
 
     -- bail if the window is not visible
-    if not window.is_visible then return false end
-
-    -- bail if the window is overlapped
-    if state.options.window_overlap_clear_enabled and #window.masks > 0 then return false end
+    if not window.is_visible then
+      utils.debug("window is not visible", image.id)
+      return false
+    end
 
     -- if the image is tied to a buffer the window must be displaying that buffer
     if image.buffer ~= nil and window.buffer ~= image.buffer then return false end
@@ -93,7 +95,7 @@ local render = function(image)
 
     -- bail if the image is inside a fold
     if image.buffer and is_folded then
-      -- utils.debug("image is inside a fold", image.id)
+      utils.debug("image is inside a fold", image.id)
       state.images[image.id] = image
       image:clear(true)
       return false
@@ -129,7 +131,9 @@ local render = function(image)
     end
   end
 
-  -- utils.debug(("(2) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset))
+  utils.debug(
+    ("(2) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset)
+  )
 
   -- global max width/height
   if type(state.options.max_width) == "number" then width = math.min(width, state.options.max_width) end
@@ -139,13 +143,25 @@ local render = function(image)
 
   if width <= 0 or height <= 0 then return false end
 
-  -- utils.debug(("(3) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset))
+  utils.debug(
+    ("(3) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset)
+  )
 
   local absolute_x = original_x + x_offset + window_offset_x
   local absolute_y = original_y + y_offset + window_offset_y
   local prevent_rendering = false
 
-  -- utils.debug(("(4) x: %d, y: %d, width: %d, height: %d y_offset: %d absolute_x: %d absolute_y: %d"):format( original_x, original_y, width, height, y_offset, absolute_x, absolute_y))
+  utils.debug(
+    ("(4) x: %d, y: %d, width: %d, height: %d y_offset: %d absolute_x: %d absolute_y: %d"):format(
+      original_x,
+      original_y,
+      width,
+      height,
+      y_offset,
+      absolute_x,
+      absolute_y
+    )
+  )
 
   if image.window and image.buffer then
     local win_info = vim.fn.getwininfo(image.window)[1]
@@ -251,7 +267,10 @@ local render = function(image)
     or absolute_x >= bounds.right
   then
     if image.is_rendered then
-      -- utils.debug("deleting out of bounds image", { id = image.id, x = absolute_x, y = absolute_y, width = width, height = height, bounds = bounds })
+      utils.debug(
+        "deleting out of bounds image",
+        { id = image.id, x = absolute_x, y = absolute_y, width = width, height = height, bounds = bounds }
+      )
       state.backend.clear(image.id, true)
     else
       state.images[image.id] = image
@@ -377,7 +396,7 @@ local render = function(image)
     and image.crop_hash == initial_crop_hash
     and image.resize_hash == initial_resize_hash
   then
-    -- utils.debug("skipping render", image.id)
+    utils.debug("skipping render", image.id)
     return true
   end
 

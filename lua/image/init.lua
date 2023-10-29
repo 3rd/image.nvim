@@ -99,13 +99,53 @@ api.setup = function(options)
 
           for _, current_window in ipairs(windows) do
             local cur_win_images = api.get_images({ window = current_window.id, buffer = bufnr })
-            if #current_window.masks > 0 then
-              for _, current_image in ipairs(cur_win_images) do
-                current_image:clear(true)
-              end
-            else
-              for _, current_image in ipairs(cur_win_images) do
-                if not current_image.is_rendered then current_image:render() end
+
+            for _, current_image in ipairs(cur_win_images) do
+              if current_image.is_rendered then
+                local is_overlapped = false
+
+                for _, mask in ipairs(current_window.masks) do
+                  utils.debug(
+                    "checkover window",
+                    current_window.id,
+                    ("rect top: %s, bottom: %s, left: %s, right: %s"):format(
+                      current_window.rect.top,
+                      current_window.rect.bottom,
+                      current_window.rect.left,
+                      current_window.rect.right
+                    )
+                  )
+
+                  if
+                    current_image.rendered_geometry.x < mask.x + mask.width
+                    and current_image.rendered_geometry.x + current_image.rendered_geometry.width > mask.x
+                    and current_image.rendered_geometry.y < mask.y + mask.height
+                    and current_image.rendered_geometry.y + current_image.rendered_geometry.height > mask.y
+                  then
+                    is_overlapped = true
+                    break
+                  end
+
+                  utils.debug(
+                    "check overlap",
+                    ("\n  image x: %s, y: %s, w: %s, h: %s"):format(
+                      current_image.rendered_geometry.x,
+                      current_image.rendered_geometry.y,
+                      current_image.rendered_geometry.width,
+                      current_image.rendered_geometry.height
+                    ),
+                    ("\n  mask  x: %s, y: %s, w: %s, h: %s"):format(mask.x, mask.y, mask.width, mask.height),
+                    ("\n  is_overlapped: %s"):format(is_overlapped)
+                  )
+                end
+
+                if is_overlapped and current_image.is_rendered then
+                  utils.debug("over clearing image", current_image.id)
+                  current_image:clear(true)
+                  -- elseif not is_overlapped and not current_image.is_rendered then
+                  --   utils.debug("over rendering image", current_image.id)
+                  --   current_image:render()
+                end
               end
             end
           end
