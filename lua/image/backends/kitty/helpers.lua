@@ -71,8 +71,14 @@ local write_graphics = function(config, data)
   control_payload = control_payload:sub(0, -2)
 
   if data then
-    if config.transmit_medium ~= codes.control.transmit_medium.direct then data = utils.base64.encode(data) end
+    if config.transmit_medium == codes.control.transmit_medium.direct then
+      local file = io.open(data,"rb")
+      data = file:read("*all")
+    end
+    data = utils.base64.encode(data):gsub("%-","/")
     local chunks = get_chunked(data)
+    local m = #chunks > 1 and 1 or 0
+    control_payload = control_payload .. ",m=" .. m
     for i = 1, #chunks do
       write("\x1b_G" .. control_payload .. ";" .. chunks[i] .. "\x1b\\", config.tty, true)
       if i == #chunks - 1 then
