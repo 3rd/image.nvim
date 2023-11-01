@@ -28,5 +28,7 @@ return {
   get_pane_id = create_dm_getter("pane_id"),
   get_pane_pid = create_dm_getter("pane_pid"),
   get_pane_tty = create_dm_getter("pane_tty"),
+  get_cursor_x = create_dm_getter("cursor_x"),
+  get_cursor_y = create_dm_getter("cursor_y"),
   escape = escape,
 }

@@ -22,9 +22,7 @@ local write = function(data, tty, escape)
 
   local payload = data
   if escape and utils.tmux.is_tmux then payload = utils.tmux.escape(data) end
-
   -- utils.debug("write:", vim.inspect(payload), tty)
-
   if tty then
     local handle = io.open(tty, "w")
     if not handle then error("failed to open tty") end
@@ -37,6 +35,12 @@ local write = function(data, tty, escape)
 end
 
 local move_cursor = function(x, y, save)
+  if utils.tmux.is_tmux then
+    -- When tmux is running over ssh, set-cursor sometimes doesn't actually get sent
+    -- I don't know why this fixes the issue...
+    local cx = utils.tmux.get_cursor_x()
+    local cy = utils.tmux.get_cursor_y()
+  end
   if save then write("\x1b[s") end
   write("\x1b[" .. y .. ";" .. x .. "H")
   vim.loop.sleep(1)
@@ -71,8 +75,14 @@ local write_graphics = function(config, data)
   control_payload = control_payload:sub(0, -2)
 
   if data then
-    if config.transmit_medium ~= codes.control.transmit_medium.direct then data = utils.base64.encode(data) end
+    if config.transmit_medium == codes.control.transmit_medium.direct then
+      local file = io.open(data,"rb")
+      data = file:read("*all")
+    end
+    data = utils.base64.encode(data):gsub("%-","/")
     local chunks = get_chunked(data)
+    local m = #chunks > 1 and 1 or 0
+    control_payload = control_payload .. ",m=" .. m
     for i = 1, #chunks do
       write("\x1b_G" .. control_payload .. ";" .. chunks[i] .. "\x1b\\", config.tty, true)
       if i == #chunks - 1 then
