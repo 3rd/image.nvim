@@ -34,6 +34,12 @@ end
 
 backend.render = function(image, x, y, width, height)
   local with_virtual_placeholders = backend.state.options.kitty_method == "unicode-placeholders"
+  local is_SSH = (vim.env.SSH_CLIENT ~= nil) or (vim.env.SSH_TTY ~= nil)
+  if is_SSH then
+    current_medium = codes.control.transmit_medium.direct
+  else
+    current_medium = codes.control.transmit_medium.file
+  end
 
   -- transmit image
   local transmit = function()
@@ -41,7 +47,7 @@ backend.render = function(image, x, y, width, height)
       action = codes.control.action.transmit,
       image_id = image.internal_id,
       transmit_format = codes.control.transmit_format.png,
-      transmit_medium = codes.control.transmit_medium.file,
+      transmit_medium = current_medium,
       display_cursor_policy = codes.control.display_cursor_policy.do_not_move,
       display_virtual_placeholder = with_virtual_placeholders and 1 or 0,
       quiet = 2,
