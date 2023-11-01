@@ -22,9 +22,7 @@ local write = function(data, tty, escape)
 
   local payload = data
   if escape and utils.tmux.is_tmux then payload = utils.tmux.escape(data) end
-
   -- utils.debug("write:", vim.inspect(payload), tty)
-
   if tty then
     local handle = io.open(tty, "w")
     if not handle then error("failed to open tty") end
@@ -37,6 +35,12 @@ local write = function(data, tty, escape)
 end
 
 local move_cursor = function(x, y, save)
+  if utils.tmux.is_tmux then
+    -- When tmux is running over ssh, set-cursor sometimes doesn't actually get sent
+    -- I don't know why this fixes the issue...
+    local cx = utils.tmux.get_cursor_x()
+    local cy = utils.tmux.get_cursor_y()
+  end
   if save then write("\x1b[s") end
   write("\x1b[" .. y .. ";" .. x .. "H")
   vim.loop.sleep(1)
