@@ -1,6 +1,6 @@
-local utils = require("image/utils")
 local image = require("image/image")
 local magick = require("image/magick")
+local utils = require("image/utils")
 
 ---@type Options
 local default_options = {
@@ -290,6 +290,7 @@ end
 ---@param win number? if nil or 0, uses current window
 ---@param buf number? if nil or 0, uses current buffer
 ---@param options ImageOptions?
+---@return Image|nil
 api.hijack_buffer = function(path, win, buf, options)
   if not win or win == 0 then win = vim.api.nvim_get_current_win() end
   if not buf or buf == 0 then buf = vim.api.nvim_get_current_buf() end
@@ -313,9 +314,12 @@ api.hijack_buffer = function(path, win, buf, options)
   opts.buffer = buf
 
   local img = api.from_file(path, opts)
-  img:render()
 
-  state.hijacked_win_buf_images[key] = img
+  if img then
+    img:render()
+    state.hijacked_win_buf_images[key] = img
+  end
+
   return img
 end
 

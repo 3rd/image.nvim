@@ -104,7 +104,7 @@ local create_document_integration = function(config)
             buffer = item.window.buffer,
             with_virtual_padding = true,
           })
-          if ok then render_image(image) end
+          if ok and image then render_image(image) end
         end
       end
     end

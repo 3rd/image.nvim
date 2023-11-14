@@ -1,6 +1,6 @@
-local utils = require("image/utils")
-local renderer = require("image/renderer")
 local magick = require("image/magick")
+local renderer = require("image/renderer")
+local utils = require("image/utils")
 
 -- { ["buf:row"]: { id, height } }
 ---@type table<string, { id: number, height: number }>
@@ -202,7 +202,7 @@ end
 ---@param path string
 ---@param options? ImageOptions
 ---@param state State
----@return Image
+---@return Image|nil
 local from_file = function(path, options, state)
   local opts = options or {}
 
@@ -213,6 +213,12 @@ local from_file = function(path, options, state)
 
   local absolute_path = vim.fn.fnamemodify(path, ":p")
   if not vim.loop.fs_stat(absolute_path) then utils.throw(("image.nvim: file not found: %s"):format(absolute_path)) end
+
+  -- bail if not an image
+  if not utils.magic.is_image(absolute_path) then
+    utils.debug(("image.nvim: not an image: %s"):format(absolute_path))
+    return nil
+  end
 
   -- bypass magick processing if already processed
   for _, instance in pairs(state.images) do
@@ -332,6 +338,7 @@ local from_url = function(url, options, callback, state)
         code = code,
         signal = signal,
       })
+      callback(nil)
     end
   end)
 

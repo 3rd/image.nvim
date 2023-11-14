@@ -2,7 +2,7 @@
 
 ---@class API
 ---@field setup fun(options?: Options)
----@field from_file fun(path: string, options?: ImageOptions): Image
+---@field from_file fun(path: string, options?: ImageOptions): Image|nil
 ---@field from_url fun(url: string, options?: ImageOptions, callback: fun(image: Image|nil))
 ---@field clear fun(id?: string)
 ---@field get_images fun(opts?: { window?: number, buffer?: number }): Image[]
