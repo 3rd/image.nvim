@@ -14,8 +14,14 @@ local backend = {
   },
 }
 
--- TODO: check for kitty
+-- index transmitted images, clear index on resize
 local transmitted_images = {}
+vim.api.nvim_create_autocmd("VimResized", {
+  callback = function()
+    transmitted_images = {}
+  end,
+})
+
 backend.setup = function(state)
   backend.state = state
   if utils.tmux.is_tmux and not utils.tmux.has_passthrough then
@@ -34,12 +40,11 @@ end
 
 backend.render = function(image, x, y, width, height)
   local with_virtual_placeholders = backend.state.options.kitty_method == "unicode-placeholders"
+
+  local transmit_medium = codes.control.transmit_medium.file
+
   local is_SSH = (vim.env.SSH_CLIENT ~= nil) or (vim.env.SSH_TTY ~= nil)
-  if is_SSH then
-    current_medium = codes.control.transmit_medium.direct
-  else
-    current_medium = codes.control.transmit_medium.file
-  end
+  if is_SSH then transmit_medium = codes.control.transmit_medium.direct end
 
   -- transmit image
   local transmit = function()
@@ -47,7 +52,7 @@ backend.render = function(image, x, y, width, height)
       action = codes.control.action.transmit,
       image_id = image.internal_id,
       transmit_format = codes.control.transmit_format.png,
-      transmit_medium = current_medium,
+      transmit_medium = transmit_medium,
       display_cursor_policy = codes.control.display_cursor_policy.do_not_move,
       display_virtual_placeholder = with_virtual_placeholders and 1 or 0,
       quiet = 2,
