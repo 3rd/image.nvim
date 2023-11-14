@@ -1,4 +1,21 @@
 local document = require("image/utils/document")
+local has_neorg = nil
+
+---Resolve workspace notation `$<workspace>/` with neorg if possible
+---@param path string
+local function maybe_parse_workspace_path(path)
+  if has_neorg ~= false and vim.startswith(path, "$") then
+    local ok, neorg = pcall(require, "neorg.core")
+    has_neorg = ok
+    if has_neorg then
+      local expanded_path = neorg.modules.get_module("core.dirman.utils").expand_path(path, true)
+      if expanded_path ~= nil then
+        return true, expanded_path -- successfully resolved workspace
+      end
+    end
+  end
+  return false, ""
+end
 
 return document.create_document_integration({
   name = "neorg",
@@ -32,6 +49,15 @@ return document.create_document_integration({
           range = { start_row = start_row, start_col = start_col, end_row = end_row, end_col = end_col },
           url = path,
         })
+
+        local ok, workspace_path = maybe_parse_workspace_path(path)
+        if ok and workspace_path ~= path then
+          table.insert(images, {
+            node = node,
+            range = { start_row = start_row, start_col = start_col, end_row = end_row, end_col = end_col },
+            url = workspace_path,
+          })
+        end
       end
     end
 
