@@ -209,7 +209,9 @@ local render = function(image)
 
           local offset = topfill
           for _, mark in ipairs(extmarks) do
-            if mark.row + 1 ~= original_y then offset = offset + mark.height end
+            if mark.row ~= original_y and mark.id ~= image:get_extmark_id() then
+              offset = offset + mark.height
+            end
           end
 
           absolute_y = absolute_y + offset

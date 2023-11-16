@@ -26,6 +26,15 @@ local createImage = function(template, global_state)
   return instance
 end
 
+---get the extmark id for the virtual padding for this image
+---@return number?
+function Image:get_extmark_id()
+  local extmark = buf_extmark_map[self.buffer .. ":" .. self.geometry.y]
+  if extmark then
+    return extmark.id
+  end
+end
+
 ---@param geometry? ImageGeometry
 function Image:render(geometry)
   if geometry then self.geometry = vim.tbl_deep_extend("force", self.geometry, geometry) end
