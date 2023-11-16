@@ -11,6 +11,8 @@ local sigs = {
   "\x66\x74\x79\x70", -- HEIC
   "\x2F\x2A\x20\x58\x50\x4D\x20\x2A\x2F", -- XPM
   "\x00\x00\x01\x00", -- ICO
+  "<svg", -- SVG
+  "<?xml", -- alternative SVG
 }
 
 ---@param path string
