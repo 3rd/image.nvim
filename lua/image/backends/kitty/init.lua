@@ -48,15 +48,16 @@ backend.render = function(image, x, y, width, height)
 
   -- transmit image
   local transmit = function()
-    helpers.write_graphics({
+    local transmit_payload = {
       action = codes.control.action.transmit,
       image_id = image.internal_id,
       transmit_format = codes.control.transmit_format.png,
       transmit_medium = transmit_medium,
       display_cursor_policy = codes.control.display_cursor_policy.do_not_move,
-      display_virtual_placeholder = with_virtual_placeholders and 1 or 0,
       quiet = 2,
-    }, image.cropped_path)
+    }
+    if with_virtual_placeholders then transmit_payload.display_virtual_placeholder = 1 end
+    helpers.write_graphics(transmit_payload, image.cropped_path)
     -- utils.debug("[kitty] transmitted image " .. image.id .. " (" .. image.internal_id .. ")")
   end
   if backend.features.crop then
