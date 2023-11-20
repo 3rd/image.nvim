@@ -159,6 +159,31 @@ local render = function(image)
       prevent_rendering = true
     end
 
+    -- folds
+    local offset = 0
+    local current_win = vim.api.nvim_get_current_win()
+    -- TODO: can this be done without switching windows?
+    vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. image.window .. ")")
+
+    local folded_ranges = {}
+    if vim.wo.foldenable then
+      local i = topline
+      while i <= original_y do
+        local fold_start, fold_end = vim.fn.foldclosed(i), vim.fn.foldclosedend(i)
+        if fold_start ~= -1 and fold_end ~= -1 then
+          -- utils.debug(("i: %d fold start: %d, fold end: %d"):format(i, fold_start, fold_end))
+          folded_ranges[fold_start] = fold_end
+          offset = offset + (fold_end - fold_start)
+          i = fold_end + 1
+        else
+          i = i + 1
+        end
+      end
+    end
+    vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. current_win .. ")")
+    -- utils.debug(("fold offset: %d"):format(offset))
+    absolute_y = absolute_y - offset
+
     -- extmark offsets
     if image.with_virtual_padding then
       -- bail if the image is above the top of the window at least by one line
@@ -207,40 +232,24 @@ local render = function(image)
             )
           )
 
-          local offset = topfill
+          local extmark_offset = topfill
           for _, mark in ipairs(extmarks) do
             if mark.row ~= original_y and mark.id ~= image:get_extmark_id() then
-              offset = offset + mark.height
+              -- check the mark is inside a fold, and skip adding the offset if it is
+              for fold_start, fold_end in pairs(folded_ranges) do
+                if mark.row >= fold_start and mark.row < fold_end then
+                  goto continue
+                end
+              end
+              extmark_offset = extmark_offset + mark.height
             end
+            ::continue::
           end
 
-          absolute_y = absolute_y + offset
+          absolute_y = absolute_y + extmark_offset
         end
       end
     end
-
-    -- folds
-    local offset = 0
-    local current_win = vim.api.nvim_get_current_win()
-    -- TODO: can this be done without switching windows?
-    vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. image.window .. ")")
-
-    if vim.wo.foldenable then
-      local i = topline
-      while i <= original_y do
-        local fold_start, fold_end = vim.fn.foldclosed(i), vim.fn.foldclosedend(i)
-        if fold_start ~= -1 and fold_end ~= -1 then
-          -- utils.debug(("i: %d fold start: %d, fold end: %d"):format(i, fold_start, fold_end))
-          offset = offset + (fold_end - fold_start)
-          i = fold_end + 1
-        else
-          i = i + 1
-        end
-      end
-    end
-    vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. current_win .. ")")
-    -- utils.debug(("fold offset: %d"):format(offset))
-    absolute_y = absolute_y - offset
   end
 
   if prevent_rendering then absolute_y = -math.huge end
