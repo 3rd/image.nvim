@@ -234,7 +234,10 @@ local render = function(image)
 
           local extmark_offset = topfill
           for _, mark in ipairs(extmarks) do
-            if mark.row ~= original_y and mark.id ~= image:get_extmark_id() then
+            -- Break if we've reached the image's extmark, don't adjust for extmarks on the same
+            -- physical line but below the image's extmark
+            if mark.id == image:get_extmark_id() then break end
+            if mark.row ~= original_y then
               -- check the mark is inside a fold, and skip adding the offset if it is
               for fold_start, fold_end in pairs(folded_ranges) do
                 if mark.row >= fold_start and mark.row < fold_end then
