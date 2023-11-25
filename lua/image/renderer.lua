@@ -132,9 +132,9 @@ local render = function(image)
     end
   end
 
-  utils.debug(
-    ("(2) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset)
-  )
+  -- utils.debug(
+  --   ("(2) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset)
+  -- )
 
   -- global max width/height
   if type(state.options.max_width) == "number" then width = math.min(width, state.options.max_width) end
