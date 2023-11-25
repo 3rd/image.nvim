@@ -1,8 +1,10 @@
-local utils = require("image/utils")
 local codes = require("image/backends/kitty/codes")
+local utils = require("image/utils")
 
 local stdout = vim.loop.new_tty(1, false)
 if not stdout then error("failed to open stdout") end
+
+local is_SSH = (vim.env.SSH_CLIENT ~= nil) or (vim.env.SSH_TTY ~= nil)
 
 -- https://github.com/edluffy/hologram.nvim/blob/main/lua/hologram/terminal.lua#L77
 local get_chunked = function(str)
@@ -35,11 +37,11 @@ local write = function(data, tty, escape)
 end
 
 local move_cursor = function(x, y, save)
-  if utils.tmux.is_tmux then
+  if is_SSH and utils.tmux.is_tmux then
     -- When tmux is running over ssh, set-cursor sometimes doesn't actually get sent
     -- I don't know why this fixes the issue...
-    local cx = utils.tmux.get_cursor_x()
-    local cy = utils.tmux.get_cursor_y()
+    utils.tmux.get_cursor_x()
+    utils.tmux.get_cursor_y()
   end
   if save then write("\x1b[s") end
   write("\x1b[" .. y .. ";" .. x .. "H")
@@ -76,10 +78,10 @@ local write_graphics = function(config, data)
 
   if data then
     if config.transmit_medium == codes.control.transmit_medium.direct then
-      local file = io.open(data,"rb")
+      local file = io.open(data, "rb")
       data = file:read("*all")
     end
-    data = utils.base64.encode(data):gsub("%-","/")
+    data = utils.base64.encode(data):gsub("%-", "/")
     local chunks = get_chunked(data)
     local m = #chunks > 1 and 1 or 0
     control_payload = control_payload .. ",m=" .. m

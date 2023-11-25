@@ -3,6 +3,7 @@ local helpers = require("image/backends/kitty/helpers")
 local utils = require("image/utils")
 
 local editor_tty = utils.term.get_tty()
+local is_SSH = (vim.env.SSH_CLIENT ~= nil) or (vim.env.SSH_TTY ~= nil)
 
 ---@type Backend
 ---@diagnostic disable-next-line: missing-fields
@@ -43,7 +44,6 @@ backend.render = function(image, x, y, width, height)
 
   local transmit_medium = codes.control.transmit_medium.file
 
-  local is_SSH = (vim.env.SSH_CLIENT ~= nil) or (vim.env.SSH_TTY ~= nil)
   if is_SSH then transmit_medium = codes.control.transmit_medium.direct end
 
   -- transmit image
