@@ -121,15 +121,20 @@ local render = function(image)
 
     -- global max window width/height percentage
     if type(state.options.max_width_window_percentage) == "number" then
-      width = math.min(width, math.floor((window.width - x_offset) * state.options.max_width_window_percentage / 100))
+      width =
+        math.min(width, math.floor((window.width - global_offsets.x) * state.options.max_width_window_percentage / 100))
     end
     if type(state.options.max_height_window_percentage) == "number" then
-      height =
-        math.min(height, math.floor((window.height - y_offset) * state.options.max_height_window_percentage / 100))
+      height = math.min(
+        height,
+        math.floor((window.height - global_offsets.y) * state.options.max_height_window_percentage / 100)
+      )
     end
   end
 
-  -- utils.debug(("(2) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset))
+  utils.debug(
+    ("(2) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset)
+  )
 
   -- global max width/height
   if type(state.options.max_width) == "number" then width = math.min(width, state.options.max_width) end
