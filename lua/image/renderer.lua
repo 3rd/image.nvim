@@ -1,5 +1,5 @@
-local utils = require("image/utils")
 local magick = require("image/magick")
+local utils = require("image/utils")
 
 -- Images get resized and cropped to fit in the context they are rendered in.
 -- Each of these versions are written to the temp directory and cleared on reboot (on Linux at least).
@@ -234,15 +234,10 @@ local render = function(image)
 
           local extmark_offset = topfill
           for _, mark in ipairs(extmarks) do
-            -- Break if we've reached the image's extmark, don't adjust for extmarks on the same
-            -- physical line but below the image's extmark
-            if mark.id == image:get_extmark_id() then break end
-            if mark.row ~= original_y then
+            if mark.row ~= original_y and mark.id ~= image:get_extmark_id() then
               -- check the mark is inside a fold, and skip adding the offset if it is
               for fold_start, fold_end in pairs(folded_ranges) do
-                if mark.row >= fold_start and mark.row < fold_end then
-                  goto continue
-                end
+                if mark.row >= fold_start and mark.row < fold_end then goto continue end
               end
               extmark_offset = extmark_offset + mark.height
             end
