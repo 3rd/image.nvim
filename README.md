@@ -9,6 +9,8 @@ It has built-in Markdown and Neorg integrations that you can use right now.
 \
 It can also render image files as images when opened.
 
+Join on Discord: https://discord.gg/tQVKuZCZ
+
 https://github.com/3rd/image.nvim/assets/59587503/9a9a1792-6476-4d96-8b8e-d3cdd7f5759e
 
 ## Requirements
