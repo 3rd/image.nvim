@@ -183,11 +183,13 @@ api.setup = function(options)
       vim.schedule(function()
         local images = api.get_images()
         for _, current_image in ipairs(images) do
-          local ok, is_valid = pcall(vim.api.nvim_win_is_valid, current_image.window)
-          if ok and is_valid then
-            current_image:render()
-          else
-            current_image:clear()
+          if current_image.window then
+            local ok, is_valid_window = pcall(vim.api.nvim_win_is_valid, current_image.window)
+            if ok and is_valid_window then
+              current_image:render()
+            else
+              current_image:clear()
+            end
           end
         end
       end)
