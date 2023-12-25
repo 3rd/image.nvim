@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.2.0](https://github.com/3rd/image.nvim/compare/v1.1.0...v1.2.0) (2023-12-25)
+
+
+### Features
+
+* add svg to render list ([147bbe6](https://github.com/3rd/image.nvim/commit/147bbe661bdec4a16a93fbd1f08a43040c363942))
+* hijack ft & expose API https://github.com/3rd/image.nvim/issues/61 ([6598813](https://github.com/3rd/image.nvim/commit/6598813b4c4e395eba0b2217cd6458aaa58b897f))
+* hijack image file patterns https://github.com/3rd/image.nvim/issues/56 ([7b475c4](https://github.com/3rd/image.nvim/commit/7b475c4cafb0ab4435defb830c0160451701402f))
+* only attempt to render a fixed list of image formats ([4c1c903](https://github.com/3rd/image.nvim/commit/4c1c903268b42a5b83caf229ddda7014a6a2e0bd))
+* re-use already converted images ([e9fd310](https://github.com/3rd/image.nvim/commit/e9fd31074c9cfd4ca2759313c560247fe5dada1d))
+* support split events for hijacking and prevent useless loading https://github.com/3rd/image.nvim/issues/60 ([d7ba5d3](https://github.com/3rd/image.nvim/commit/d7ba5d3b2a13dc22e7e464d9be066a29b3abddf3))
+
+
+### Bug Fixes
+
+* clear images that were not rendered ([c91d47c](https://github.com/3rd/image.nvim/commit/c91d47c8e69a0959b29117f3fb86ae6b8f19efec))
+* **document:** ignore remote image loading errors https://github.com/3rd/image.nvim/issues/65 ([1650ecc](https://github.com/3rd/image.nvim/commit/1650eccca5b0d071d1305c17646ad16693987796))
+* don't clear images not attached to windows on window close ([4d1dd5d](https://github.com/3rd/image.nvim/commit/4d1dd5ddc63b37e5af303af0a3a8ed752d43a95c))
+* images rendering below extmarks on same line ([0d3ab85](https://github.com/3rd/image.nvim/commit/0d3ab852f55a9080a045756bd9900868b19726cd))
+* **kitty:** don't send unicode placeholder flag unnecessary ([7aaad09](https://github.com/3rd/image.nvim/commit/7aaad09f53c620fd61074c3b05940db861dd606c))
+* markdown parsing error (also parsing might be broken in new files) ([1cb60be](https://github.com/3rd/image.nvim/commit/1cb60be1cdc108e3a3b09cb0ed115ef75ce51320))
+* max width/height should not depend on scroll position ([04ad8fe](https://github.com/3rd/image.nvim/commit/04ad8fe861ded0809f2997acddee1a9d37de8f89))
+* min 1 cell for width/height when inferring ([8ff8abc](https://github.com/3rd/image.nvim/commit/8ff8abca008ba193b1ed2c38fa93b1517b82de8a))
+* **neorg:** resolve workspace notation with image files ([98cd990](https://github.com/3rd/image.nvim/commit/98cd990967e9de94a6ffa506c8127611bfa445b1))
+* parse markdown buffer with markdown parser and get inlines as children ([984a7fa](https://github.com/3rd/image.nvim/commit/984a7fac438fc3d15da5f16d7dc6383b77ca8203))
+* performance issues due to tmux+ssh hack https://github.com/3rd/image.nvim/issues/89 ([2aad3ad](https://github.com/3rd/image.nvim/commit/2aad3ad35e136240a7b2fb53a50d87358f867463))
+* position relative nearby virtual text ([4d18722](https://github.com/3rd/image.nvim/commit/4d18722d82e9f3a5983c5a2d640fbf9973688906))
+* process events for all windows when checking for overlaps ([8637d24](https://github.com/3rd/image.nvim/commit/8637d24fd36211bda5e4b7abef9a15fdf44a40a1))
+* re-transmit all images after resize and force rerender ([4fee87e](https://github.com/3rd/image.nvim/commit/4fee87e4d63dfe35c430c950cae63acdaf5e6785))
+* rendering images below folded extmarks ([8bcf828](https://github.com/3rd/image.nvim/commit/8bcf828cd310794f437cde745e7cf39e3d498efc))
+* scale aspect ratio correctly, fix tmux split (https://github.com/3rd/image.nvim/issues/64) ([72bbf46](https://github.com/3rd/image.nvim/commit/72bbf46977aec8a25d9b515fe12011c639543727))
+* stacked images ([44c0a1c](https://github.com/3rd/image.nvim/commit/44c0a1cbcab8276beeac6d67efa449816e5731f5))
+* tmux passthrough check broken by https://github.com/NixOS/nixpkgs/issues/261777 ([431235a](https://github.com/3rd/image.nvim/commit/431235a5f5cfc3a4c17c600a8ac88257f99de3d6))
+* trigger hijacking on BufWinEnter https://github.com/3rd/image.nvim/issues/60 ([80906aa](https://github.com/3rd/image.nvim/commit/80906aa014024fdc47d437df2d724328d33d3f15))
+
 ## [1.1.0](https://github.com/3rd/image.nvim/compare/v1.0.0...v1.1.0) (2023-10-20)
 
 
