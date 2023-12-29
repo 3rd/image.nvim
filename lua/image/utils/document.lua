@@ -46,6 +46,7 @@ local create_document_integration = function(config)
           local previous_images = ctx.api.get_images({
             window = window.id,
             buffer = window.buffer,
+            namespace = config.name,
           })
           local new_image_ids = {}
           local file_path = vim.api.nvim_buf_get_name(window.buffer)
@@ -91,6 +92,7 @@ local create_document_integration = function(config)
               window = item.window.id,
               buffer = item.window.buffer,
               with_virtual_padding = true,
+              namespace = config.name,
             }, function(image)
               if not image then return end
               render_image(image)
@@ -103,6 +105,7 @@ local create_document_integration = function(config)
             window = item.window.id,
             buffer = item.window.buffer,
             with_virtual_padding = true,
+            namespace = config.name,
           })
           if ok and image then render_image(image) end
         end
@@ -163,7 +166,7 @@ local create_document_integration = function(config)
         callback = function(args)
           if not has_valid_filetype(ctx, vim.bo[args.buf].filetype) then return end
           local current_window = vim.api.nvim_get_current_win()
-          local images = ctx.api.get_images({ window = current_window })
+          local images = ctx.api.get_images({ window = current_window, namespace = config.name })
           for _, image in ipairs(images) do
             image:clear()
           end

@@ -5,7 +5,7 @@
 ---@field from_file fun(path: string, options?: ImageOptions): Image|nil
 ---@field from_url fun(url: string, options?: ImageOptions, callback: fun(image: Image|nil))
 ---@field clear fun(id?: string)
----@field get_images fun(opts?: { window?: number, buffer?: number }): Image[]
+---@field get_images fun(opts?: { window?: number, buffer?: number, namespace?: string }): Image[]
 ---@field hijack_buffer fun(path: string, window?: number, buffer?: number, options?: ImageOptions): Image|nil
 
 ---@class State
@@ -62,6 +62,7 @@
 ---@field window? number
 ---@field buffer? number
 ---@field with_virtual_padding? boolean
+---@field namespace? string
 
 ---@class ImageBounds
 ---@field top number
@@ -110,6 +111,7 @@
 ---@field brightness fun(self: Image, brightness: number)
 ---@field saturation fun(self: Image, saturation: number)
 ---@field hue fun(self: Image, hue: number)
+---@field namespace? string
 
 -- wish proper generics were a thing here
 ---@class IntegrationContext

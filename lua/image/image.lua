@@ -30,9 +30,7 @@ end
 ---@return number?
 function Image:get_extmark_id()
   local extmark = buf_extmark_map[self.buffer .. ":" .. self.geometry.y]
-  if extmark then
-    return extmark.id
-  end
+  if extmark then return extmark.id end
 end
 
 ---@param geometry? ImageGeometry
