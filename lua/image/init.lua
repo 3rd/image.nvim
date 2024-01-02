@@ -290,7 +290,7 @@ api.setup = function(options)
       local images = api.get_images({ buffer = event.buf })
       for _, img in ipairs(images) do
         local has_moved, extmark_y = img:has_extmark_moved()
-        if has_moved then
+        if has_moved and extmark_y ~= nil then
           img.geometry.y = extmark_y + 1
           img:render()
         end
