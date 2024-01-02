@@ -261,6 +261,7 @@ local from_file = function(path, options, state)
         is_rendered = false,
         crop_hash = nil,
         resize_hash = nil,
+        namespace = opts.namespace or nil,
       }, state)
       -- utils.debug(("image.nvim: cloned image %s from %s"):format(clone.id, instance.id))
       return clone
@@ -321,6 +322,7 @@ local from_file = function(path, options, state)
     is_rendered = false,
     crop_hash = nil,
     resize_hash = nil,
+    namespace = opts.namespace or nil,
   }, state)
 
   return instance
