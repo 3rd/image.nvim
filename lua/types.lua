@@ -112,6 +112,7 @@
 ---@field saturation fun(self: Image, saturation: number)
 ---@field hue fun(self: Image, hue: number)
 ---@field namespace? string
+---@field extmark? { id: number, row: number }
 
 -- wish proper generics were a thing here
 ---@class IntegrationContext
