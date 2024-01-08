@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.3.0](https://github.com/3rd/image.nvim/compare/v1.2.0...v1.3.0) (2024-01-08)
+
+
+### Features
+
+* namespace integration images ([ec57744](https://github.com/3rd/image.nvim/commit/ec577441edca399c43d77b522870dbd7b9cd38b8))
+* sync image positions to external extmark changes ([c53bbc4](https://github.com/3rd/image.nvim/commit/c53bbc41debf42e6470235c4fef9868f6be20c12))
+
+
+### Bug Fixes
+
+* get_images api https://github.com/3rd/image.nvim/issues/111 ([2090055](https://github.com/3rd/image.nvim/commit/2090055394d5c8efb5f23143cc2f3d9fac68a61e))
+* namespaces not set on images ([088c2ed](https://github.com/3rd/image.nvim/commit/088c2ed65d05aea12389ea76b96bb2bfe6f964d8))
+* nil check extmark_y ([f40f1d4](https://github.com/3rd/image.nvim/commit/f40f1d445e75d8d9101fe44e2df962a202b79695))
+
 ## [1.2.0](https://github.com/3rd/image.nvim/compare/v1.1.0...v1.2.0) (2023-12-25)
 
 
