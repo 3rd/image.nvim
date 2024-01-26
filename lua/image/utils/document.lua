@@ -99,7 +99,12 @@ local create_document_integration = function(config)
             end)
           end
         else
-          local path = resolve_absolute_path(item.file_path, item.match.url)
+          local path
+          if ctx.options.resolve_image_path then
+            path = ctx.options.resolve_image_path(item.file_path, item.match.url, resolve_absolute_path)
+          else
+            path = resolve_absolute_path(item.file_path, item.match.url)
+          end
           local ok, image = pcall(ctx.api.from_file, path, {
             id = item.id,
             window = item.window.id,
