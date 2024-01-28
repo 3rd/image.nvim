@@ -18,6 +18,8 @@ return document.create_document_integration({
     local inline_lang = "markdown_inline"
     local inlines = parser:children()[inline_lang]
     local inline_query = vim.treesitter.query.parse(inline_lang, "(image (link_destination) @url) @image")
+    local shortcut_query =
+        vim.treesitter.query.parse(inline_lang, "(image (image_description (shortcut_link (link_text) @url))) @image")
 
     if not inlines then return {} end
 
@@ -26,22 +28,24 @@ return document.create_document_integration({
       local root = tree:root()
       local current_image = nil
 
-      ---@diagnostic disable-next-line: missing-parameter
-      for id, node in inline_query:iter_captures(root, 0) do
-        local key = inline_query.captures[id]
-        local value = vim.treesitter.get_node_text(node, buf)
+      for _, query in ipairs({ inline_query, shortcut_query }) do
+        ---@diagnostic disable-next-line: missing-parameter
+        for id, node in query:iter_captures(root, 0) do
+          local key = query.captures[id]
+          local value = vim.treesitter.get_node_text(node, buf)
 
-        -- TODO: fix node:range() taking into account the extmarks for SOME FKING REASON
-        if key == "image" then
-          local start_row, start_col, end_row, end_col = node:range()
-          current_image = {
-            node = node,
-            range = { start_row = start_row, start_col = start_col, end_row = end_row, end_col = end_col },
-          }
-        elseif current_image and key == "url" then
-          current_image.url = value
-          table.insert(images, current_image)
-          current_image = nil
+          -- TODO: fix node:range() taking into account the extmarks for SOME FKING REASON
+          if key == "image" then
+            local start_row, start_col, end_row, end_col = node:range()
+            current_image = {
+              node = node,
+              range = { start_row = start_row, start_col = start_col, end_row = end_row, end_col = end_col },
+            }
+          elseif current_image and key == "url" then
+            current_image.url = value
+            table.insert(images, current_image)
+            current_image = nil
+          end
         end
       end
     end
