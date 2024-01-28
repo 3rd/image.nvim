@@ -24,6 +24,7 @@
 ---@field clear_in_insert_mode? boolean
 ---@field only_render_image_at_cursor? boolean
 ---@field filetypes? string[]
+---@field resolve_image_path? function
 
 ---@alias IntegrationOptions DocumentIntegrationOptions
 
