@@ -184,11 +184,21 @@ api.setup = function(options)
         local images = api.get_images()
         for _, current_image in ipairs(images) do
           if current_image.window then
-            local ok, is_valid_window = pcall(vim.api.nvim_win_is_valid, current_image.window)
-            if ok and is_valid_window then
-              current_image:render()
-            else
+            local window_ok, is_valid_window = pcall(vim.api.nvim_win_is_valid, current_image.window)
+            if not window_ok or not is_valid_window then
               current_image:clear()
+              return
+            end
+
+            if current_image.buffer then
+              local buf_ok, is_valid_buffer = pcall(vim.api.nvim_buf_is_valid, current_image.buffer)
+              if not buf_ok or not is_valid_buffer then
+                current_image:clear()
+                return
+              end
+
+              local is_buffer_in_window = vim.api.nvim_win_get_buf(current_image.window) == current_image.buffer
+              if not is_buffer_in_window then current_image:clear() end
             end
           end
         end
@@ -210,11 +220,10 @@ api.setup = function(options)
   -- force rerender on resize (handles VimResized as well)
   vim.api.nvim_create_autocmd({ "WinResized" }, {
     group = group,
-    callback = function(au)
-      local images = api.get_images({ window = tonumber(au.file) })
+    callback = function()
+      local images = api.get_images()
       for _, current_image in ipairs(images) do
-        current_image.is_rendered = false
-        current_image:render()
+        if current_image.window ~= nil then current_image:render() end
       end
     end,
   })
@@ -313,7 +322,10 @@ api.hijack_buffer = function(path, win, buf, options)
   if not buf or buf == 0 then buf = vim.api.nvim_get_current_buf() end
 
   local key = ("%s:%s"):format(win, buf)
-  if state.hijacked_win_buf_images[key] then return state.hijacked_win_buf_images[key] end
+  if state.hijacked_win_buf_images[key] then
+    state.hijacked_win_buf_images[key]:render()
+    return state.hijacked_win_buf_images[key]
+  end
 
   vim.bo[buf].modifiable = true
   vim.api.nvim_buf_set_lines(buf, 0, -1, true, { "" })
