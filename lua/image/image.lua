@@ -44,6 +44,10 @@ end
 function Image:render(geometry)
   if geometry then self.geometry = vim.tbl_deep_extend("force", self.geometry, geometry) end
 
+  -- don't render if we are in the conmmand-line-window, in this case previously rendered images can
+  -- be left in place
+  if vim.fn.getcmdwintype()~='' then return end
+
   -- utils.debug(("---------------- %s ----------------"):format(self.id))
   local was_rendered = renderer.render(self)
 
