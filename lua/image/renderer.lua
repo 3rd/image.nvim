@@ -84,8 +84,6 @@ local render = function(image)
     -- if the image is tied to a buffer the window must be displaying that buffer
     if image.buffer ~= nil and window.buffer ~= image.buffer then return false end
 
-    -- don't render if we are in the conmmand-line-window
-    if vim.fn.getcmdwintype()~='' then return false end
     -- get topfill and check fold status
     local current_win = vim.api.nvim_get_current_win()
     vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. image.window .. ")")
