@@ -177,15 +177,28 @@ api.setup = function(options)
   local group = vim.api.nvim_create_augroup("image.nvim", { clear = true })
 
   -- auto-clear on buffer / window close
-  vim.api.nvim_create_autocmd({ "BufLeave", "WinClosed" }, {
+  vim.api.nvim_create_autocmd({ "BufLeave", "WinClosed", "TabEnter" }, {
     group = group,
     callback = function() -- auto-clear images when windows and buffers change
       vim.schedule(function()
         local images = api.get_images()
+
+        local windows_in_current_tab = vim.api.nvim_tabpage_list_wins(0)
+        local windows_in_current_tab_map = {}
+        for _, current_window in ipairs(windows_in_current_tab) do
+          windows_in_current_tab_map[current_window] = true
+        end
+
         for _, current_image in ipairs(images) do
           if current_image.window then
             local window_ok, is_valid_window = pcall(vim.api.nvim_win_is_valid, current_image.window)
             if not window_ok or not is_valid_window then
+              current_image:clear()
+              return
+            end
+
+            local is_window_in_current_tab = windows_in_current_tab_map[current_image.window]
+            if not is_window_in_current_tab then
               current_image:clear()
               return
             end

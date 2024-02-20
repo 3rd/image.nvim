@@ -135,7 +135,7 @@ local create_document_integration = function(config)
     local group = vim.api.nvim_create_augroup(group_name, { clear = true })
 
     -- watch for window changes
-    vim.api.nvim_create_autocmd({ "WinNew", "BufWinEnter" }, {
+    vim.api.nvim_create_autocmd({ "WinNew", "BufWinEnter", "TabEnter" }, {
       group = group,
       callback = function(args)
         if not has_valid_filetype(ctx, vim.bo[args.buf].filetype) then return end
