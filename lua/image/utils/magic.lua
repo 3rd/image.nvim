@@ -1,44 +1,56 @@
--- local log = require("image/utils/logger")
-
-local max_bytes = 9
-
-local sigs = {
-  "\x89\x50\x4E\x47", -- PNG
-  "\xFF\xD8\xFF\xE0", -- JPEG
-  "\x52\x49\x46\x46", -- WEBP
-  "\x47\x49\x46\x38", -- GIF87a, GIF89a
-  "\x42\x4D", -- BMP
-  "\x66\x74\x79\x70", -- HEIC
-  "\x2F\x2A\x20\x58\x50\x4D\x20\x2A\x2F", -- XPM
-  "\x00\x00\x01\x00", -- ICO
-  "<svg", -- SVG
-  "<?xml", -- alternative SVG
+local image_signatures = {
+  PNG = "\x89\x50\x4E\x47",
+  JPEG = "\xFF\xD8\xFF",
+  WEBP = "\x52\x49\x46\x46",
+  GIF = "\x47\x49\x46\x38",
+  BMP = "\x42\x4D",
+  HEIC = "\x66\x74\x79\x70",
+  XPM = "\x2F\x2A\x20\x58\x50\x4D\x20\x2A\x2F",
+  ICO = "\x00\x00\x01\x00",
+  SVG = "<svg",
+  XML = "<?xml",
 }
 
----@param path string
----@param n? number
-local get_header = function(path, n)
-  local f = assert(io.open(path, "rb"))
-  local bytes = { f:read(n):byte(1, n) }
-  f:close()
-  return bytes
+local function read_file_header(path, numBytes)
+  local file, err = io.open(path, "rb")
+  if not file then return nil, "Failed to open file: " .. err end
+  local content = file:read(numBytes)
+  file:close()
+  return content and { content:byte(1, #content) } or nil
 end
 
-local is_image = function(path)
-  local header_bytes = get_header(path, max_bytes)
-  -- local header_str = string.char(unpack(header_bytes))
-  -- log.debug("signature", header_str)
+local function has_jpeg_end_signature(path)
+  local file, _ = io.open(path, "rb")
+  if not file then return false end
+  local size = file:seek("end")
+  if size < 2 then
+    file:close()
+    return false
+  end
+  file:seek("set", size - 2)
+  local end_signature = file:read(2)
+  file:close()
+  return end_signature == "\xFF\xD9", nil
+end
 
-  for _, sig in ipairs(sigs) do
-    local match = true
-    for i = 1, #sig do
-      if header_bytes[i] ~= string.byte(sig, i) then
-        match = false
-        break
+local function is_image(path)
+  local max_bytes = 9
+  local header, err = read_file_header(path, max_bytes)
+  if not header then return false, err end
+
+  for _, signature in pairs(image_signatures) do
+    local bytes = { signature:byte(1, #signature) }
+    for i = 1, #bytes do
+      if header[i] == bytes[i] then
+        if signature == image_signatures.JPEG then
+          if has_jpeg_end_signature(path) then return true, nil end
+        else
+          return true
+        end
       end
     end
-    if match then return true end
   end
+
   return false
 end
 
