@@ -11,15 +11,13 @@ return document.create_document_integration({
   },
   query_buffer_images = function(buffer)
     local buf = buffer or vim.api.nvim_get_current_buf()
-
-    local lang = vim.treesitter.language.get_lang(vim.bo[buf].filetype) or vim.bo[buf].filetype
-    local parser = vim.treesitter.get_parser(buf, lang)
+    local parser = vim.treesitter.get_parser(buf, "markdown")
     parser:parse(true)
     local inline_lang = "markdown_inline"
     local inlines = parser:children()[inline_lang]
     local inline_query = vim.treesitter.query.parse(inline_lang, "(image (link_destination) @url) @image")
     local shortcut_query =
-        vim.treesitter.query.parse(inline_lang, "(image (image_description (shortcut_link (link_text) @url))) @image")
+      vim.treesitter.query.parse(inline_lang, "(image (image_description (shortcut_link (link_text) @url))) @image")
 
     if not inlines then return {} end
 
