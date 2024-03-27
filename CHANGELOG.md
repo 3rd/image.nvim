@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.3.0](https://github.com/3rd/image.nvim/compare/v1.2.0...v1.3.0) (2024-02-27)
+
+
+### Features
+
+* configurable resolve_image_path function ([6ab77ff](https://github.com/3rd/image.nvim/commit/6ab77ffda4ac0825a9b49e5580da261e74a577ac))
+* namespace integration images ([ec57744](https://github.com/3rd/image.nvim/commit/ec577441edca399c43d77b522870dbd7b9cd38b8))
+* shortcut link imgs in md doc integration ([af1fb0c](https://github.com/3rd/image.nvim/commit/af1fb0cf3aaae48c5a25afb4152f94cb46e344e9))
+* sync image positions to external extmark changes ([c53bbc4](https://github.com/3rd/image.nvim/commit/c53bbc41debf42e6470235c4fef9868f6be20c12))
+
+
+### Bug Fixes
+
+* auto-clear/re-render on tab switch ([95a3afd](https://github.com/3rd/image.nvim/commit/95a3afd192931eac58703c269164aae989cbfd09))
+* better clearing, hijack cache rerender, resize ([77df64a](https://github.com/3rd/image.nvim/commit/77df64af37ff68a1f593aa4f79b42b1388479239))
+* extend jpeg signatures ([2cb0a10](https://github.com/3rd/image.nvim/commit/2cb0a100f8b1311ca2f373927b2f3aed61684540))
+* get_images api https://github.com/3rd/image.nvim/issues/111 ([2090055](https://github.com/3rd/image.nvim/commit/2090055394d5c8efb5f23143cc2f3d9fac68a61e))
+* hardcode markdown parser (fixes vimwiki) ([0dd8bdb](https://github.com/3rd/image.nvim/commit/0dd8bdbb8855bc98c534a902c91dc9eddb8155b1))
+* namespaces not set on images ([088c2ed](https://github.com/3rd/image.nvim/commit/088c2ed65d05aea12389ea76b96bb2bfe6f964d8))
+* nil check extmark_y ([f40f1d4](https://github.com/3rd/image.nvim/commit/f40f1d445e75d8d9101fe44e2df962a202b79695))
+* re-use file descriptor for jpeg check ([402ff91](https://github.com/3rd/image.nvim/commit/402ff916a17f86fb6542886ad0d553f5d77cf22f))
+
 ## [1.2.0](https://github.com/3rd/image.nvim/compare/v1.1.0...v1.2.0) (2023-12-25)
 
 
