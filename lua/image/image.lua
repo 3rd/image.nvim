@@ -46,7 +46,7 @@ function Image:render(geometry)
 
   -- don't render if we are in the conmmand-line-window, in this case previously rendered images can
   -- be left in place
-  if vim.fn.getcmdwintype()~='' then return end
+  if vim.fn.getcmdwintype() ~= "" then return end
 
   -- utils.debug(("---------------- %s ----------------"):format(self.id))
   local was_rendered = renderer.render(self)
@@ -69,7 +69,7 @@ function Image:render(geometry)
   end
 
   -- virtual padding
-  if was_rendered and self.buffer and self.with_virtual_padding then
+  if was_rendered and self.buffer and self.inline then
     local row = self.geometry.y
     local height = self.rendered_geometry.height
 
@@ -88,19 +88,27 @@ function Image:render(geometry)
         end
 
         local filler = {}
-        for _ = 0, height - 1 do
-          filler[#filler + 1] = { { " ", "" } }
+        local extmark_opts = { id = self.internal_id, strict = false }
+        if self.with_virtual_padding then
+          for _ = 0, height - 1 do
+            filler[#filler + 1] = { { " ", "" } }
+          end
+          extmark_opts.virt_lines = filler
         end
 
         -- utils.debug(("(image.render) creating extmark %s"):format(self.internal_id))
         local extmark_row = row > 0 and row - 1 or 0
-        local ok, extmark_id =
-          pcall(vim.api.nvim_buf_set_extmark, self.buffer, self.global_state.extmarks_namespace, extmark_row, 0, {
-            id = self.internal_id,
-            virt_lines = filler,
-          })
+        local extmark_col = self.geometry.x >= 0 and self.geometry.x or 0
+        local ok, extmark_id = pcall(
+          vim.api.nvim_buf_set_extmark,
+          self.buffer,
+          self.global_state.extmarks_namespace,
+          extmark_row,
+          extmark_col,
+          extmark_opts
+        )
         if ok then
-          buf_extmark_map[extmark_key] = { id = self.internal_id, height = height }
+          buf_extmark_map[extmark_key] = { id = self.internal_id, height = height or 0 }
           self.extmark = { id = extmark_id, row = extmark_row }
         end
       end
@@ -141,7 +149,9 @@ function Image:clear(shallow)
     height = nil,
   }
 
-  if self.with_virtual_padding and self.buffer then
+  -- All virtual padding images will have inline == true. And an image only gets one extmark, so
+  -- this will correctly cleanup all extmarks
+  if self.inline and self.buffer then
     if vim.api.nvim_buf_is_valid(self.buffer) then
       vim.api.nvim_buf_del_extmark(self.buffer, self.global_state.extmarks_namespace, self.internal_id)
     end
@@ -262,6 +272,7 @@ local from_file = function(path, options, state)
           height = nil,
         },
         with_virtual_padding = opts.with_virtual_padding or false,
+        inline = opts.inline or opts.with_virtual_padding or false,
         is_rendered = false,
         crop_hash = nil,
         resize_hash = nil,
@@ -323,6 +334,7 @@ local from_file = function(path, options, state)
       height = nil,
     },
     with_virtual_padding = opts.with_virtual_padding or false,
+    inline = opts.inline or opts.with_virtual_padding or false,
     is_rendered = false,
     crop_hash = nil,
     resize_hash = nil,

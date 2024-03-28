@@ -1,5 +1,3 @@
-local image = require("image/image")
-local magick = require("image/magick")
 local utils = require("image/utils")
 
 ---@type Options
@@ -51,14 +49,17 @@ api.setup = function(options)
   local opts = vim.tbl_deep_extend("force", default_options, options or {})
   state.options = opts
 
-  -- check that magick is available
-  if not magick.has_magick then
-    vim.api.nvim_err_writeln(
-      "image.nvim: magick rock not found, please install it and restart your editor. Error: "
-        .. vim.inspect(magick.magick)
-    )
-    return
-  end
+  vim.schedule(function()
+    local magick = require("image/magick")
+    -- check that magick is available
+    if not magick.has_magick then
+      vim.api.nvim_err_writeln(
+        "image.nvim: magick rock not found, please install it and restart your editor. Error: "
+          .. vim.inspect(magick.magick)
+      )
+      return
+    end
+  end)
 
   -- load backend
   local backend = require("image/backends/" .. opts.backend)
@@ -372,6 +373,7 @@ end
 ---@param options? ImageOptions
 api.from_file = function(path, options)
   guard_setup()
+  local image = require("image/image")
   return image.from_file(path, options, state)
 end
 
@@ -380,6 +382,7 @@ end
 ---@param callback fun(image: Image|nil)
 api.from_url = function(url, options, callback)
   guard_setup()
+  local image = require("image/image")
   image.from_url(url, options, callback, state)
 end
 

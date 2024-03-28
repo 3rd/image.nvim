@@ -63,6 +63,7 @@
 ---@field window? number
 ---@field buffer? number
 ---@field with_virtual_padding? boolean
+---@field inline? boolean
 ---@field namespace? string
 
 ---@class ImageBounds
@@ -99,6 +100,7 @@
 ---@field window? number
 ---@field buffer? number
 ---@field with_virtual_padding? boolean
+---@field inline? boolean
 ---@field geometry ImageGeometry
 ---@field rendered_geometry ImageGeometry
 ---@field bounds ImageBounds
