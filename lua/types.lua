@@ -78,6 +78,7 @@
 ---@field crop fun(self: MagickImage, width: number, height: number, x?: number, y?: number)
 ---@field destroy fun(self: MagickImage)
 ---@field get_format fun(self: MagickImage): string
+---@field get_property fun(self: MagickImage, property: string): string
 ---@field get_height fun(self: MagickImage): number
 ---@field get_width fun(self: MagickImage): number
 ---@field modulate fun(self: MagickImage, brightness?: number, saturation?: number, hue?: number)
