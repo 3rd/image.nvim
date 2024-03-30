@@ -189,8 +189,8 @@ local render = function(image)
     -- utils.debug(("fold offset: %d"):format(offset))
     absolute_y = absolute_y - offset
 
-    -- extmark offsets
-    if image.with_virtual_padding then
+    -- account for things that push line numbers around
+    if image.inline then
       -- bail if the image is above the top of the window at least by one line
       if topfill == 0 and original_y < topline then
         -- utils.debug("prevent rendering 2", image.id)

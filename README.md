@@ -182,7 +182,12 @@ local image = api.from_file("/path/to/image.png", {
   id = "my_image_id", -- optional, defaults to a random string
   window = 1000, -- optional, binds image to a window and its bounds
   buffer = 1000, -- optional, binds image to a buffer (paired with window binding)
-  with_virtual_padding = true, -- optional, pads vertically with extmarks
+  with_virtual_padding = true, -- optional, pads vertically with extmarks, defaults to false
+
+  -- optional, binds image to an extmark which it follows. Set to true when
+  -- `with_virtual_padding` is true. defaults to false.
+  inline = true,
+
   ...geometry, -- optional, { x, y, width, height }
 })
 
@@ -192,6 +197,11 @@ local image = api.from_file("https://gist.ro/s/remote.png", {
   window = 1000, -- optional, binds image to a window and its bounds
   buffer = 1000, -- optional, binds image to a buffer (paired with window binding)
   with_virtual_padding = true, -- optional, pads vertically with extmarks
+
+  -- optional, binds image to an extmark which it follows. Set to true when
+  -- `with_virtual_padding` is true. defaults to false.
+  inline = true,
+
   ...geometry, -- optional, { x, y, width, height }
 })
 
