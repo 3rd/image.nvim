@@ -37,7 +37,7 @@ Fully **optional:**
 <details>
 <summary>Lazy.nvim</summary>
 
-> [!INFO] Don't forget to install the imageMagick system package, detailed
+> [!NOTE] Don't forget to install the imageMagick system package, detailed
 > [below](#installing-imagemagick)
 
 It's recommended that you use [vhyrro/luarocks.nvim](https://github.com/vhyrro/luarocks.nvim) to
@@ -90,7 +90,7 @@ package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/shar
 <details>
   <summary>Rocks.nvim</summary>
 
-> [!INFO] Don't forget to install the imageMagick system package, detailed
+> [!NOTE] Don't forget to install the imageMagick system package, detailed
 > [below](#installing-imagemagick)
 
 `:Rocks install image.nvim`
@@ -167,6 +167,7 @@ package as well.
     `export DYLD_LIBRARY_PATH="$(brew --prefix)/lib:$DYLD_LIBRARY_PATH"`
     to your shell profile (probably `.zshrc` or `.bashrc`)
 - Fedora: `sudo dnf install ImageMagick-devel`
+- Arch: `sudo pacman -Syy imagemagick`
 
 ## Configuration
 
@@ -262,26 +263,24 @@ local image = api.from_file("/path/to/image.png", {
   buffer = 1000, -- optional, binds image to a buffer (paired with window binding)
   with_virtual_padding = true, -- optional, pads vertically with extmarks, defaults to false
 
-  -- optional, binds image to an extmark which it follows. Set to true when
+  -- optional, binds image to an extmark which it follows. Forced to be true when
   -- `with_virtual_padding` is true. defaults to false.
   inline = true,
 
-  ...geometry, -- optional, { x, y, width, height }
+  -- geometry (optional)
+  x = 1,
+  y = 1,
+  width = 10,
+  height = 10
 })
 
 -- from a URL
-local image = api.from_file("https://gist.ro/s/remote.png", {
-  id = "my_image_id", -- optional, defaults to a random string
-  window = 1000, -- optional, binds image to a window and its bounds
-  buffer = 1000, -- optional, binds image to a buffer (paired with window binding)
-  with_virtual_padding = true, -- optional, pads vertically with extmarks
-
-  -- optional, binds image to an extmark which it follows. Set to true when
-  -- `with_virtual_padding` is true. defaults to false.
-  inline = true,
-
-  ...geometry, -- optional, { x, y, width, height }
-})
+api.from_url("https://gist.ro/s/remote.png", {
+    -- all the same options from above
+}, function(img)
+    -- do stuff with the image
+end
+)
 
 image:render() -- render image
 image:render(geometry) -- update image geometry and render it
