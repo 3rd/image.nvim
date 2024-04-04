@@ -13,45 +13,113 @@ Join on Discord: https://discord.gg/GTwbCxBNgz
 
 https://github.com/3rd/image.nvim/assets/59587503/9a9a1792-6476-4d96-8b8e-d3cdd7f5759e
 
-## Requirements
+## Installation
 
-These are things you have to setup on your own:
+This plugin requires a few external dependencies. Here is a list, there are instructions for
+specific plugin managers below.
 
-- [ImageMagick](https://github.com/ImageMagick/ImageMagick) - mandatory
-- [magick LuaRock](https://github.com/leafo/magick) - mandatory (`luarocks --local install magick` or through your [package manager](https://github.com/vhyrro/hologram.nvim#install))
+**Mandatory Deps:**
+
+- [ImageMagick](https://github.com/ImageMagick/ImageMagick) - see [Installing ImageMagick](#installing-imagemagick)
+- [magick LuaRock](https://github.com/leafo/magick)
+
+You need **one of:**
+
 - [Kitty](https://sw.kovidgoyal.net/kitty/) >= 28.0 - for the `kitty` backend
 - [ueberzugpp](https://github.com/jstkdng/ueberzugpp) - for the `ueberzug` backend
+
+Fully **optional:**
+
 - [curl](https://github.com/curl/curl) - for remote images
 
-After installing the `magick` LuaRock, you need to change your config to load it.
+### Installing The Plugin & Rock
+
+<details>
+<summary>Lazy.nvim</summary>
+
+> [!INFO] Don't forget to install the imageMagick system package, detailed
+> [below](#installing-imagemagick)
+
+It's recommended that you use [vhyrro/luarocks.nvim](https://github.com/vhyrro/luarocks.nvim) to
+install luarocks for neovim while using lazy. But you can install manually as well.
+
+**With luarocks.nvim**:
+
+```lua
+{
+    "vhyrro/luarocks.nvim",
+    priority = 1001, -- this plugin needs to run before anything else
+    opts = {
+        rocks = "magick",
+    },
+},
+{
+    "3rd/image.nvim",
+    dependencies = { "luarocks.nvim" },
+    config = function()
+        -- ...
+    end
+}
+```
+
+---
+
+**OR Without luarocks.nvim**:
+
+You have to install the luarock manually.
+
+1. install [luarocks](https://luarocks.org/) on your system via your system package manager
+2. run `luarocks --local --lua-version=5.1 install magick`
 
 ```lua
 -- Example for configuring Neovim to load user-installed installed Lua rocks:
-package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/share/lua/5.1/?/init.lua;"
-package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/share/lua/5.1/?.lua;"
+package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/share/lua/5.1/?/init.lua"
+package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/share/lua/5.1/?.lua"
+
+-- lazy snippet
+{
+    "3rd/image.nvim",
+    config = function()
+        -- ...
+    end
+}
 ```
 
-**NixOS** users need to install `imageMagick` and `luajitPackages.magick` ([thanks](https://github.com/NixOS/nixpkgs/pull/243687) to [@donovanglover](https://github.com/donovanglover)).
-\
-If you don't want to deal with setting up LuaRocks, you can build your Neovim with the rock installed:
+</details>
 
 <details>
-<summary>With home-manager (thanks @wuliuqii https://github.com/3rd/image.nvim/issues/13)</summary>
+  <summary>Rocks.nvim</summary>
+
+> [!INFO] Don't forget to install the imageMagick system package, detailed
+> [below](#installing-imagemagick)
+
+`:Rocks install image.nvim`
+
+</details>
+
+<details>
+  <summary>NixOS</summary>
+
+NixOS users need to install `imagemagick` and `luajitPackages.magick`
+([thanks](https://github.com/NixOS/nixpkgs/pull/243687) to
+[@donovanglover](https://github.com/donovanglover)).
+
+It's recommended that you can build your Neovim with those packages like so:
+
+<details>
+<summary>With home-manager</summary>
+
+_thanks to [@wuliuqii](https://github.com/wuliuqii) in [#13](https://github.com/3rd/image.nvim/issues/13)_
 
 ```nix
 { pkgs, ... }:
 
 {
-  nixpkgs.overlays = [
-    (import (builtins.fetchTarball {
-      url =
-        "https://github.com/nix-community/neovim-nightly-overlay/archive/master.tar.gz";
-    }))
-  ];
   programs.neovim = {
     enable = true;
-    package = pkgs.neovim-nightly;
     extraLuaPackages = ps: [ ps.magick ];
+    extraPackages = ps: [ ps.imagemagick ];
+    # ... other config
   };
 }
 ```
@@ -59,7 +127,7 @@ If you don't want to deal with setting up LuaRocks, you can build your Neovim wi
 </details>
 
 <details>
-<summary>Without home-manager</summary>
+  <summary>Vanilla NixOS</summary>
 
 ```nix
 # https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/editors/neovim/utils.nix#L27
@@ -67,19 +135,15 @@ If you don't want to deal with setting up LuaRocks, you can build your Neovim wi
 
 let
   config = pkgs.neovimUtils.makeNeovimConfig {
-    extraLuaPackages = p: [ p.luarocks p.magick ];
-    withNodeJs = false;
-    withRuby = false;
-    withPython3 = false;
-    # https://github.com/NixOS/nixpkgs/issues/211998
-    customRC = "luafile ~/.config/nvim/init.lua";
+    extraLuaPackages = p: [ p.magick ];
+    extraPackages = p: [ p.imagemagick ];
+    # ... other config
   };
 in {
   nixpkgs.overlays = [
     (_: super: {
       neovim-custom = pkgs.wrapNeovimUnstable
         (super.neovim-unwrapped.overrideAttrs (oldAttrs: {
-          version = "master";
           buildInputs = oldAttrs.buildInputs ++ [ super.tree-sitter ];
         })) config;
     })
@@ -89,6 +153,20 @@ in {
 ```
 
 </details>
+</details>
+
+### Installing ImageMagick
+
+The `magick` luarock provides bindings to ImageMagick's MagickWand, so we need to install that
+package as well.
+
+- Ubuntu: `sudo apt install libmagickwand-dev`
+- MacOS: `brew install imagemagick`
+  - By default, brew installs into a weird location, so you have to add `$(brew --prefix)/lib` to
+    `DYLD_LIBRARY_PATH` by adding something like
+    `export DYLD_LIBRARY_PATH="$(brew --prefix)/lib:$DYLD_LIBRARY_PATH"`
+    to your shell profile (probably `.zshrc` or `.bashrc`)
+- Fedora: `sudo dnf install ImageMagick-devel`
 
 ## Configuration
 
