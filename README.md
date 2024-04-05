@@ -50,7 +50,7 @@ install luarocks for neovim while using lazy. But you can install manually as we
     "vhyrro/luarocks.nvim",
     priority = 1001, -- this plugin needs to run before anything else
     opts = {
-        rocks = "magick",
+        rocks = { "magick" },
     },
 },
 {
