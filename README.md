@@ -35,10 +35,10 @@ Fully **optional:**
 ### Installing The Plugin & Rock
 
 <details>
+
 <summary>Lazy.nvim</summary>
 
-> [!NOTE] Don't forget to install the imageMagick system package, detailed
-> [below](#installing-imagemagick)
+**NOTE:** Don't forget to install the imageMagick system package, detailed [below](#installing-imagemagick)
 
 It's recommended that you use [vhyrro/luarocks.nvim](https://github.com/vhyrro/luarocks.nvim) to
 install luarocks for neovim while using lazy. But you can install manually as well.
@@ -90,8 +90,7 @@ package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/shar
 <details>
   <summary>Rocks.nvim</summary>
 
-> [!NOTE] Don't forget to install the imageMagick system package, detailed
-> [below](#installing-imagemagick)
+**NOTE:** Don't forget to install the imageMagick system package, detailed [below](#installing-imagemagick)
 
 `:Rocks install image.nvim`
 
@@ -107,6 +106,7 @@ NixOS users need to install `imagemagick` and `luajitPackages.magick`
 It's recommended that you can build your Neovim with those packages like so:
 
 <details>
+
 <summary>With home-manager</summary>
 
 _thanks to [@wuliuqii](https://github.com/wuliuqii) in [#13](https://github.com/3rd/image.nvim/issues/13)_
