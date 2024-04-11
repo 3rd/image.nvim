@@ -37,7 +37,15 @@ return document.create_document_integration({
 
         local path = line:sub(start_col):gsub(".*src=[\"'](.-)[\"'].*$", "%1")
 
-        if path:sub(1,1) ~= "/" then
+        -- search for path relative to webroot
+        if path:sub(1,1) == "/" then
+          path = vim.fs.find(path:sub(2), {
+            upward = true,
+            path = vim.fs.dirname(vim.api.nvim_buf_get_name(0)),
+          })[1]
+        end
+
+        if path ~= nil then
           table.insert(images, {
             node = node,
             range = {
@@ -48,24 +56,6 @@ return document.create_document_integration({
             },
             url = path,
           })
-        else
-          path = path:sub(2)
-          local file = vim.fs.find(path, {
-            upward = true,
-            path = vim.fs.dirname(vim.api.nvim_buf_get_name(0)),
-          })[1]
-          if file ~= nil then
-            table.insert(images, {
-              node = node,
-              range = {
-                start_row = start_row,
-                start_col = start_col,
-                end_row = end_row,
-                end_col = end_col,
-              },
-              url = file,
-            })
-          end
         end
       end
     end
