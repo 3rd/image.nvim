@@ -1,7 +1,7 @@
 local document = require("image/utils/document")
 return document.create_document_integration({
   name = "css",
-  debug = true,
+  -- debug = true,
   default_options = {
     clear_in_insert_mode = false,
     download_remote_images = true,
@@ -35,7 +35,6 @@ return document.create_document_integration({
         )[1]
 
         local path = line:sub(start_col):gsub(".*url%([\"'](.-)[\"']%).*$", "%1")
-        print (path)
 
         if path:sub(1,1) ~= "/" then
           table.insert(images, {
