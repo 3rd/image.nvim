@@ -1,7 +1,7 @@
 local document = require("image/utils/document")
 return document.create_document_integration({
   name = "html",
-  debug = true,
+  -- debug = true,
   default_options = {
     clear_in_insert_mode = false,
     download_remote_images = true,
