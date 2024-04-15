@@ -36,7 +36,7 @@ end
 function Image:has_extmark_moved()
   if not self.extmark then return false end
   local extmark =
-    vim.api.nvim_buf_get_extmark_by_id(self.buffer, self.global_state.extmarks_namespace, self.extmark.id, {})
+      vim.api.nvim_buf_get_extmark_by_id(self.buffer, self.global_state.extmarks_namespace, self.extmark.id, {})
   return extmark and extmark[1] ~= self.extmark.row, extmark and extmark[1] or nil
 end
 
@@ -114,25 +114,19 @@ function Image:render(geometry)
       end
     end
 
-    -- TODO: chain rerendering only the next affected image after this one
-    -- local next_image = nil
-    -- local next_image_distance = math.huge
-    -- for _, image in pairs(self.global_state.images) do
-    --   -- if image.buffer == self.buffer and image.geometry.y > self.geometry.y then image:render() end
-    --   if image.buffer == self.buffer then
-    --     local distance = image.geometry.y - self.geometry.y
-    --     if distance > 0 and distance < next_image_distance then
-    --       next_image = image
-    --       next_image_distance = distance
-    --     end
-    --   end
-    -- end
-    -- utils.debug(("(image.render) id: %s, next_image: %s"):format(self.id, next_image and next_image.id))
-    -- if next_image then next_image:render() end
+    if self.with_virtual_padding then
+      -- rerender any images that are below this one
+      local to_be_rerendered = vim.tbl_filter(function(x)
+        return x.is_rendered and x.buffer == self.buffer and x.geometry.y > self.geometry.y
+      end, vim.tbl_values(self.global_state.images))
+      table.sort(to_be_rerendered, function(a, b)
+        return a.geometry.y < b.geometry.y
+      end)
+      for _, image in ipairs(to_be_rerendered) do
+        image:render()
 
-    -- rerender any images that are below this one
-    for _, image in pairs(self.global_state.images) do
-      if image.buffer == self.buffer and image.geometry.y > self.geometry.y then image:render() end
+        if image.with_virtual_padding then break end
+      end
     end
   end
 end
