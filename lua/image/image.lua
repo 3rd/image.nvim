@@ -170,7 +170,7 @@ function Image:brightness(brightness)
 
   self.path = altered_path
   self.cropped_path = altered_path
-  self.date_hash = nil
+  self.resize_hash = nil
   self.cropped_hash = nil
   self.resize_hash = nil
   if self.is_rendered then
@@ -190,7 +190,7 @@ function Image:saturation(saturation)
 
   self.path = altered_path
   self.cropped_path = altered_path
-  self.date_hash = nil
+  self.resize_hash = nil
   self.cropped_hash = nil
   self.resize_hash = nil
   if self.is_rendered then
@@ -210,7 +210,7 @@ function Image:hue(hue)
 
   self.path = altered_path
   self.cropped_path = altered_path
-  self.date_hash = nil
+  self.resize_hash = nil
   self.cropped_hash = nil
   self.resize_hash = nil
   if self.is_rendered then
@@ -268,7 +268,6 @@ local from_file = function(path, options, state)
         with_virtual_padding = opts.with_virtual_padding or false,
         inline = opts.inline or opts.with_virtual_padding or false,
         is_rendered = false,
-        date_hash = nil,
         crop_hash = nil,
         resize_hash = nil,
         namespace = opts.namespace or nil,

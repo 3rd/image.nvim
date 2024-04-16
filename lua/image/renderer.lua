@@ -6,8 +6,8 @@ local utils = require("image/utils")
 -- This is where we keep track of the hashes of the resized and cropped versions of the images so we
 -- can avoid processing and writing the same cropped/resized image variant multiple times.
 local cache = {
-  resized = {}, -- { [`${original_path}:${modification_date}:${resize_hash}`]: string }
-  cropped = {}, -- { [`${original_path}:${modification_date}:${crop_hash}`]: string }
+  resized = {}, -- { [`${original_path}:${resize_hash}`]: string }
+  cropped = {}, -- { [`${original_path}:${crop_hash}`]: string }
 }
 
 ---@param image Image
@@ -285,7 +285,6 @@ local render = function(image)
   local cropped_pixel_height = height * term_size.cell_height
   local needs_crop = false
   local needs_resize = false
-  local initial_date_hash = image.date_hash
   local initial_crop_hash = image.crop_hash
   local initial_resize_hash = image.resize_hash
 
@@ -311,20 +310,10 @@ local render = function(image)
 
   -- TODO make this non-blocking
 
-  -- modification_date
-  local magick_image = magick.load_image(image.path)
-  image.date_hash = magick_image:get_property("date:modify"):gsub("[-:+]", "")
-  if image.date_hash ~= initial_date_hash then
-    image:clear()
-    needs_resize = true
-    needs_crop = true
-  end
-  magick_image:destroy()
-
   -- resize
   if needs_resize then
-    if image.resize_hash ~= resize_hash or image.date_hash ~= initial_date_hash then
-      local cached_path = cache.resized[image.path .. ":" .. image.date_hash .. ":" .. resize_hash]
+    if image.resize_hash ~= resize_hash then
+      local cached_path = cache.resized[image.path .. ":" .. resize_hash]
 
       -- try cache
       if cached_path then
@@ -340,21 +329,14 @@ local render = function(image)
           resized_image:set_format("png")
           resized_image:scale(pixel_width, pixel_height)
 
-          local tmp_path = state.tmp_dir
-            .. "/"
-            .. utils.base64.encode(image.id)
-            .. "-"
-            .. image.date_hash
-            .. "-resized-"
-            .. resize_hash
-            .. ".png"
+          local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-resized-" .. resize_hash .. ".png"
           resized_image:write(tmp_path)
           resized_image:destroy()
 
           image.resized_path = tmp_path
           image.resize_hash = resize_hash
 
-          cache.resized[image.path .. ":" .. image.date_hash .. ":" .. resize_hash] = tmp_path
+          cache.resized[image.path .. ":" .. resize_hash] = tmp_path
         end
       end
     end
@@ -366,12 +348,8 @@ local render = function(image)
   -- crop
   local crop_hash = ("%d-%d-%d-%d"):format(0, crop_offset_top, pixel_width, cropped_pixel_height)
   if needs_crop and not state.backend.features.crop then
-    if
-      (needs_resize and image.resize_hash ~= resize_hash)
-      or image.crop_hash ~= crop_hash
-      or image.date_hash ~= initial_date_hash
-    then
-      local cached_path = cache.cropped[image.path .. ":" .. image.date_hash .. ":" .. crop_hash]
+    if (needs_resize and image.resize_hash ~= resize_hash) or image.crop_hash ~= crop_hash then
+      local cached_path = cache.cropped[image.path .. ":" .. crop_hash]
 
       -- try cache;
       if cached_path then
@@ -386,14 +364,7 @@ local render = function(image)
         cropped_image:set_format("png")
         cropped_image:crop(pixel_width, cropped_pixel_height, 0, crop_offset_top)
 
-        local tmp_path = state.tmp_dir
-          .. "/"
-          .. utils.base64.encode(image.id)
-          .. "-"
-          .. image.date_hash
-          .. "-cropped-"
-          .. crop_hash
-          .. ".png"
+        local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-cropped-" .. crop_hash .. ".png"
         cropped_image:write(tmp_path)
         cropped_image:destroy()
 
@@ -401,7 +372,7 @@ local render = function(image)
 
         image.crop_hash = crop_hash
 
-        cache.cropped[image.path .. ":" .. image.date_hash .. ":" .. crop_hash] = image.cropped_path
+        cache.cropped[image.path .. ":" .. crop_hash] = image.cropped_path
       end
     end
   elseif needs_crop then
@@ -418,7 +389,6 @@ local render = function(image)
     and image.rendered_geometry.y == rendered_geometry.y
     and image.rendered_geometry.width == rendered_geometry.width
     and image.rendered_geometry.height == rendered_geometry.height
-    and image.date_hash == initial_date_hash
     and image.crop_hash == initial_crop_hash
     and image.resize_hash == initial_resize_hash
   then
