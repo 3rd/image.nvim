@@ -116,6 +116,7 @@
 ---@field hue fun(self: Image, hue: number)
 ---@field namespace? string
 ---@field extmark? { id: number, row: number, col: number }
+---@field last_modified? number
 
 -- wish proper generics were a thing here
 ---@class IntegrationContext

@@ -51,6 +51,33 @@ function Image:render(geometry)
   -- be left in place
   if vim.fn.getcmdwintype() ~= "" then return end
 
+  -- track last_modified and wipe cache
+  local current_last_modified = vim.fn.getftime(self.original_path)
+  -- utils.debug(("timestamp: %s, last_modified: %s"):format(current_last_modified, self.last_modified))
+  if self.last_modified ~= current_last_modified then
+    self.last_modified = current_last_modified
+    self.resize_hash = nil
+    self.cropped_hash = nil
+    self.resize_hash = nil
+
+    local magick_image = magick.load_image(self.original_path)
+
+    if magick_image:get_format():lower() ~= "png" then
+      local converted_path = self.global_state.tmp_dir .. "/" .. utils.base64.encode(self.id) .. "-source.png"
+      magick_image:set_format("png")
+      magick_image:write(converted_path)
+      self.path = converted_path
+    end
+
+    self:clear()
+    self.image_width = magick_image:get_width()
+    self.image_height = magick_image:get_height()
+
+    magick_image:destroy()
+
+    renderer.clear_cache_for_path(self.original_path)
+  end
+
   -- utils.debug(("---------------- %s ----------------"):format(self.id))
   local was_rendered = renderer.render(self)
 
@@ -235,18 +262,20 @@ local from_file = function(path, options, state)
     if existing_image then return existing_image end
   end
 
-  local absolute_path = vim.fn.fnamemodify(path, ":p")
-  if not vim.loop.fs_stat(absolute_path) then utils.throw(("image.nvim: file not found: %s"):format(absolute_path)) end
+  local absolute_original_path = vim.fn.fnamemodify(path, ":p")
+  if not vim.loop.fs_stat(absolute_original_path) then
+    utils.throw(("image.nvim: file not found: %s"):format(absolute_original_path))
+  end
 
   -- bail if not an image
-  if not utils.magic.is_image(absolute_path) then
-    utils.debug(("image.nvim: not an image: %s"):format(absolute_path))
+  if not utils.magic.is_image(absolute_original_path) then
+    utils.debug(("image.nvim: not an image: %s"):format(absolute_original_path))
     return nil
   end
 
   -- bypass magick processing if already processed
   for _, instance in pairs(state.images) do
-    if instance.original_path == absolute_path then
+    if instance.original_path == absolute_original_path then
       local clone = createImage({
         id = opts.id or utils.random.id(),
         path = instance.path,
@@ -275,6 +304,7 @@ local from_file = function(path, options, state)
         crop_hash = nil,
         resize_hash = nil,
         namespace = opts.namespace or nil,
+        last_modified = vim.fn.getftime(absolute_original_path),
       }, state)
       -- utils.debug(("image.nvim: cloned image %s from %s"):format(clone.id, instance.id))
       return clone
@@ -284,17 +314,20 @@ local from_file = function(path, options, state)
   local id = opts.id or utils.random.id()
 
   -- convert non-png images to png and read the dimensions
-  local source_path = absolute_path
+  local source_path = absolute_original_path
   local converted_path = state.tmp_dir .. "/" .. utils.base64.encode(id) .. "-source.png"
   local magick_image = nil
 
   -- case 1: non-png, already converted
-  if vim.fn.filereadable(converted_path) == 1 and vim.fn.getftime(converted_path) > vim.fn.getftime(absolute_path) then
+  if
+    vim.fn.filereadable(converted_path) == 1
+    and vim.fn.getftime(converted_path) > vim.fn.getftime(absolute_original_path)
+  then
     magick_image = magick.load_image(converted_path)
     source_path = converted_path
   else
     -- case 2: png
-    magick_image = magick.load_image(absolute_path)
+    magick_image = magick.load_image(absolute_original_path)
 
     -- case 3: non-png, not converted
     if magick_image:get_format():lower() ~= "png" then
@@ -304,7 +337,7 @@ local from_file = function(path, options, state)
     end
   end
 
-  if not magick_image then error(("image.nvim: magick failed to load image: %s"):format(absolute_path)) end
+  if not magick_image then error(("image.nvim: magick failed to load image: %s"):format(absolute_original_path)) end
   local image_width = magick_image:get_width()
   local image_height = magick_image:get_height()
   magick_image:destroy()
@@ -337,6 +370,7 @@ local from_file = function(path, options, state)
     crop_hash = nil,
     resize_hash = nil,
     namespace = opts.namespace or nil,
+    last_modified = vim.fn.getftime(absolute_original_path),
   }, state)
 
   return instance
