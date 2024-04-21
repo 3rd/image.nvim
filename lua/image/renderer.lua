@@ -258,7 +258,7 @@ local render = function(image)
             image.buffer,
             -1,
             { original_y, 0 },
-            { original_y + 1, original_x - 2 },
+            { original_y, original_x - 2 },
             { details = true }
           )
           for _, extmark in ipairs(same_line_extmarks) do
