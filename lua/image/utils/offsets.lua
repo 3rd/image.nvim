@@ -44,7 +44,19 @@ local get_global_offsets = function(window_id)
   return { x = x, y = y }
 end
 
+---Compute the width of virtual text
+---@param vt table[] list of (text, highlight) tuples
+---@return number
+local virt_text_width = function (vt)
+  local width = 0
+  for _, tuple in ipairs(vt) do
+    width = width + string.len(tuple[1])
+  end
+  return width
+end
+
 return {
   get_global_offsets = get_global_offsets,
   get_border_shape = get_border_shape,
+  virt_text_width = virt_text_width,
 }

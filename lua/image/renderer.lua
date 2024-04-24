@@ -122,7 +122,7 @@ local render = function(image)
     -- global max window width/height percentage
     if type(state.options.max_width_window_percentage) == "number" then
       width =
-        math.min(width, math.floor((window.width - global_offsets.x) * state.options.max_width_window_percentage / 100))
+          math.min(width, math.floor((window.width - global_offsets.x) * state.options.max_width_window_percentage / 100))
     end
     if type(state.options.max_height_window_percentage) == "number" then
       height = math.min(
@@ -237,7 +237,7 @@ local render = function(image)
             )
           )
 
-          local extmark_offset = topfill
+          local extmark_y_offset = topfill
           for _, mark in ipairs(extmarks) do
             if image.extmark and image.extmark.id == mark.id then goto continue end
             if mark.row ~= original_y and mark.id ~= image:get_extmark_id() then
@@ -245,12 +245,64 @@ local render = function(image)
               for fold_start, fold_end in pairs(folded_ranges) do
                 if mark.row >= fold_start and mark.row < fold_end then goto continue end
               end
-              extmark_offset = extmark_offset + mark.height
+              extmark_y_offset = extmark_y_offset + mark.height
             end
             ::continue::
           end
 
-          absolute_y = absolute_y + extmark_offset
+          -- offset x by inline virtual text
+          local extmark_x_offset = 0
+          -- track positions that are concealed by extmarks
+          local extmark_concealed = {}
+          local same_line_extmarks = vim.api.nvim_buf_get_extmarks(
+            image.buffer,
+            -1,
+            { original_y, 0 },
+            { original_y, original_x - 2 },
+            { details = true }
+          )
+          for _, extmark in ipairs(same_line_extmarks) do
+            if extmark[3] >= original_x then goto continue end
+            local details = extmark[4]
+            if details.virt_text_pos == "inline" then
+              -- add the width b/c this takes up space
+              extmark_x_offset = extmark_x_offset + utils.offsets.virt_text_width(details.virt_text)
+            end
+
+            local conceallevel = vim.wo[image.window].conceallevel
+            -- TODO: account for conceal cursor?
+            local conceal_current_line = vim.api.nvim_win_get_cursor(image.window)[1] ~= original_x and conceallevel > 0
+            if details.conceal and details.end_col and conceal_current_line then
+              -- remove width b/c this is removing space
+              for i = extmark[3], details.end_col do
+                extmark_concealed[i] = true
+              end
+              extmark_x_offset = extmark_x_offset - (details.end_col - extmark[3])
+
+              if conceallevel ~= 3 then
+                -- concealed text will be replaced with a single character
+                extmark_x_offset = extmark_x_offset + math.min(string.len(details.conceal), 1)
+              end
+            end
+            ::continue::
+          end
+
+          local sum = 0
+          for i = 0, original_x - 1 do
+            local res = vim.inspect_pos(
+              image.buffer,
+              original_y,
+              i,
+              { semantic_tokens = false, syntax = false, extmarks = false, treesitter = true }
+            )
+            for _, hl in ipairs(res.treesitter) do
+              if hl.capture == "conceal" and not extmark_concealed[i + 1] then sum = sum + 1 end
+            end
+          end
+          extmark_x_offset = extmark_x_offset - sum
+
+          absolute_y = absolute_y + extmark_y_offset
+          absolute_x = absolute_x + extmark_x_offset
         end
       end
     end
@@ -260,10 +312,10 @@ local render = function(image)
 
   -- clear out of bounds images
   if
-    absolute_y + height <= bounds.top
-    or absolute_y >= bounds.bottom
-    or absolute_x + width <= bounds.left
-    or absolute_x >= bounds.right
+      absolute_y + height <= bounds.top
+      or absolute_y >= bounds.bottom
+      or absolute_x + width <= bounds.left
+      or absolute_x >= bounds.right
   then
     if image.is_rendered then
       -- utils.debug("deleting out of bounds image", { id = image.id, x = absolute_x, y = absolute_y, width = width, height = height, bounds = bounds })
@@ -384,13 +436,13 @@ local render = function(image)
   end
 
   if
-    image.is_rendered
-    and image.rendered_geometry.x == rendered_geometry.x
-    and image.rendered_geometry.y == rendered_geometry.y
-    and image.rendered_geometry.width == rendered_geometry.width
-    and image.rendered_geometry.height == rendered_geometry.height
-    and image.crop_hash == initial_crop_hash
-    and image.resize_hash == initial_resize_hash
+      image.is_rendered
+      and image.rendered_geometry.x == rendered_geometry.x
+      and image.rendered_geometry.y == rendered_geometry.y
+      and image.rendered_geometry.width == rendered_geometry.width
+      and image.rendered_geometry.height == rendered_geometry.height
+      and image.crop_hash == initial_crop_hash
+      and image.resize_hash == initial_resize_hash
   then
     -- utils.debug("skipping render", image.id)
     return true
