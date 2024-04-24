@@ -148,6 +148,11 @@ local render = function(image)
 
   local absolute_x = original_x + x_offset + window_offset_x
   local absolute_y = original_y + y_offset + window_offset_y
+
+  if image.with_virtual_padding then
+    absolute_y = absolute_y + 1
+  end
+
   local prevent_rendering = false
 
   -- utils.debug(("(4) x: %d, y: %d, width: %d, height: %d y_offset: %d absolute_x: %d absolute_y: %d"):format( original_x, original_y, width, height, y_offset, absolute_x, absolute_y))
