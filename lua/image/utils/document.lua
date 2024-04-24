@@ -81,7 +81,7 @@ local create_document_integration = function(config)
         local render_image = function(image)
           image:render({
             x = item.match.range.start_col,
-            y = item.match.range.start_row + 1,
+            y = item.match.range.start_row,
           })
         end
 

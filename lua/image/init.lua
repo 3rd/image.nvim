@@ -310,14 +310,17 @@ api.setup = function(options)
   end
 
   -- sync with extmarks
-  vim.api.nvim_create_autocmd({ "BufWritePost", "TextChanged", "TextChangedI" }, {
+  vim.api.nvim_create_autocmd({ "BufWritePost", "TextChanged", "TextChangedI", "InsertEnter" }, {
     group = group,
     callback = function(event)
       local images = api.get_images({ buffer = event.buf })
       for _, img in ipairs(images) do
-        local has_moved, extmark_y = img:has_extmark_moved()
-        if has_moved and extmark_y ~= nil then
-          img.geometry.y = extmark_y + 1
+        local has_moved, extmark_y, extmark_x = img:has_extmark_moved()
+        if has_moved and extmark_x and extmark_y then
+          img.geometry.y = extmark_y
+          img.geometry.x = extmark_x
+          img.extmark.col = extmark_x
+          img.extmark.row = extmark_y
           img:render()
         end
       end

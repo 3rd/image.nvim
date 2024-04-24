@@ -2,7 +2,7 @@ local magick = require("image/magick")
 local renderer = require("image/renderer")
 local utils = require("image/utils")
 
--- { ["buf:row"]: { id, height } }
+-- { ["buf:row:col"]: { id, height } }
 ---@type table<string, { id: number, height: number }>
 local buf_extmark_map = {}
 
@@ -29,15 +29,18 @@ end
 ---get the extmark id for the virtual padding for this image
 ---@return number?
 function Image:get_extmark_id()
-  local extmark = buf_extmark_map[self.buffer .. ":" .. self.geometry.y]
+  local extmark = buf_extmark_map[self.buffer .. ":" .. self.geometry.y .. ":" .. self.geometry.x]
   if extmark then return extmark.id end
 end
 
 function Image:has_extmark_moved()
   if not self.extmark then return false end
   local extmark =
-      vim.api.nvim_buf_get_extmark_by_id(self.buffer, self.global_state.extmarks_namespace, self.extmark.id, {})
-  return extmark and extmark[1] ~= self.extmark.row, extmark and extmark[1] or nil
+    vim.api.nvim_buf_get_extmark_by_id(self.buffer, self.global_state.extmarks_namespace, self.extmark.id, {})
+  if extmark then
+    local moved = extmark[1] ~= self.extmark.row or extmark[2] ~= self.extmark.col
+    return moved, extmark[1], extmark[2]
+  end
 end
 
 ---@param geometry? ImageGeometry
@@ -71,9 +74,10 @@ function Image:render(geometry)
   -- virtual padding
   if was_rendered and self.buffer and self.inline then
     local row = self.geometry.y
+    local col = self.geometry.x
     local height = self.rendered_geometry.height
 
-    local extmark_key = self.buffer .. ":" .. row
+    local extmark_key = self.buffer .. ":" .. row .. ":" .. col
     local previous_extmark = buf_extmark_map[extmark_key]
 
     -- create extmark
@@ -97,8 +101,8 @@ function Image:render(geometry)
         end
 
         -- utils.debug(("(image.render) creating extmark %s"):format(self.internal_id))
-        local extmark_row = row > 0 and row - 1 or 0
-        local extmark_col = self.geometry.x >= 0 and self.geometry.x or 0
+        local extmark_row = math.max(row or 0, 0)
+        local extmark_col = math.max(col or 0, 0)
         local ok, extmark_id = pcall(
           vim.api.nvim_buf_set_extmark,
           self.buffer,
@@ -109,7 +113,7 @@ function Image:render(geometry)
         )
         if ok then
           buf_extmark_map[extmark_key] = { id = self.internal_id, height = height or 0 }
-          self.extmark = { id = extmark_id, row = extmark_row }
+          self.extmark = { id = extmark_id, row = extmark_row, col = extmark_col }
         end
       end
     end
@@ -149,7 +153,7 @@ function Image:clear(shallow)
     if vim.api.nvim_buf_is_valid(self.buffer) then
       vim.api.nvim_buf_del_extmark(self.buffer, self.global_state.extmarks_namespace, self.internal_id)
     end
-    buf_extmark_map[self.buffer .. ":" .. self.geometry.y] = nil
+    buf_extmark_map[self.buffer .. ":" .. self.geometry.y .. ":" .. self.geometry.x] = nil
   end
 end
 
