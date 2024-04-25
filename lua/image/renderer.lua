@@ -301,7 +301,10 @@ local render = function(image)
               { semantic_tokens = false, syntax = false, extmarks = false, treesitter = true }
             )
             for _, hl in ipairs(res.treesitter) do
-              if hl.capture == "conceal" and not extmark_concealed[i + 1] then sum = sum + 1 end
+              if hl.capture == "conceal" and not extmark_concealed[i + 1] then
+                sum = sum + 1
+                break
+              end
             end
           end
           extmark_x_offset = extmark_x_offset - sum
