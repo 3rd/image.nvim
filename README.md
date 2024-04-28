@@ -190,6 +190,12 @@ require("image").setup({
       only_render_image_at_cursor = false,
       filetypes = { "norg" },
     },
+    html = {
+      enabled = false,
+    },
+    css = {
+      enabled = false,
+    },
   },
   max_width = nil,
   max_height = nil,

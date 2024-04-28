@@ -14,6 +14,12 @@ local default_options = {
     syslang = {
       enabled = true,
     },
+    html = {
+      enabled = false,
+    },
+    css = {
+      enabled = false,
+    },
   },
   max_width = nil,
   max_height = nil,
