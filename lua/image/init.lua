@@ -15,10 +15,10 @@ local default_options = {
       enabled = true,
     },
     html = {
-      enabled = true,
+      enabled = false,
     },
     css = {
-      enabled = true,
+      enabled = false,
     },
   },
   max_width = nil,
