@@ -1,6 +1,10 @@
 local codes = require("image/backends/kitty/codes")
 local utils = require("image/utils")
 
+local uv = vim.uv
+ -- Allow for loop to be used on older versions
+if not uv then uv = vim.loop end
+
 local stdout = vim.loop.new_tty(1, false)
 if not stdout then error("failed to open stdout") end
 
@@ -45,7 +49,7 @@ local move_cursor = function(x, y, save)
   end
   if save then write("\x1b[s") end
   write("\x1b[" .. y .. ";" .. x .. "H")
-  vim.loop.sleep(1)
+  uv.sleep(1)
 end
 
 local restore_cursor = function()
@@ -92,6 +96,7 @@ local write_graphics = function(config, data)
       else
         control_payload = "m=1"
       end
+      uv.sleep(1)
     end
   else
     -- utils.debug("kitty control payload:", control_payload)
