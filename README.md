@@ -44,6 +44,7 @@ It's recommended that you use [vhyrro/luarocks.nvim](https://github.com/vhyrro/l
 install luarocks for neovim while using lazy. But you can install manually as well.
 
 **With luarocks.nvim**:
+**Please readthe luarocks.nvim README,** it currently has an external dependency.
 
 ```lua
 {
