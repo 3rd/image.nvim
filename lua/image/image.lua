@@ -353,7 +353,7 @@ local from_url = function(url, options, callback, state)
     return
   end
 
-  local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(url) .. ".png"
+  local tmp_path = state.tmp_dir .. "/" .. utils.hash.simple(url) .. ".png"
   local stdout = vim.loop.new_pipe()
 
   vim.loop.spawn("curl", {
