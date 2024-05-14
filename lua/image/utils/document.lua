@@ -53,7 +53,13 @@ local create_document_integration = function(config)
           local cursor_row = vim.api.nvim_win_get_cursor(window.id)[1] - 1 -- 0-indexed row
 
           for _, match in ipairs(matches) do
-            local id = string.format("%d:%d:%d:%s", window.id, window.buffer, match.range.start_row, match.url)
+            local id = string.format(
+              "%d:%d:%d:%s",
+              window.id,
+              window.buffer,
+              match.range.start_row,
+              utils.hash.sha256(match.url)
+            )
 
             if ctx.options.only_render_image_at_cursor and match.range.start_row ~= cursor_row then goto continue end
 
