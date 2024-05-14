@@ -58,7 +58,7 @@ local create_document_integration = function(config)
               window.id,
               window.buffer,
               match.range.start_row,
-              utils.hash.simple(match.url)
+              utils.hash.sha256(match.url)
             )
 
             if ctx.options.only_render_image_at_cursor and match.range.start_row ~= cursor_row then goto continue end

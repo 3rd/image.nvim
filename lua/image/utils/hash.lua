@@ -1,6 +1,6 @@
 local bit = require("bit")
 
-local filename = function(str)
+local simple = function(str)
   local hash = 5381
   for i = 1, #str do
     local char = string.byte(str, i)
@@ -9,6 +9,11 @@ local filename = function(str)
   return hash
 end
 
+local sha256 = function(str)
+  return vim.fn.sha256(str)
+end
+
 return {
-  simple = filename,
+  simple = simple,
+  sha256 = sha256,
 }
