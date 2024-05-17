@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.3.0](https://github.com/3rd/image.nvim/compare/v1.2.0...v1.3.0) (2024-05-14)
+
+
+### Features
+
+* configurable resolve_image_path function ([6ab77ff](https://github.com/3rd/image.nvim/commit/6ab77ffda4ac0825a9b49e5580da261e74a577ac))
+* include the magick error in the "rock not found" message ([13f56f4](https://github.com/3rd/image.nvim/commit/13f56f4eea294f190db8c67d4c8045d3be608f4b))
+* namespace integration images ([ec57744](https://github.com/3rd/image.nvim/commit/ec577441edca399c43d77b522870dbd7b9cd38b8))
+* shortcut link imgs in md doc integration ([af1fb0c](https://github.com/3rd/image.nvim/commit/af1fb0cf3aaae48c5a25afb4152f94cb46e344e9))
+* sync image positions to external extmark changes ([c53bbc4](https://github.com/3rd/image.nvim/commit/c53bbc41debf42e6470235c4fef9868f6be20c12))
+* track col position for extmarks ([d24d498](https://github.com/3rd/image.nvim/commit/d24d498cdb020bb87d629263e89f25767b6c73c9))
+* use sha256 for hashing ([4d7ae21](https://github.com/3rd/image.nvim/commit/4d7ae2162ace0f7028e60148ba6fecd78659a994))
+
+
+### Bug Fixes
+
+* account for char with multiple conceal hl ([a61323f](https://github.com/3rd/image.nvim/commit/a61323f72c2533e4d85a3fac1539868c6083f934))
+* account for extmarks/conceal for inline imgs ([be2d94a](https://github.com/3rd/image.nvim/commit/be2d94a6e0143bb276b474c6fa58bebcb64a5f8a))
+* add missing scrollview_sign ft to overlap exceptions ([895ff42](https://github.com/3rd/image.nvim/commit/895ff42de4c9682f1eafe0ce4913ef66e498fc4d))
+* add scrollview to default non-overlapping filetypes ([bf168f8](https://github.com/3rd/image.nvim/commit/bf168f8c4a6ec7b6d892defb62607c81d88b86d9))
+* auto-clear/re-render on tab switch ([95a3afd](https://github.com/3rd/image.nvim/commit/95a3afd192931eac58703c269164aae989cbfd09))
+* better clearing, hijack cache rerender, resize ([77df64a](https://github.com/3rd/image.nvim/commit/77df64af37ff68a1f593aa4f79b42b1388479239))
+* don't look at extmarks on line below ([9cc4e13](https://github.com/3rd/image.nvim/commit/9cc4e13ccd20ccc142110c495a88d80df47e7ce6))
+* extend jpeg signatures ([2cb0a10](https://github.com/3rd/image.nvim/commit/2cb0a100f8b1311ca2f373927b2f3aed61684540))
+* get_images api https://github.com/3rd/image.nvim/issues/111 ([2090055](https://github.com/3rd/image.nvim/commit/2090055394d5c8efb5f23143cc2f3d9fac68a61e))
+* hardcode markdown parser (fixes vimwiki) ([0dd8bdb](https://github.com/3rd/image.nvim/commit/0dd8bdbb8855bc98c534a902c91dc9eddb8155b1))
+* hash urls/ids for temp paths ([e3d2cc1](https://github.com/3rd/image.nvim/commit/e3d2cc1f88588192a119206ff912279b57954ed4))
+* namespaces not set on images ([088c2ed](https://github.com/3rd/image.nvim/commit/088c2ed65d05aea12389ea76b96bb2bfe6f964d8))
+* nil check extmark_y ([f40f1d4](https://github.com/3rd/image.nvim/commit/f40f1d445e75d8d9101fe44e2df962a202b79695))
+* padded images cause lower images to rerender ([5cb5b0e](https://github.com/3rd/image.nvim/commit/5cb5b0e8dc3a10ff5946efbdb06881e0b475b28c))
+* re-use file descriptor for jpeg check ([402ff91](https://github.com/3rd/image.nvim/commit/402ff916a17f86fb6542886ad0d553f5d77cf22f))
+
 ## [1.2.0](https://github.com/3rd/image.nvim/compare/v1.1.0...v1.2.0) (2023-12-25)
 
 
