@@ -168,7 +168,7 @@ package as well.
     `export DYLD_LIBRARY_PATH="$(brew --prefix)/lib:$DYLD_LIBRARY_PATH"`
     to your shell profile (probably `.zshrc` or `.bashrc`)
 - Fedora: `sudo dnf install ImageMagick-devel`
-- Arch: `sudo pacman -Syy imagemagick`
+- Arch: `sudo pacman -Syu imagemagick`
 
 ## Configuration
 
