@@ -357,7 +357,7 @@ local from_url = function(url, options, callback, state)
   local stdout = vim.loop.new_pipe()
 
   vim.loop.spawn("curl", {
-    args = { "-s", "-o", tmp_path, url },
+    args = { "-L", "-s", "-o", tmp_path, url },
     stdio = { nil, stdout, nil },
     hide = true,
   }, function(code, signal)
