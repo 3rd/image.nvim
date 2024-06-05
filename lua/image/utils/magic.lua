@@ -7,6 +7,7 @@ local image_signatures = {
   HEIC = "\x66\x74\x79\x70",
   XPM = "\x2F\x2A\x20\x58\x50\x4D\x20\x2A\x2F",
   ICO = "\x00\x00\x01\x00",
+  AVIF = "\x66\x74\x79\x70\x61\x76\x69\x66",
   SVG = "<svg",
   XML = "<?xml",
 }
@@ -33,7 +34,7 @@ local function is_image(path)
   local file, _ = io.open(path, "rb")
   if not file then return false end
 
-  local max_bytes = 9
+  local max_bytes = 12
   local header, _ = read_file_header(file, max_bytes)
   if not header then
     file:close()
@@ -41,17 +42,26 @@ local function is_image(path)
   end
 
   local is_image_flag = false
-  for _, signature in pairs(image_signatures) do
+  for key, signature in pairs(image_signatures) do
     local bytes = { signature:byte(1, #signature) }
     local match = true
-    for i = 1, #bytes do
-      if header[i] ~= bytes[i] then
-        match = false
-        break
+    if key == "AVIF" then
+      for i = 1, #bytes do
+        if header[i + 4] ~= bytes[i] then
+          match = false
+          break
+        end
+      end
+    else
+      for i = 1, #bytes do
+        if header[i] ~= bytes[i] then
+          match = false
+          break
+        end
       end
     end
     if match then
-      if signature == image_signatures.JPEG then
+      if key == "JPEG" then
         is_image_flag = has_jpeg_end_signature(file)
       else
         is_image_flag = true
