@@ -321,7 +321,7 @@ local render = function(image)
   -- clear out of bounds images
   if
       absolute_y + height <= bounds.top
-      or absolute_y >= bounds.bottom
+      or absolute_y >= bounds.bottom + (vim.o.laststatus == 2 and 1 or 0)
       or absolute_x + width <= bounds.left
       or absolute_x >= bounds.right
   then
