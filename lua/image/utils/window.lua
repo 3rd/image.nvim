@@ -33,7 +33,7 @@ local get_windows = function(opts)
       rect = {
         top = pos[1],
         right = pos[2] + columns,
-        bottom = pos[1] + rows,
+        bottom = pos[1] + rows - (vim.o.laststatus == 2 and 1 or 0),
         left = pos[2],
       },
       masks = {},
