@@ -52,8 +52,9 @@ local create_document_integration = function(config)
   local render = vim.schedule_wrap(
     ---@param ctx IntegrationContext
     function(ctx)
-      local windows = utils.window.get_windows({ normal = true, floating = ctx.options.floating_windows })
+      if not ctx.state.enabled then return end
 
+      local windows = utils.window.get_windows({ normal = true, floating = ctx.options.floating_windows })
       local image_queue = {}
 
       for _, window in ipairs(windows) do
