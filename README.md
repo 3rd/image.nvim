@@ -38,6 +38,24 @@ Fully **optional:**
 
 <summary>Lazy.nvim</summary>
 
+> Since version v11.* of Lazy rockspec is supported, so no need of extra plugins `vhyrro/luarocks.nvim`
+
+<details>
+<summary><b>Lazy >= v11.*</b></summary>
+
+```lua
+{
+    "3rd/image.nvim",
+    config = function()
+        -- ...
+    end
+}
+```
+</details>
+
+<details>
+<summary><b>Lazy < v11.x</b></summary>
+
 **NOTE:** Don't forget to install the imageMagick system package, detailed [below](#installing-imagemagick)
 
 It's recommended that you use [vhyrro/luarocks.nvim](https://github.com/vhyrro/luarocks.nvim) to
@@ -62,6 +80,7 @@ install luarocks for neovim while using lazy. But you can install manually as we
     end
 }
 ```
+</details>
 
 ---
 
