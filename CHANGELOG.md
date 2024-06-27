@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.4.0](https://github.com/3rd/image.nvim/compare/v1.3.0...v1.4.0) (2024-06-27)
+
+
+### Features
+
+* add rockspec to avoid needs of extra plugins on Lazy >= v11 ([94319cd](https://github.com/3rd/image.nvim/commit/94319cdafec62cd5b3ac1448ed1aae1bbe731f45))
+* curl always redirect ([56ddfa2](https://github.com/3rd/image.nvim/commit/56ddfa21270160126c26bc98133c0f7755d91511))
+
+
+### Bug Fixes
+
+* **readme:** Fix typo in pacman command ([47c9470](https://github.com/3rd/image.nvim/commit/47c947061c93e19aa9dba5cf2dbf374a4b46811e))
+
 ## [1.3.0](https://github.com/3rd/image.nvim/compare/v1.2.0...v1.3.0) (2024-05-14)
 
 
