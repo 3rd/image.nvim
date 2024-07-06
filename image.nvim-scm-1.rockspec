@@ -1,7 +1,7 @@
 local modrev, specrev = "scm", "-1"
 
-local repo_url = "https://github.com/kevinm6/image.nvim"
-local git_ref = "59d35492342f4afd74d74961cb9aafdb7caf29b9"
+local repo_url = "https://github.com/3rd/image.nvim"
+local git_ref = "7d021c94e231d491355f5e724ba357ace296f06d"
 
 rockspec_format = "3.0"
 package = "image.nvim"
@@ -22,7 +22,7 @@ dependencies = {
 
 source = {
   url = repo_url .. "/archive/" .. git_ref .. ".zip",
-  dir = "image.nvim-" .. "59d35492342f4afd74d74961cb9aafdb7caf29b9",
+  dir = "image.nvim-" .. git_ref,
 }
 
 if modrev == "scm" or modrev == "dev" then source = {
