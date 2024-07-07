@@ -38,10 +38,10 @@ Fully **optional:**
 
 <summary>Lazy.nvim</summary>
 
-> Since version v11.* of Lazy rockspec is supported, so no need of extra plugins `vhyrro/luarocks.nvim`
+> Since version v11.\* of Lazy rockspec is supported, so no need of extra plugins `vhyrro/luarocks.nvim`
 
 <details>
-<summary><b>Lazy >= v11.*</b></summary>
+<summary><b>Lazy >= v11.* [(DISABLED DUE TO ISSUES)](https://github.com/3rd/image.nvim/issues/191)</b></summary>
 
 ```lua
 {
@@ -51,6 +51,7 @@ Fully **optional:**
     end
 }
 ```
+
 </details>
 
 <details>
@@ -80,6 +81,7 @@ install luarocks for neovim while using lazy. But you can install manually as we
     end
 }
 ```
+
 </details>
 
 ---
