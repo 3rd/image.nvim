@@ -37,25 +37,57 @@ Fully **optional:**
 <details>
 
 <summary>Lazy.nvim</summary>
+<br>
 
-> Since version v11.\* of Lazy rockspec is supported, so no need of extra plugins `vhyrro/luarocks.nvim`
+⚠️ Read carefully and check your Lazy version before continue reading ⚠️  
 
 <details>
-<summary><b>Lazy >= v11.* [(DISABLED DUE TO ISSUES)](https://github.com/3rd/image.nvim/issues/191)</b></summary>
+<summary><b>Lazy >= v11</b></summary>
 
-```lua
-{
-    "3rd/image.nvim",
-    config = function()
-        -- ...
-    end
-}
-```
+> Since version v11.\* of Lazy rockspec is supported, so no need of extra plugins `vhyrro/luarocks.nvim`.  
+> To work with *luarocks*, **Lazy** requires **lua@5.1** available in your `$PATH`, so to make
+> `image.nvim` work with it easily you must configure your machine in one of the below instructions
+
+If this approach is not for you, you <u>have to follow</u> the steps for [Lazy < v11](https://github.com/3rd/image.nvim?tab=readme-ov-file#installing-the-plugin--rock)  
+
+> If you continue with the config below, another [plugin](https://github.com/luarocks/hererocks) will be installed by **Lazy**  
+
+1. Add `opts.hererocks = true` to Lazy config  
+
+    ```lua
+    -- This is an example, your config could differ
+    require("lazy").setup({ ... }, {
+     defaults = {
+          lazy = true,
+       },
+       dev = {
+          path = "~/dev",
+       },
+       rocks = {
+          hererocks = true,
+       },
+    })
+    ```
+
+2. Add `image.nvim` as plugin  
+
+    ```lua
+    {
+        "3rd/image.nvim",
+        config = function()
+            -- ...
+        end
+    }
+    ```
+
+3. Just follow **Lazy UI**, so install `hererocks` and then install `image.nvim`
+
+---
 
 </details>
 
 <details>
-<summary><b>Lazy < v11.x</b></summary>
+<summary><b>Lazy < v11</b></summary>
 
 **NOTE:** Don't forget to install the imageMagick system package, detailed [below](#installing-imagemagick)
 
