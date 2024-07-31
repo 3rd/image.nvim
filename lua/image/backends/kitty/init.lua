@@ -166,7 +166,6 @@ backend.clear = function(image_id, shallow)
 
     if image.is_rendered then
       local tty = get_clear_tty_override()
-      if tty == nil then tty = utils.tmux.get_active_pane_tty() end
       helpers.write_graphics({
         action = codes.control.action.delete,
         display_delete = "i",
