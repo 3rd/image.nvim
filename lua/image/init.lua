@@ -97,6 +97,10 @@ api.setup = function(options)
       if not vim.api.nvim_win_is_valid(winid) then return false end
       if not vim.api.nvim_buf_is_valid(bufnr) then return false end
 
+      -- bail if there are no images
+      local all_images = api.get_images()
+      if #all_images == 0 then return false end
+
       -- toggle images in overlapped windows
       if state.options.window_overlap_clear_enabled then
         vim.schedule(function()
