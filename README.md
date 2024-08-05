@@ -233,7 +233,7 @@ require("image").setup({
 
 ## Tmux
 
-- You must set: `set -gq allow-passthrough on`
+- You must use tmux [>= 3.3](https://github.com/tmux/tmux/wiki/FAQ#:~:text=tmux%203.3%2C%20the-,allow%2Dpassthrough,-option%20must%20be) and set: `set -gq allow-passthrough on`
 - If you want the images to be automatically hidden/shown when you switch windows (`tmux_show_only_in_active_window = true`), set: `set -g visual-activity off`
 
 ### Try it out with a minimal setup
