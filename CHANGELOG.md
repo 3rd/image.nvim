@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.4.0](https://github.com/3rd/image.nvim/compare/v1.3.0...v1.4.0) (2024-08-05)
+
+
+### Features
+
+* add rockspec to avoid needs of extra plugins on Lazy >= v11 ([94319cd](https://github.com/3rd/image.nvim/commit/94319cdafec62cd5b3ac1448ed1aae1bbe731f45))
+* curl always redirect ([56ddfa2](https://github.com/3rd/image.nvim/commit/56ddfa21270160126c26bc98133c0f7755d91511))
+
+
+### Bug Fixes
+
+* bail early out of nvim_set_decoration_provider ([6fb2b84](https://github.com/3rd/image.nvim/commit/6fb2b84a739d92b781bba5f59f2678ea047332a9))
+* disable rockspec until we fix https://github.com/3rd/image.nvim/issues/191 ([61c7651](https://github.com/3rd/image.nvim/commit/61c76515cfc3cdac8123ece9e9761b20c3dc1315))
+* **readme:** Fix typo in pacman command ([47c9470](https://github.com/3rd/image.nvim/commit/47c947061c93e19aa9dba5cf2dbf374a4b46811e))
+
 ## [1.3.0](https://github.com/3rd/image.nvim/compare/v1.2.0...v1.3.0) (2024-05-14)
 
 
