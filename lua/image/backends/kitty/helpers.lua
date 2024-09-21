@@ -75,7 +75,20 @@ local write_graphics = function(config, data)
   for k, v in pairs(config) do
     if v ~= nil then
       local key = codes.control.keys[k]
-      if key then control_payload = control_payload .. key .. "=" .. v .. "," end
+      if key then
+        if type(v) == "number" then
+          -- There are currently no floating-point values in the Kitty graphics
+          -- specification. All values are either signed or unsigned 32-bit integers.
+          -- As such, we just stringify the number values here using "%d" to drop any
+          -- possible fractional portions.
+          --
+          -- (Note that string.format here is used to accommodate older versions of
+          -- Lua, in addition to the fact that we are just writing the string below
+          -- anyway).
+          v = string.format("%d", v)
+        end
+        control_payload = control_payload .. key .. "=" .. v .. ","
+      end
     end
   end
   control_payload = control_payload:sub(0, -2)
