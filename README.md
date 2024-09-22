@@ -183,11 +183,14 @@ The `magick` luarock provides bindings to ImageMagick's MagickWand, so we need t
 package as well.
 
 - Ubuntu: `sudo apt install libmagickwand-dev`
-- MacOS: `brew install imagemagick`
-  - By default, brew installs into a weird location, so you have to add `$(brew --prefix)/lib` to
+- MacOS:
+  - Homebrew: `brew install imagemagick`
+    - By default, homebrew installs into a weird location, so you have to add `$(brew --prefix)/lib` to
     `DYLD_LIBRARY_PATH` by adding something like
     `export DYLD_LIBRARY_PATH="$(brew --prefix)/lib:$DYLD_LIBRARY_PATH"`
     to your shell profile (probably `.zshrc` or `.bashrc`)
+  - MacPorts: `sudo port install imagemagick`
+    - You must add `/opt/local/lib` to `DYLD_LIBRARY_PATH`, similar to homebrew.
 - Fedora: `sudo dnf install ImageMagick-devel`
 - Arch: `sudo pacman -Syu imagemagick`
 
