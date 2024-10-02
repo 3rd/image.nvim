@@ -265,6 +265,7 @@ api.setup = function(options)
   then
     local images_to_restore_on_focus = {}
     local initial_tmux_window_id = utils.tmux.get_window_id()
+    local initial_tmux_session = utils.tmux.get_current_session()
 
     vim.api.nvim_create_autocmd("FocusLost", {
       group = group,
@@ -275,6 +276,7 @@ api.setup = function(options)
           if
             state.options.editor_only_render_when_focused
             or (utils.tmux.is_tmux and utils.tmux.get_window_id() ~= initial_tmux_window_id)
+            or (utils.tmux.is_tmux and utils.tmux.get_current_session() ~= initial_tmux_session)
           then
             state.disable_decorator_handling = true
 
@@ -298,6 +300,16 @@ api.setup = function(options)
         state.disable_decorator_handling = false
 
         vim.schedule_wrap(function()
+          -- force rerender
+          local images = api.get_images()
+          for _, current_image in ipairs(images) do
+            if current_image.is_rendered then
+              current_image:clear()
+              current_image:render()
+            end
+          end
+
+          -- render images cleared on focus loss
           for _, current_image in ipairs(images_to_restore_on_focus) do
             current_image:render()
           end
