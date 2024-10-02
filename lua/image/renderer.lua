@@ -5,10 +5,8 @@ local utils = require("image/utils")
 -- Each of these versions are written to the temp directory and cleared on reboot (on Linux at least).
 -- This is where we keep track of the hashes of the resized and cropped versions of the images so we
 -- can avoid processing and writing the same cropped/resized image variant multiple times.
-local cache = {
-  resized = {}, -- { [`${original_path}:${resize_hash}`]: string }
-  cropped = {}, -- { [`${original_path}:${crop_hash}`]: string }
-}
+---@type table<string, { resized: table<string>, cropped: table<string> }>
+local cache = {}
 
 ---@param image Image
 local render = function(image)
@@ -16,6 +14,7 @@ local render = function(image)
   local term_size = utils.term.get_size()
   local image_rows = math.floor(image.image_height / term_size.cell_height)
   local image_columns = math.floor(image.image_width / term_size.cell_width)
+  local image_cache = cache[image.original_path] or { resized = {}, cropped = {} }
 
   -- utils.debug(("renderer.render() %s"):format(image.id), {
   --   id = image.id,
@@ -373,7 +372,7 @@ local render = function(image)
   -- resize
   if needs_resize then
     if image.resize_hash ~= resize_hash then
-      local cached_path = cache.resized[image.path .. ":" .. resize_hash]
+      local cached_path = image_cache.resized[resize_hash]
 
       -- try cache
       if cached_path then
@@ -396,7 +395,7 @@ local render = function(image)
           image.resized_path = tmp_path
           image.resize_hash = resize_hash
 
-          cache.resized[image.path .. ":" .. resize_hash] = tmp_path
+          image_cache.resized[resize_hash] = tmp_path
         end
       end
     end
@@ -409,7 +408,7 @@ local render = function(image)
   local crop_hash = ("%d-%d-%d-%d"):format(0, crop_offset_top, pixel_width, cropped_pixel_height)
   if needs_crop and not state.backend.features.crop then
     if (needs_resize and image.resize_hash ~= resize_hash) or image.crop_hash ~= crop_hash then
-      local cached_path = cache.cropped[image.path .. ":" .. crop_hash]
+      local cached_path = image_cache.cropped[crop_hash]
 
       -- try cache;
       if cached_path then
@@ -432,7 +431,7 @@ local render = function(image)
 
         image.crop_hash = crop_hash
 
-        cache.cropped[image.path .. ":" .. crop_hash] = image.cropped_path
+        image_cache.cropped[crop_hash] = image.cropped_path
       end
     end
   elseif needs_crop then
@@ -461,11 +460,17 @@ local render = function(image)
   image.bounds = bounds
   state.backend.render(image, absolute_x, absolute_y, width, height)
   image.rendered_geometry = rendered_geometry
-  -- utils.debug("rendered", image)
+  cache[image.original_path] = image_cache
 
+  -- utils.debug("rendered", image)
   return true
+end
+
+local clear_cache_for_path = function(path)
+  cache[path] = nil
 end
 
 return {
   render = render,
+  clear_cache_for_path = clear_cache_for_path,
 }
