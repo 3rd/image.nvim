@@ -8,6 +8,9 @@ local default_options = {
     markdown = {
       enabled = true,
     },
+    typst = {
+      enabled = true,
+    },
     neorg = {
       enabled = true,
     },
