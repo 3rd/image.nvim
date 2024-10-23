@@ -140,7 +140,7 @@ _thanks to [@wuliuqii](https://github.com/wuliuqii) in [#13](https://github.com/
   programs.neovim = {
     enable = true;
     extraLuaPackages = ps: [ ps.magick ];
-    extraPackages = ps: [ ps.imagemagick ];
+    extraPackages = [ pkgs.imagemagick ];
     # ... other config
   };
 }
