@@ -148,9 +148,7 @@ local render = function(image)
   local absolute_x = original_x + x_offset + window_offset_x
   local absolute_y = original_y + y_offset + window_offset_y
 
-  if image.with_virtual_padding then
-    absolute_y = absolute_y + 1
-  end
+  if image.with_virtual_padding then absolute_y = absolute_y + 1 end
 
   local prevent_rendering = false
 
@@ -163,8 +161,11 @@ local render = function(image)
     local botline = win_info.botline
 
     -- bail if out of bounds
-    if original_y > botline then
-      -- utils.debug("prevent rendering 1", image.id)
+    if
+      (image.with_virtual_padding and ((topline == original_y + 2 and topfill == 0) or (topline > original_y + 2)))
+      or original_y > botline
+    then
+      -- utils.debug("prevent rendering 1", image.id, { topline = topline, original_y = original_y })
       prevent_rendering = true
     end
 
