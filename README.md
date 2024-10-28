@@ -186,11 +186,11 @@ package as well.
 - MacOS:
   - Homebrew: `brew install imagemagick`
     - By default, homebrew installs into a weird location, so you have to add `$(brew --prefix)/lib` to
-    `DYLD_LIBRARY_PATH` by adding something like
-    `export DYLD_LIBRARY_PATH="$(brew --prefix)/lib:$DYLD_LIBRARY_PATH"`
+    `DYLD_FALLBACK_LIBRARY_PATH` by adding something like
+    `export DYLD_FALLBACK_LIBRARY_PATH="$(brew --prefix)/lib:$DYLD_FALLBACK_LIBRARY_PATH"`
     to your shell profile (probably `.zshrc` or `.bashrc`)
   - MacPorts: `sudo port install imagemagick`
-    - You must add `/opt/local/lib` to `DYLD_LIBRARY_PATH`, similar to homebrew.
+    - You must add `/opt/local/lib` to `DYLD_FALLBACK_LIBRARY_PATH`, similar to homebrew.
 - Fedora: `sudo dnf install ImageMagick-devel`
 - Arch: `sudo pacman -Syu imagemagick`
 
