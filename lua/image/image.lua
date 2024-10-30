@@ -41,6 +41,7 @@ function Image:has_extmark_moved()
     local moved = extmark[1] ~= self.extmark.row or extmark[2] ~= self.extmark.col
     return moved, extmark[1], extmark[2]
   end
+  return false
 end
 
 ---@param geometry? ImageGeometry

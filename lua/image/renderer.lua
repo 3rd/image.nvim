@@ -59,7 +59,7 @@ local render = function(image)
 
   -- screen max width/height
   width = math.min(width, term_size.screen_cols)
-  height = math.min(height, term_size.screen_rows)
+  -- height = math.min(height, term_size.screen_rows)
 
   -- utils.debug(("(1) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset))
 
@@ -121,7 +121,7 @@ local render = function(image)
     -- global max window width/height percentage
     if type(state.options.max_width_window_percentage) == "number" then
       width =
-          math.min(width, math.floor((window.width - global_offsets.x) * state.options.max_width_window_percentage / 100))
+        math.min(width, math.floor((window.width - global_offsets.x) * state.options.max_width_window_percentage / 100))
     end
     if type(state.options.max_height_window_percentage) == "number" then
       height = math.min(
@@ -148,9 +148,7 @@ local render = function(image)
   local absolute_x = original_x + x_offset + window_offset_x
   local absolute_y = original_y + y_offset + window_offset_y
 
-  if image.with_virtual_padding then
-    absolute_y = absolute_y + 1
-  end
+  if image.with_virtual_padding then absolute_y = absolute_y + 1 end
 
   local prevent_rendering = false
 
@@ -163,8 +161,11 @@ local render = function(image)
     local botline = win_info.botline
 
     -- bail if out of bounds
-    if original_y + 1 < topline or original_y > botline then
-      -- utils.debug("prevent rendering 1", image.id)
+    if
+      (image.with_virtual_padding and ((topline == original_y + 2 and topfill == 0) or (topline > original_y + 2)))
+      or original_y > botline
+    then
+      -- utils.debug("prevent rendering 1", image.id, { topline = topline, original_y = original_y })
       prevent_rendering = true
     end
 
@@ -196,7 +197,7 @@ local render = function(image)
     -- account for things that push line numbers around
     if image.inline then
       -- bail if the image is above the top of the window at least by one line
-      if topfill == 0 and original_y < topline then
+      if topfill == 0 and original_y < topline - 1 then
         -- utils.debug("prevent rendering 2", image.id)
         prevent_rendering = true
       end
@@ -319,10 +320,10 @@ local render = function(image)
 
   -- clear out of bounds images
   if
-      absolute_y + height <= bounds.top
-      or absolute_y >= bounds.bottom + (vim.o.laststatus == 2 and 1 or 0)
-      or absolute_x + width <= bounds.left
-      or absolute_x >= bounds.right
+    absolute_y + height <= bounds.top
+    or absolute_y >= bounds.bottom + (vim.o.laststatus == 2 and 1 or 0)
+    or absolute_x + width <= bounds.left
+    or absolute_x >= bounds.right
   then
     if image.is_rendered then
       -- utils.debug("deleting out of bounds image", { id = image.id, x = absolute_x, y = absolute_y, width = width, height = height, bounds = bounds })
@@ -443,13 +444,13 @@ local render = function(image)
   end
 
   if
-      image.is_rendered
-      and image.rendered_geometry.x == rendered_geometry.x
-      and image.rendered_geometry.y == rendered_geometry.y
-      and image.rendered_geometry.width == rendered_geometry.width
-      and image.rendered_geometry.height == rendered_geometry.height
-      and image.crop_hash == initial_crop_hash
-      and image.resize_hash == initial_resize_hash
+    image.is_rendered
+    and image.rendered_geometry.x == rendered_geometry.x
+    and image.rendered_geometry.y == rendered_geometry.y
+    and image.rendered_geometry.width == rendered_geometry.width
+    and image.rendered_geometry.height == rendered_geometry.height
+    and image.crop_hash == initial_crop_hash
+    and image.resize_hash == initial_resize_hash
   then
     -- utils.debug("skipping render", image.id)
     return true

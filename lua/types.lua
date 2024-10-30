@@ -117,6 +117,7 @@
 ---@field namespace? string
 ---@field extmark? { id: number, row: number, col: number }
 ---@field last_modified? number
+---@field has_extmark_moved fun (self:Image): (boolean, number?, number?)
 
 -- wish proper generics were a thing here
 ---@class IntegrationContext
