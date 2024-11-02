@@ -193,7 +193,7 @@ If you are using the default `magick_rock` processor, you need the dev version o
 - Ubuntu: `sudo apt install libmagickwand-dev`
 - MacOS:
   - Homebrew: `brew install imagemagick`
-    - By default, homebrew installs into a weird location, so you have to add `$(brew --prefix)/lib` to
+    - **For some users** homebrew might install it into a weird location, so you have to add `$(brew --prefix)/lib` to
       `DYLD_FALLBACK_LIBRARY_PATH` by adding something like
       `export DYLD_FALLBACK_LIBRARY_PATH="$(brew --prefix)/lib:$DYLD_FALLBACK_LIBRARY_PATH"`
       to your shell profile (probably `.zshrc` or `.bashrc`)
