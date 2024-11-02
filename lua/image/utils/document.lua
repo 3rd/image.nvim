@@ -150,11 +150,10 @@ local create_document_integration = function(config)
     })
 
     -- watch for text changes
-    vim.api.nvim_create_autocmd({ "BufAdd", "BufNew", "BufNewFile" }, {
+    vim.api.nvim_create_autocmd({ "BufAdd", "BufNew", "BufNewFile", "BufWinEnter" }, {
       group = group,
       callback = function(args)
         if not has_valid_filetype(ctx, vim.bo[args.buf].filetype) then return end
-
         setup_text_change_watcher(ctx, args.buf)
         render(ctx)
       end,
