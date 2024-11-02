@@ -8,6 +8,7 @@ local random = require("image/utils/random")
 local term = require("image/utils/term")
 local tmux = require("image/utils/tmux")
 local window = require("image/utils/window")
+local json = require("image/utils/json")
 
 return {
   log = logger.log,
@@ -22,4 +23,5 @@ return {
   tmux = tmux,
   magic = magic,
   hash = hash,
+  json = json,
 }

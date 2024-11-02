@@ -1,4 +1,3 @@
-local magick = require("image/magick")
 local renderer = require("image/renderer")
 local utils = require("image/utils")
 
@@ -61,20 +60,17 @@ function Image:render(geometry)
     self.cropped_hash = nil
     self.resize_hash = nil
 
-    local magick_image = magick.load_image(self.original_path)
+    local format = self.global_state.processor.get_format(self.original_path)
 
-    if magick_image:get_format():lower() ~= "png" then
+    if format ~= "png" then
       local converted_path = self.global_state.tmp_dir .. "/" .. utils.base64.encode(self.id) .. "-source.png"
-      magick_image:set_format("png")
-      magick_image:write(converted_path)
-      self.path = converted_path
+      self.path = self.global_state.processor.convert_to_png(self.original_path, converted_path)
     end
 
     self:clear()
-    self.image_width = magick_image:get_width()
-    self.image_height = magick_image:get_height()
-
-    magick_image:destroy()
+    local dimensions = self.global_state.processor.get_dimensions(self.original_path)
+    self.image_width = dimensions.width
+    self.image_height = dimensions.height
 
     renderer.clear_cache_for_path(self.original_path)
   end
@@ -193,15 +189,9 @@ end
 
 ---@param brightness number
 function Image:brightness(brightness)
-  local magick_image = magick.load_image(self.path)
-  if not magick_image then error(("image.nvim: magick failed to load image: %s"):format(self.path)) end
-  magick_image:modulate(brightness)
   local altered_path = self.global_state.tmp_dir .. "/" .. utils.base64.encode(self.id) .. "-source.png"
-  magick_image:write(altered_path)
-  magick_image:destroy()
-
-  self.path = altered_path
-  self.cropped_path = altered_path
+  self.path = self.global_state.processor.brightness(self.path, brightness, altered_path)
+  self.cropped_path = self.path
   self.resize_hash = nil
   self.cropped_hash = nil
   self.resize_hash = nil
@@ -213,15 +203,9 @@ end
 
 ---@param saturation number
 function Image:saturation(saturation)
-  local magick_image = magick.load_image(self.path)
-  if not magick_image then error(("image.nvim: magick failed to load image: %s"):format(self.path)) end
-  magick_image:modulate(nil, saturation)
   local altered_path = self.global_state.tmp_dir .. "/" .. utils.base64.encode(self.id) .. "-source.png"
-  magick_image:write(altered_path)
-  magick_image:destroy()
-
-  self.path = altered_path
-  self.cropped_path = altered_path
+  self.path = self.global_state.processor.saturation(self.path, saturation, altered_path)
+  self.cropped_path = self.path
   self.resize_hash = nil
   self.cropped_hash = nil
   self.resize_hash = nil
@@ -233,15 +217,9 @@ end
 
 ---@param hue number
 function Image:hue(hue)
-  local magick_image = magick.load_image(self.path)
-  if not magick_image then error(("image.nvim: magick failed to load image: %s"):format(self.path)) end
-  magick_image:modulate(nil, nil, hue)
   local altered_path = self.global_state.tmp_dir .. "/" .. utils.base64.encode(self.id) .. "-source.png"
-  magick_image:write(altered_path)
-  magick_image:destroy()
-
-  self.path = altered_path
-  self.cropped_path = altered_path
+  self.path = self.global_state.processor.hue(self.path, hue, altered_path)
+  self.cropped_path = self.path
   self.resize_hash = nil
   self.cropped_hash = nil
   self.resize_hash = nil
@@ -274,7 +252,7 @@ local from_file = function(path, options, state)
     return nil
   end
 
-  -- bypass magick processing if already processed
+  -- bypass processing if already processed
   for _, instance in pairs(state.images) do
     if instance.original_path == absolute_original_path then
       local clone = createImage({
@@ -317,31 +295,21 @@ local from_file = function(path, options, state)
   -- convert non-png images to png and read the dimensions
   local source_path = absolute_original_path
   local converted_path = state.tmp_dir .. "/" .. utils.base64.encode(id) .. "-source.png"
-  local magick_image = nil
 
   -- case 1: non-png, already converted
   if
     vim.fn.filereadable(converted_path) == 1
     and vim.fn.getftime(converted_path) > vim.fn.getftime(absolute_original_path)
   then
-    magick_image = magick.load_image(converted_path)
     source_path = converted_path
   else
-    -- case 2: png
-    magick_image = magick.load_image(absolute_original_path)
-
+    local format = state.processor.get_format(absolute_original_path)
     -- case 3: non-png, not converted
-    if magick_image:get_format():lower() ~= "png" then
-      magick_image:set_format("png")
-      magick_image:write(converted_path)
-      source_path = converted_path
-    end
+    if format ~= "png" then source_path = state.processor.convert_to_png(absolute_original_path, converted_path) end
+    -- case 2: png
   end
 
-  if not magick_image then error(("image.nvim: magick failed to load image: %s"):format(absolute_original_path)) end
-  local image_width = magick_image:get_width()
-  local image_height = magick_image:get_height()
-  magick_image:destroy()
+  local dimensions = state.processor.get_dimensions(source_path)
 
   local instance = createImage({
     id = id,
@@ -349,8 +317,8 @@ local from_file = function(path, options, state)
     resized_path = source_path,
     cropped_path = source_path,
     original_path = path,
-    image_width = image_width,
-    image_height = image_height,
+    image_width = dimensions.width,
+    image_height = dimensions.height,
     window = opts.window or nil,
     buffer = opts.buffer or nil,
     geometry = {

@@ -38,6 +38,11 @@ local escape = function(sequence)
   return "\x1bPtmux;" .. sequence:gsub("\x1b", "\x1b\x1b") .. "\x1b\\"
 end
 
+local get_version = function()
+  local result = vim.fn.system("tmux -V")
+  return result:match("tmux (%d+%.%d+)")
+end
+
 return {
   is_tmux = is_tmux,
   has_passthrough = has_passthrough,
@@ -51,5 +56,6 @@ return {
   get_pane_tty = create_dm_pane_getter("pane_tty"),
   get_cursor_x = create_dm_getter("cursor_x"),
   get_cursor_y = create_dm_getter("cursor_y"),
+  get_version = get_version,
   escape = escape,
 }

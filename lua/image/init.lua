@@ -1,9 +1,12 @@
 local utils = require("image/utils")
+local processors = require("image/processors")
+local report = require("image/report")
 
 ---@type Options
 local default_options = {
   -- backend = "ueberzug",
   backend = "kitty",
+  processor = "magick_rock",
   integrations = {
     markdown = {
       enabled = true,
@@ -40,6 +43,8 @@ local default_options = {
 local state = {
   ---@diagnostic disable-next-line: assign-type-mismatch
   backend = nil,
+  ---@diagnostic disable-next-line: assign-type-mismatch
+  processor = nil,
   options = default_options,
   images = {},
   extmarks_namespace = vim.api.nvim_create_namespace("image.nvim"),
@@ -69,6 +74,9 @@ api.setup = function(options)
       return
     end
   end)
+
+  -- load processor
+  state.processor = processors.get_processor(opts.processor)
 
   -- load backend
   local backend = require("image/backends/" .. opts.backend)
@@ -351,6 +359,11 @@ api.setup = function(options)
       end
     end,
   })
+
+  -- add :ImageReport
+  vim.api.nvim_create_user_command("ImageReport", function()
+    api.create_report()
+  end, {})
 end
 
 local guard_setup = function()
@@ -443,6 +456,11 @@ api.get_images = function(opts)
     end
   end
   return images
+end
+
+api.create_report = function()
+  guard_setup()
+  return report.create(state)
 end
 
 return api

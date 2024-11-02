@@ -1,6 +1,6 @@
 local has_magick, magick = pcall(require, "magick")
 
----@return MagickImage
+---@return MagickRockImage
 local load_image = function(path)
   if not has_magick then
     local err = "image.nvim: magick not found"

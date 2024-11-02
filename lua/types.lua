@@ -17,6 +17,7 @@
 ---@field tmp_dir string
 ---@field disable_decorator_handling boolean
 ---@field hijacked_win_buf_images { [string]: Image }
+---@field processor ImageProcessor
 
 ---@class DocumentIntegrationOptions
 ---@field enabled? boolean
@@ -41,6 +42,7 @@
 ---@field editor_only_render_when_focused? boolean
 ---@field tmux_show_only_in_active_window? boolean
 ---@field hijack_file_patterns? string[]
+---@field processor? string
 
 ---@class BackendFeatures
 ---@field crop boolean
@@ -72,21 +74,21 @@
 ---@field bottom number
 ---@field left number
 
----@class MagickImage
----@field adaptive_resize fun(self: MagickImage, width: number, height: number)
----@field clone fun(self: MagickImage): MagickImage
----@field composite fun(self: MagickImage, source: MagickImage, x: number, y: number, operator?: string)
----@field crop fun(self: MagickImage, width: number, height: number, x?: number, y?: number)
----@field destroy fun(self: MagickImage)
----@field get_format fun(self: MagickImage): string
----@field get_height fun(self: MagickImage): number
----@field get_width fun(self: MagickImage): number
----@field modulate fun(self: MagickImage, brightness?: number, saturation?: number, hue?: number)
----@field resize fun(self: MagickImage, width: number, height: number)
----@field resize_and_crop fun(self: MagickImage, width: number, height: number)
----@field scale fun(self: MagickImage, width: number, height: number)
----@field set_format fun(self: MagickImage, format: string)
----@field write fun(self: MagickImage, path: string)
+---@class MagickRockImage
+---@field adaptive_resize fun(self: MagickRockImage, width: number, height: number)
+---@field clone fun(self: MagickRockImage): MagickRockImage
+---@field composite fun(self: MagickRockImage, source: MagickRockImage, x: number, y: number, operator?: string)
+---@field crop fun(self: MagickRockImage, width: number, height: number, x?: number, y?: number)
+---@field destroy fun(self: MagickRockImage)
+---@field get_format fun(self: MagickRockImage): string
+---@field get_height fun(self: MagickRockImage): number
+---@field get_width fun(self: MagickRockImage): number
+---@field modulate fun(self: MagickRockImage, brightness?: number, saturation?: number, hue?: number)
+---@field resize fun(self: MagickRockImage, width: number, height: number)
+---@field resize_and_crop fun(self: MagickRockImage, width: number, height: number)
+---@field scale fun(self: MagickRockImage, width: number, height: number)
+---@field set_format fun(self: MagickRockImage, format: string)
+---@field write fun(self: MagickRockImage, path: string)
 
 ---@class Image
 ---@field id string
@@ -118,6 +120,23 @@
 ---@field extmark? { id: number, row: number, col: number }
 ---@field last_modified? number
 ---@field has_extmark_moved fun (self:Image): (boolean, number?, number?)
+
+---@class ImageProcessor
+--- We need to:
+--- - get image format
+--- - convert non-png images to png
+--- - get dimensions
+--- - resize
+--- - crop
+--- - adjust brightness, saturation, hue
+---@field get_format fun(path: string): string
+---@field convert_to_png fun(path: string, output_path?: string): string
+---@field get_dimensions fun(path: string): { width: number, height: number }
+---@field resize fun(path: string, width: number, height: number, output_path?: string): string
+---@field crop fun(path: string, x: number, y: number, width: number, height: number, output_path?: string): string
+---@field brightness fun(path: string, brightness: number, output_path?: string): string
+---@field saturation fun(path: string, saturation: number, output_path?: string): string
+---@field hue fun(path: string, hue: number, output_path?: string): string
 
 -- wish proper generics were a thing here
 ---@class IntegrationContext

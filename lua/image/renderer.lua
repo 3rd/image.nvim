@@ -1,4 +1,3 @@
-local magick = require("image/magick")
 local utils = require("image/utils")
 
 -- Images get resized and cropped to fit in the context they are rendered in.
@@ -382,22 +381,10 @@ local render = function(image)
         image.resize_hash = resize_hash
       else
         -- perform resize
-        local resized_image = magick.load_image(image.path)
-        if resized_image then
-          -- utils.debug(("resizing image %s to %dx%d"):format(image.path, pixel_width, pixel_height))
-          --
-          resized_image:set_format("png")
-          resized_image:scale(pixel_width, pixel_height)
-
-          local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-resized-" .. resize_hash .. ".png"
-          resized_image:write(tmp_path)
-          resized_image:destroy()
-
-          image.resized_path = tmp_path
-          image.resize_hash = resize_hash
-
-          image_cache.resized[resize_hash] = tmp_path
-        end
+        local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-resized-" .. resize_hash .. ".png"
+        image.resized_path = state.processor.resize(image.path, pixel_width, pixel_height, tmp_path)
+        image.resize_hash = resize_hash
+        image_cache.resized[resize_hash] = image.resized_path
       end
     end
   else
@@ -418,20 +405,16 @@ local render = function(image)
         image.crop_hash = crop_hash
       else
         -- perform crop
-        -- utils.debug(("cropping image %s to %dx%d"):format(image.path, pixel_width, cropped_pixel_height))
-
-        local cropped_image = magick.load_image(image.resized_path or image.path)
-        cropped_image:set_format("png")
-        cropped_image:crop(pixel_width, cropped_pixel_height, 0, crop_offset_top)
-
         local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-cropped-" .. crop_hash .. ".png"
-        cropped_image:write(tmp_path)
-        cropped_image:destroy()
-
-        image.cropped_path = tmp_path
-
+        image.cropped_path = state.processor.crop(
+          image.resized_path or image.path,
+          0,
+          crop_offset_top,
+          pixel_width,
+          cropped_pixel_height,
+          tmp_path
+        )
         image.crop_hash = crop_hash
-
         image_cache.cropped[crop_hash] = image.cropped_path
       end
     end
