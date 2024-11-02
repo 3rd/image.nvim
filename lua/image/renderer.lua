@@ -53,8 +53,8 @@ local render = function(image)
   end
 
   -- rendered size cannot be larger than the image itself
-  width = math.min(width, image_columns)
-  height = math.min(height, image_rows)
+  -- width = math.min(width, image_columns)
+  -- height = math.min(height, image_rows)
 
   -- screen max width/height
   width = math.min(width, term_size.screen_cols)
@@ -119,8 +119,12 @@ local render = function(image)
 
     -- global max window width/height percentage
     if type(state.options.max_width_window_percentage) == "number" then
-      width =
-        math.min(width, math.floor((window.width - global_offsets.x) * state.options.max_width_window_percentage / 100))
+      width = math.min(
+        -- original
+        width,
+        -- max_window_percentage
+        math.floor((window.width - global_offsets.x) * state.options.max_width_window_percentage / 100)
+      )
     end
     if type(state.options.max_height_window_percentage) == "number" then
       height = math.min(
@@ -360,7 +364,7 @@ local render = function(image)
 
   -- compute resize
   local resize_hash = ("%d-%d"):format(pixel_width, pixel_height)
-  if image.image_width > pixel_width then needs_resize = true end
+  if image.image_width ~= pixel_width then needs_resize = true end
 
   -- TODO make this non-blocking
 
