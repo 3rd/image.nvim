@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.4.0](https://github.com/3rd/image.nvim/compare/v1.3.0...v1.4.0) (2024-11-02)
+
+
+### Features
+
+* add rockspec to avoid needs of extra plugins on Lazy >= v11 ([94319cd](https://github.com/3rd/image.nvim/commit/94319cdafec62cd5b3ac1448ed1aae1bbe731f45))
+* curl always redirect ([56ddfa2](https://github.com/3rd/image.nvim/commit/56ddfa21270160126c26bc98133c0f7755d91511))
+* handle external source image changes ([2d0be8c](https://github.com/3rd/image.nvim/commit/2d0be8c7ea337e58abcfe43dca030703803a0e10))
+* image clipping on scroll ([79e4c59](https://github.com/3rd/image.nvim/commit/79e4c59cb886f549baa416889a195fa672781c5a))
+
+
+### Bug Fixes
+
+* bail early out of nvim_set_decoration_provider ([6fb2b84](https://github.com/3rd/image.nvim/commit/6fb2b84a739d92b781bba5f59f2678ea047332a9))
+* disable rockspec until we fix https://github.com/3rd/image.nvim/issues/191 ([61c7651](https://github.com/3rd/image.nvim/commit/61c76515cfc3cdac8123ece9e9761b20c3dc1315))
+* handle clipping for images with virtual padding ([6f7e2ed](https://github.com/3rd/image.nvim/commit/6f7e2ed3840a703d4e0a14a351904b4928bcb1ad))
+* **kitty:** image shown when switching to different tmux session [#198](https://github.com/3rd/image.nvim/issues/198) ([bcdc1e3](https://github.com/3rd/image.nvim/commit/bcdc1e3676d6e48d569f8e45db7278a93e944dbf))
+* more reliably hijack buffer ([d3914da](https://github.com/3rd/image.nvim/commit/d3914daaf47b38c024778890fd5c6f1ecdb492be))
+* **readme:** Fix typo in pacman command ([47c9470](https://github.com/3rd/image.nvim/commit/47c947061c93e19aa9dba5cf2dbf374a4b46811e))
+* session clear & forced rerender on focusgained ([3f0cbb5](https://github.com/3rd/image.nvim/commit/3f0cbb5b540429ebae13e3229c0f75729f654b18))
+
 ## [1.3.0](https://github.com/3rd/image.nvim/compare/v1.2.0...v1.3.0) (2024-05-14)
 
 
