@@ -41,15 +41,19 @@ Fully **optional:**
 > Since version v11.\* of Lazy rockspec is supported, so no need of extra plugins `vhyrro/luarocks.nvim`
 
 <details>
-<summary><b>Lazy >= v11.* [(DISABLED DUE TO ISSUES)](https://github.com/3rd/image.nvim/issues/191)</b></summary>
+<summary><b>Lazy >= v11.*</b></summary>
 
 ```lua
-{
+require("lazy").setup({
     "3rd/image.nvim",
     config = function()
         -- ...
     end
-}
+}, {
+    rocks = {
+        hererocks = true,  -- recommended if you do not have global installation of Lua 5.1.
+    },
+})
 ```
 
 </details>
