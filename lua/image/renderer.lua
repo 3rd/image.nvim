@@ -232,18 +232,13 @@ local render = function(image)
               local virt_height = #(mark_opts.virt_lines or {})
               return { id = mark_id, row = mark_row, col = mark_col, height = virt_height }
             end,
-            vim.api.nvim_buf_get_extmarks(
-              image.buffer,
-              -1,
-              { topline - 1, 0 },
-              { original_y - 1, 0 },
-              { details = true }
-            )
+            vim.api.nvim_buf_get_extmarks(image.buffer, -1, { topline - 1, 0 }, { original_y, 0 }, { details = true })
           )
 
           local extmark_y_offset = topfill
           for _, mark in ipairs(extmarks) do
             if image.extmark and image.extmark.id == mark.id then goto continue end
+            if mark.row > original_y then goto continue end
             if mark.row ~= original_y and mark.id ~= image:get_extmark_id() then
               -- check the mark is inside a fold, and skip adding the offset if it is
               for fold_start, fold_end in pairs(folded_ranges) do
