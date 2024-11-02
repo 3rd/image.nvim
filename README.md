@@ -21,7 +21,7 @@ specific plugin managers below.
 **Mandatory Deps:**
 
 - [ImageMagick](https://github.com/ImageMagick/ImageMagick) - see [Installing ImageMagick](#installing-imagemagick)
-- [magick LuaRock](https://github.com/leafo/magick)
+- [magick LuaRock](https://github.com/leafo/magick) - **for the default `magick_rock` image processor, but you can use the `magick_cli` processor instead**
 
 You need **one of:**
 
@@ -33,6 +33,8 @@ Fully **optional:**
 - [curl](https://github.com/curl/curl) - for remote images
 
 ### Installing The Plugin & Rock
+
+> Note: There is now a `magick_cli` processor that uses ImageMagick's CLI tools instead of the LuaRock bindings, you can switch to that by setting `processor = "magick_cli"` in your configuration.
 
 <details>
 
@@ -185,16 +187,16 @@ in {
 
 ### Installing ImageMagick
 
-The `magick` luarock provides bindings to ImageMagick's MagickWand, so we need to install that
-package as well.
+We use ImageMagick to process images, make sure you have it installed.
+If you are using the default `magick_rock` processor, you need the dev version of ImageMagick installed so that the rock can bind to it.
 
 - Ubuntu: `sudo apt install libmagickwand-dev`
 - MacOS:
   - Homebrew: `brew install imagemagick`
     - By default, homebrew installs into a weird location, so you have to add `$(brew --prefix)/lib` to
-    `DYLD_FALLBACK_LIBRARY_PATH` by adding something like
-    `export DYLD_FALLBACK_LIBRARY_PATH="$(brew --prefix)/lib:$DYLD_FALLBACK_LIBRARY_PATH"`
-    to your shell profile (probably `.zshrc` or `.bashrc`)
+      `DYLD_FALLBACK_LIBRARY_PATH` by adding something like
+      `export DYLD_FALLBACK_LIBRARY_PATH="$(brew --prefix)/lib:$DYLD_FALLBACK_LIBRARY_PATH"`
+      to your shell profile (probably `.zshrc` or `.bashrc`)
   - MacPorts: `sudo port install imagemagick`
     - You must add `/opt/local/lib` to `DYLD_FALLBACK_LIBRARY_PATH`, similar to homebrew.
 - Fedora: `sudo dnf install ImageMagick-devel`
@@ -206,6 +208,7 @@ package as well.
 -- default config
 require("image").setup({
   backend = "kitty",
+  processor = "magick_rock", -- or "magick_cli"
   integrations = {
     markdown = {
       enabled = true,
@@ -327,6 +330,9 @@ image:move(x, y) -- move image
 image:brightness(value) -- change brightness
 image:saturation(value) -- change saturation
 image:hue(value) -- change hue
+
+-- create a report, also available as :ImageReport
+require("image").create_report()
 ```
 
 ---
