@@ -45,10 +45,12 @@ Fully **optional:**
 
 ```lua
 require("lazy").setup({
-    "3rd/image.nvim",
-    config = function()
-        -- ...
-    end
+    {
+        "3rd/image.nvim",
+        config = function()
+            -- ...
+        end
+    },
 }, {
     rocks = {
         hererocks = true,  -- recommended if you do not have global installation of Lua 5.1.
