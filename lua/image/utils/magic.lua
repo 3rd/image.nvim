@@ -10,6 +10,7 @@ local image_signatures = {
   AVIF = "\x66\x74\x79\x70\x61\x76\x69\x66",
   SVG = "<svg",
   XML = "<?xml",
+  PDF = "%PDF",
 }
 
 local function read_file_header(file, num_bytes)
