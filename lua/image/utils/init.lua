@@ -1,4 +1,3 @@
-local base64 = require("image/utils/base64")
 local hash = require("image/utils/hash")
 local logger = require("image/utils/logger")
 local magic = require("image/utils/magic")
@@ -14,7 +13,6 @@ return {
   log = logger.log,
   throw = logger.throw,
   debug = logger.debug,
-  base64 = base64,
   random = random,
   window = window,
   term = term,

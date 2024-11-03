@@ -2,7 +2,7 @@ local codes = require("image/backends/kitty/codes")
 local utils = require("image/utils")
 
 local uv = vim.uv
- -- Allow for loop to be used on older versions
+-- Allow for loop to be used on older versions
 if not uv then uv = vim.loop end
 
 local stdout = vim.loop.new_tty(1, false)
@@ -98,7 +98,7 @@ local write_graphics = function(config, data)
       local file = io.open(data, "rb")
       data = file:read("*all")
     end
-    data = utils.base64.encode(data):gsub("%-", "/")
+    data = vim.base64.encode(data):gsub("%-", "/")
     local chunks = get_chunked(data)
     local m = #chunks > 1 and 1 or 0
     control_payload = control_payload .. ",m=" .. m

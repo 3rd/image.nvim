@@ -63,7 +63,7 @@ function Image:render(geometry)
     local format = self.global_state.processor.get_format(self.original_path)
 
     if format ~= "png" then
-      local converted_path = self.global_state.tmp_dir .. "/" .. utils.base64.encode(self.id) .. "-source.png"
+      local converted_path = self.global_state.tmp_dir .. "/" .. vim.base64.encode(self.id) .. "-source.png"
       self.path = self.global_state.processor.convert_to_png(self.original_path, converted_path)
     end
 
@@ -189,7 +189,7 @@ end
 
 ---@param brightness number
 function Image:brightness(brightness)
-  local altered_path = self.global_state.tmp_dir .. "/" .. utils.base64.encode(self.id) .. "-source.png"
+  local altered_path = self.global_state.tmp_dir .. "/" .. vim.base64.encode(self.id) .. "-source.png"
   self.path = self.global_state.processor.brightness(self.path, brightness, altered_path)
   self.cropped_path = self.path
   self.resize_hash = nil
@@ -203,7 +203,7 @@ end
 
 ---@param saturation number
 function Image:saturation(saturation)
-  local altered_path = self.global_state.tmp_dir .. "/" .. utils.base64.encode(self.id) .. "-source.png"
+  local altered_path = self.global_state.tmp_dir .. "/" .. vim.base64.encode(self.id) .. "-source.png"
   self.path = self.global_state.processor.saturation(self.path, saturation, altered_path)
   self.cropped_path = self.path
   self.resize_hash = nil
@@ -217,7 +217,7 @@ end
 
 ---@param hue number
 function Image:hue(hue)
-  local altered_path = self.global_state.tmp_dir .. "/" .. utils.base64.encode(self.id) .. "-source.png"
+  local altered_path = self.global_state.tmp_dir .. "/" .. vim.base64.encode(self.id) .. "-source.png"
   self.path = self.global_state.processor.hue(self.path, hue, altered_path)
   self.cropped_path = self.path
   self.resize_hash = nil
@@ -294,7 +294,7 @@ local from_file = function(path, options, state)
 
   -- convert non-png images to png and read the dimensions
   local source_path = absolute_original_path
-  local converted_path = state.tmp_dir .. "/" .. utils.base64.encode(id) .. "-source.png"
+  local converted_path = state.tmp_dir .. "/" .. vim.base64.encode(id) .. "-source.png"
 
   -- case 1: non-png, already converted
   if

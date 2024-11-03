@@ -380,7 +380,7 @@ local render = function(image)
         image.resize_hash = resize_hash
       else
         -- perform resize
-        local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-resized-" .. resize_hash .. ".png"
+        local tmp_path = state.tmp_dir .. "/" .. vim.base64.encode(image.id) .. "-resized-" .. resize_hash .. ".png"
         image.resized_path = state.processor.resize(image.path, pixel_width, pixel_height, tmp_path)
         image.resize_hash = resize_hash
         image_cache.resized[resize_hash] = image.resized_path
@@ -404,7 +404,7 @@ local render = function(image)
         image.crop_hash = crop_hash
       else
         -- perform crop
-        local tmp_path = state.tmp_dir .. "/" .. utils.base64.encode(image.id) .. "-cropped-" .. crop_hash .. ".png"
+        local tmp_path = state.tmp_dir .. "/" .. vim.base64.encode(image.id) .. "-cropped-" .. crop_hash .. ".png"
         image.cropped_path = state.processor.crop(
           image.resized_path or image.path,
           0,
