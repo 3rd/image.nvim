@@ -64,14 +64,16 @@ api.setup = function(options)
   state.options = opts
 
   vim.schedule(function()
-    local magick = require("image/magick")
-    -- check that magick is available
-    if not magick.has_magick then
-      vim.api.nvim_err_writeln(
-        "image.nvim: magick rock not found, please install it and restart your editor. Error: "
-          .. vim.inspect(magick.magick)
-      )
-      return
+    if opts.processor == "magick_rock" then
+      local magick = require("image/magick")
+      -- check that magick is available
+      if not magick.has_magick then
+        vim.api.nvim_err_writeln(
+          "image.nvim: magick rock not found, please install it and restart your editor. Error: "
+            .. vim.inspect(magick.magick)
+        )
+        return
+      end
     end
   end)
 
