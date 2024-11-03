@@ -6,7 +6,7 @@ It works great with Kitty and Tmux, and it handles all the rendering complexity 
 
 Join on Discord: https://discord.gg/GTwbCxBNgz
 
-https://github.com/3rd/image.nvim/assets/59587503/9a9a1792-6476-4d96-8b8e-d3cdd7f5759e
+https://github.com/user-attachments/assets/0ae46acf-3240-446a-a458-7c7dfd03b9b7
 
 We provide:
 
