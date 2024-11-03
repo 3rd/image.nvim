@@ -1,57 +1,179 @@
 # 🖼️ image.nvim
 
-This plugin attempts to add image support to Neovim.
-
-It works wonderfully with Kitty + Tmux, and it handles painful things like rendering an image
-at a given position in a buffer, scrolling, windows, etc.
-
-It has built-in Markdown and Neorg integrations that you can use right now.
+This plugin adds image support to Neovim using [Kitty's Graphics Protocol](https://sw.kovidgoyal.net/kitty/graphics-protocol/) or [ueberzugpp](https://github.com/jstkdng/ueberzugpp).
 \
-It can also render image files as images when opened.
+It works great with Kitty and Tmux, and it handles all the rendering complexity for you.
 
 Join on Discord: https://discord.gg/GTwbCxBNgz
 
 https://github.com/3rd/image.nvim/assets/59587503/9a9a1792-6476-4d96-8b8e-d3cdd7f5759e
 
-## Installation
+We provide:
 
-This plugin requires a few external dependencies. Here is a list, there are instructions for
-specific plugin managers below.
+- A library for working with images
+- A set of built-in integrations like Markdown and Neorg
 
-**Mandatory Deps:**
+Try it out quickly by downloading [minimal-setup.lua](./minimal-setup.lua) from the root of this repository and running `nvim --clean -c ":luafile minimal-setup.lua"`
 
-- [ImageMagick](https://github.com/ImageMagick/ImageMagick) - see [Installing ImageMagick](#installing-imagemagick)
-- [magick LuaRock](https://github.com/leafo/magick) - **for the default `magick_rock` image processor, but you can use the `magick_cli` processor instead**
+## Getting started
 
-You need **one of:**
+### Dependencies
 
-- [Kitty](https://sw.kovidgoyal.net/kitty/) >= 28.0 - for the `kitty` backend
-- [ueberzugpp](https://github.com/jstkdng/ueberzugpp) - for the `ueberzug` backend
+#### Rendering backend
 
-Fully **optional:**
+We support two rendering backends, so first you need to set up one of these:
 
-- [curl](https://github.com/curl/curl) - for remote images
+1. [Kitty](https://sw.kovidgoyal.net/kitty/) **(recommended)** >= 28.0 for the `kitty` backend
+   - Has the best performance, native clipping, caching, etc.
+   - You need to use Kitty or a terminal emulator that implements [Kitty's Graphics Protocol](https://sw.kovidgoyal.net/kitty/graphics-protocol/).
+   - [WezTerm](https://github.com/wez/wezterm) implements it, but the performance is bad and it's not fully compliant.
+     Most things work, but due to these issues it's not _officially supported_.
+2. [Überzug++](https://github.com/jstkdng/ueberzugpp) for the `ueberzug` backend
+   - Works with any terminal emulator.
+   - Has much lower performance.
 
-### Installing The Plugin & Rock
+#### ImageMagick
 
-> Note: There is now a `magick_cli` processor that uses ImageMagick's CLI tools instead of the LuaRock bindings, you can switch to that by setting `processor = "magick_cli"` in your configuration.
+We need to convert, scale, and crop images, and for that we use ImageMagick.
+\
+There are two ways we can do this, and you need to pick and follow the setup for the one you prefer.
+
+1. Via FFI bindings (default) - using the `magick_rock` processor and the [magick Lua rock](https://github.com/leafo/magick)
+   - Has slightly better performance.
+   - Requires a working LuaRocks setup and building the magick rock.
+2. Via CLI wrapping - using the `magick_cli` processor
+   - Shells out to ImageMagick's CLI utilities like `identify` and `convert`.
+   - Slightly scary in some scenarios as we could potentially pass untrusted input to a shell.
+     We try to keep things secure, but this would be the main selling point of using the bindings instead.
+
+For the `magick_cli` processor you need a regular installation of ImageMagick.
+\
+For the `magick_rock` processor you need to install the development version of ImageMagick.
 
 <details>
+<summary>NixOS</summary>
 
-<summary>Lazy.nvim</summary>
+NixOS users need to install the `imagemagick` package.
+For `magick_rock` you need to install `luajitPackages.magick` as well ([thanks](https://github.com/NixOS/nixpkgs/pull/243687) to [@donovanglover](https://github.com/donovanglover)).
 
-> Since version v11.\* of Lazy rockspec is supported, so no need of extra plugins `vhyrro/luarocks.nvim`
+- <details>
+    <summary>Home Manager</summary>
+
+  _thanks to [@wuliuqii](https://github.com/wuliuqii) in [#13](https://github.com/3rd/image.nvim/issues/13)_
+
+  ```nix
+  { pkgs, ... }:
+
+  {
+    programs.neovim = {
+        enable = true;
+        extraLuaPackages = ps: [ ps.magick ];
+        extraPackages = [ pkgs.imagemagick ];
+        # ... other config
+    };
+  }
+  ```
+
+  </details>
+
+- <details>
+    <summary>Vanilla NixOS</summary>
+
+  ```nix
+  # https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/editors/neovim/utils.nix#L27
+  { pkgs, neovimUtils, wrapNeovimUnstable, ... }:
+
+  let
+  config = pkgs.neovimUtils.makeNeovimConfig {
+    extraLuaPackages = p: [ p.magick ];
+    extraPackages = p: [ p.imagemagick ];
+    # ... other config
+  };
+  in {
+    nixpkgs.overlays = [
+        (_: super: {
+        neovim-custom = pkgs.wrapNeovimUnstable
+            (super.neovim-unwrapped.overrideAttrs (oldAttrs: {
+            buildInputs = oldAttrs.buildInputs ++ [ super.tree-sitter ];
+            })) config;
+        })
+    ];
+    environment.systemPackages = with pkgs; [ neovim-custom ];
+  }
+  ```
+
+</details>
+</details>
 
 <details>
-<summary><b>Lazy >= v11.*</b></summary>
+<summary>Arch</summary>
+
+```sh
+sudo pacman -Syu imagemagick
+```
+
+</details>
+
+<details>
+<summary>Ubuntu</summary>
+
+```sh
+# for magick_cli
+sudo apt install imagemagick
+# for magick_rock
+sudo apt install libmagickwand-dev
+```
+
+</details>
+
+<details>
+<summary>macOS</summary>
+
+The setup is the same for both `magick_rock` and `magick_cli`:
+
+- Homebrew: `brew install imagemagick`
+  - **For some users** homebrew might install it into a weird location, so you have to add `$(brew --prefix)/lib` to `DYLD_FALLBACK_LIBRARY_PATH` by adding something like `export DYLD_FALLBACK_LIBRARY_PATH="$(brew --prefix)/lib:$DYLD_FALLBACK_LIBRARY_PATH"` to your shell profile (probably `.zshrc` or `.bashrc`)
+- MacPorts: `sudo port install imagemagick`
+  - You must add `/opt/local/lib` to `DYLD_FALLBACK_LIBRARY_PATH`, similar to homebrew.
+
+</details>
+
+<details>
+<summary>Fedora</summary>
+
+```sh
+# for magick_cli
+sudo dnf install ImageMagick
+# for magick_rock
+sudo dnf install ImageMagick-devel
+```
+
+</details>
+
+#### Tmux
+
+This plugin will always have first class support for Tmux, to make it work make sure you:
+
+- Use Tmux [>= 3.3](https://github.com/tmux/tmux/wiki/FAQ#:~:text=tmux%203.3%2C%20the-,allow%2Dpassthrough,-option%20must%20be)
+- `set -gq allow-passthrough on`
+- `set -g visual-activity off`
+
+#### Other
+
+- [cURL](https://github.com/curl/curl) for remote image support
+
+### Plugin installation
+
+After you've set up the dependencies, install the `image.nvim` plugin.
+
+<details>
+<summary><b>For magick_rock using Lazy >= v11.*</b></summary>
 
 ```lua
 require("lazy").setup({
     {
         "3rd/image.nvim",
-        config = function()
-            -- ...
-        end
+        opts = {}
     },
 }, {
     rocks = {
@@ -63,15 +185,13 @@ require("lazy").setup({
 </details>
 
 <details>
-<summary><b>Lazy < v11.x</b></summary>
+<summary><b>For magick_rock using Lazy < v11.x</b></summary>
 
-**NOTE:** Don't forget to install the imageMagick system package, detailed [below](#installing-imagemagick)
+It's recommended that you use [vhyrro/luarocks.nvim](https://github.com/vhyrro/luarocks.nvim) to install Lua rocks for Neovim while using lazy, but you can install them manually as well.
 
-It's recommended that you use [vhyrro/luarocks.nvim](https://github.com/vhyrro/luarocks.nvim) to
-install luarocks for neovim while using lazy. But you can install manually as well.
-
-**With luarocks.nvim**:
-**Please readthe luarocks.nvim README,** it currently has an external dependency.
+**With luarocks.nvim**
+\
+Please read the luarocks.nvim README, it currently has an external dependency.
 
 ```lua
 {
@@ -84,128 +204,57 @@ install luarocks for neovim while using lazy. But you can install manually as we
 {
     "3rd/image.nvim",
     dependencies = { "luarocks.nvim" },
-    config = function()
-        -- ...
-    end
+    opts = {}
 }
 ```
 
-</details>
+**Without luarocks.nvim**
+\
+You have to install the Lua rock manually.
 
----
-
-**OR Without luarocks.nvim**:
-
-You have to install the luarock manually.
-
-1. install [luarocks](https://luarocks.org/) on your system via your system package manager
-2. run `luarocks --local --lua-version=5.1 install magick`
+1. Install [LuaRocks](https://luarocks.org/) on your system via your system package manager
+2. Run `luarocks --local --lua-version=5.1 install magick`
 
 ```lua
 -- Example for configuring Neovim to load user-installed installed Lua rocks:
 package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/share/lua/5.1/?/init.lua"
 package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/share/lua/5.1/?.lua"
 
--- lazy snippet
 {
     "3rd/image.nvim",
-    config = function()
-        -- ...
-    end
+    opts = {}
 }
 ```
 
 </details>
 
 <details>
-  <summary>Rocks.nvim</summary>
+<summary><b>For magick_rock using Rocks.nvim</b></summary>
 
-**NOTE:** Don't forget to install the imageMagick system package, detailed [below](#installing-imagemagick)
-
-`:Rocks install image.nvim`
+```
+:Rocks install image.nvim
+```
 
 </details>
 
 <details>
-  <summary>NixOS</summary>
+<summary><b>For magick_cli using Lazy</b></summary>
 
-NixOS users need to install `imagemagick` and `luajitPackages.magick`
-([thanks](https://github.com/NixOS/nixpkgs/pull/243687) to
-[@donovanglover](https://github.com/donovanglover)).
-
-It's recommended that you can build your Neovim with those packages like so:
-
-<details>
-
-<summary>With home-manager</summary>
-
-_thanks to [@wuliuqii](https://github.com/wuliuqii) in [#13](https://github.com/3rd/image.nvim/issues/13)_
-
-```nix
-{ pkgs, ... }:
-
+```lua
 {
-  programs.neovim = {
-    enable = true;
-    extraLuaPackages = ps: [ ps.magick ];
-    extraPackages = [ pkgs.imagemagick ];
-    # ... other config
-  };
+    "3rd/image.nvim",
+    build = false, -- so that it doesn't build the rock https://github.com/3rd/image.nvim/issues/91#issuecomment-2453430239
+    opts = {}
 }
 ```
 
 </details>
-
-<details>
-  <summary>Vanilla NixOS</summary>
-
-```nix
-# https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/editors/neovim/utils.nix#L27
-{ pkgs, neovimUtils, wrapNeovimUnstable, ... }:
-
-let
-  config = pkgs.neovimUtils.makeNeovimConfig {
-    extraLuaPackages = p: [ p.magick ];
-    extraPackages = p: [ p.imagemagick ];
-    # ... other config
-  };
-in {
-  nixpkgs.overlays = [
-    (_: super: {
-      neovim-custom = pkgs.wrapNeovimUnstable
-        (super.neovim-unwrapped.overrideAttrs (oldAttrs: {
-          buildInputs = oldAttrs.buildInputs ++ [ super.tree-sitter ];
-        })) config;
-    })
-  ];
-  environment.systemPackages = with pkgs; [ neovim-custom ];
-}
-```
-
-</details>
-</details>
-
-### Installing ImageMagick
-
-We use ImageMagick to process images, make sure you have it installed.
-If you are using the default `magick_rock` processor, you need the dev version of ImageMagick installed so that the rock can bind to it.
-
-- Ubuntu: `sudo apt install libmagickwand-dev`
-- MacOS:
-  - Homebrew: `brew install imagemagick`
-    - **For some users** homebrew might install it into a weird location, so you have to add `$(brew --prefix)/lib` to
-      `DYLD_FALLBACK_LIBRARY_PATH` by adding something like
-      `export DYLD_FALLBACK_LIBRARY_PATH="$(brew --prefix)/lib:$DYLD_FALLBACK_LIBRARY_PATH"`
-      to your shell profile (probably `.zshrc` or `.bashrc`)
-  - MacPorts: `sudo port install imagemagick`
-    - You must add `/opt/local/lib` to `DYLD_FALLBACK_LIBRARY_PATH`, similar to homebrew.
-- Fedora: `sudo dnf install ImageMagick-devel`
-- Arch: `sudo pacman -Syu imagemagick`
 
 ## Configuration
 
+### Default configuration
+
 ```lua
--- default config
 require("image").setup({
   backend = "kitty",
   processor = "magick_rock", -- or "magick_cli"
@@ -219,10 +268,11 @@ require("image").setup({
     },
     neorg = {
       enabled = true,
-      clear_in_insert_mode = false,
-      download_remote_images = true,
-      only_render_image_at_cursor = false,
       filetypes = { "norg" },
+    },
+    typst = {
+      enabled = true,
+      filetypes = { "typst" },
     },
     html = {
       enabled = false,
@@ -243,19 +293,6 @@ require("image").setup({
 })
 ```
 
-## Tmux
-
-- You must use tmux [>= 3.3](https://github.com/tmux/tmux/wiki/FAQ#:~:text=tmux%203.3%2C%20the-,allow%2Dpassthrough,-option%20must%20be) and set: `set -gq allow-passthrough on`
-- If you want the images to be automatically hidden/shown when you switch windows (`tmux_show_only_in_active_window = true`), set: `set -g visual-activity off`
-
-### Try it out with a minimal setup
-
-Download [minimal-setup.lua](./minimal-setup.lua) from the root of this repository and run the demo with:
-
-```sh
-nvim --clean -c ":luafile minimal-setup.lua"
-```
-
 ### Backends
 
 All the backends support rendering inside Tmux.
@@ -268,6 +305,8 @@ All the backends support rendering inside Tmux.
 
 - `markdown` - uses [tree-sitter-markdown](https://github.com/MDeiml/tree-sitter-markdown) and supports any Markdown-based grammars (Quarto, VimWiki Markdown)
 - `neorg` - uses [tree-sitter-norg](https://github.com/nvim-neorg/tree-sitter-norg) (also check https://github.com/nvim-neorg/neorg/issues/971)
+- `typst` - thanks to @etiennecollin (https://github.com/3rd/image.nvim/pull/223)
+- `html` and `css` - thanks to @zuloo (https://github.com/3rd/image.nvim/pull/163)
 
 You can configure where images are searched for on a per-integration basis by passing a function to
 `resolve_image_path` as shown below:
@@ -288,6 +327,8 @@ require('image').setup({
   }
 })
 ```
+
+Check https://github.com/3rd/image.nvim/issues/190#issuecomment-2378156235 for how to configure this for Obsidian.
 
 ## API
 
@@ -337,7 +378,9 @@ require("image").create_report()
 
 ---
 
-### Thanks
+### Thank you
+
+Deep thanks to the [awesome people](https://github.com/3rd/image.nvim/graphs/contributors) who have gifted their time and energy to this project, and to those who work on Neovim and the dependencies without which this would not be possible.
 
 - [@benlubas](https://github.com/benlubas) for their countless amazing contributions
 - [@edluffy](https://github.com/edluffy) for [hologram.nvim](https://github.com/edluffy/hologram.nvim) - of which I borrowed a lot of code
@@ -347,25 +390,18 @@ require("image").create_report()
 
 ### The story behind
 
-Some years ago, I took a trip to Emacs land for a few months to learn Elisp and also research what Org-mode is, how it works,
-and look for features of interest for my workflow.
-I already had my own document syntax, albeit a very simple one, hacked together with Vimscript and a lot
-of Regex, and I was looking for ideas to improve it and build features on top of it.
+Some years ago, I took a trip to Emacs land for a few months to learn Elisp and also research what Org-mode is, how it works, and look for features of interest for my workflow.
 
-I kept working on my [syntax](https://github.com/3rd/syslang) over the years, rewrote it many times, and today it's a proper Tree-sitter grammar,
-that I use for all my needs, from second braining to managing my tasks and time.
-It's helped me control my ADHD and be productive long before I was diagnosed, and it's still helping me be so much better than I'd be without it today.
+I already had my own document syntax, albeit a very simple one, hacked together with Vimscript and a lot of Regex, and I was looking for ideas to improve it and build features on top of it.
+
+I kept working on my [syntax](https://github.com/3rd/syslang) over the years, rewrote it many times, and today it's a proper Tree-sitter grammar, that I use for all my needs, from second braining to managing my tasks and time. It's helped me control my ADHD and be productive long before I was diagnosed, and it's still helping me be so much better than I'd be without it today.
 
 One thing Emacs and Org-mode had that I liked was the ability to embed images in the document. Of course, we don't _"need"_ it, but... I really wanted to have images in my documents.
 
-About 3 years ago, I made my [first attempt](https://www.reddit.com/r/neovim/comments/ieh7l4/im_building_an_image_plugin_and_need_some_help/) at solving this problem but didn't get far.
-If you have similar interests, you might have seen the [vimage.nvim demo video](https://www.youtube.com/watch?v=cnt9mPOjrLg) on YouTube.
+About 3 years ago, I made my [first attempt](https://www.reddit.com/r/neovim/comments/ieh7l4/im_building_an_image_plugin_and_need_some_help/) at solving this problem but didn't get far. If you have similar interests, you might have seen the [vimage.nvim demo video](https://www.youtube.com/watch?v=cnt9mPOjrLg) on YouTube.
 
 It was using [ueberzug](https://github.com/seebye/ueberzug), which is now dead. It was buggy and didn't handle things like window-relative positioning, attaching images to windows and buffers, folds, etc.
 
 Kitty's graphics protocol was a thing, but it didn't work with Tmux, which I'll probably use forever or replace it with something of my own.
 
 Now, things have changed, and I'm happy to announce that rendering images using [Kitty's graphics protocol](https://sw.kovidgoyal.net/kitty/graphics-protocol.html) from Neovim inside Tmux is working, and it's working pretty well!
-
-My plan for this plugin is to support multiple backends, provide a few core integrations, and an easy-to-use API for other plugin authors to build on top of. There is a lot of logic that deals with positioning, cropping, bounds,
-folds, extmarks, etc. that is painful and unrealistic to write from scratch for every plugin that wants to use images.
