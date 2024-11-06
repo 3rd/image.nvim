@@ -388,6 +388,8 @@ Deep thanks to the [awesome people](https://github.com/3rd/image.nvim/graphs/con
 - [@kovidgoyal](https://github.com/kovidgoyal) for [Kitty](https://github.com/kovidgoyal/kitty) - the program I spend most of my time in
 - [@jstkdng](https://github.com/jstkdng) for [ueberzugpp](https://github.com/jstkdng/ueberzugpp) - the revived version of ueberzug
 
+![Analytics](https://repobeats.axiom.co/api/embed/fac3ac11abb0ea10e07af68d2ccdc20a1263325d.svg)
+
 ### The story behind
 
 Some years ago, I took a trip to Emacs land for a few months to learn Elisp and also research what Org-mode is, how it works, and look for features of interest for my workflow.
