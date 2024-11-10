@@ -12,7 +12,7 @@ end
 
 local resolve_base64_image = function(document_file_path, image_path)
   local tmp_b64_path = vim.fn.tempname()
-  local base64_part = string.sub(image_path, 23)
+  local base64_part = image_path:gsub("^data:image/[%w%+]+;base64,", "")
   local decoded = vim.base64.decode(base64_part)
 
   local file = io.open(tmp_b64_path, "wb")
