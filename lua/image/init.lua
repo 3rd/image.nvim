@@ -268,6 +268,28 @@ api.setup = function(options)
     end,
   })
 
+  -- auto-clear on VimSuspend and re-render on VimResume
+  local image_to_restore_on_resume = {}
+  vim.api.nvim_create_autocmd({ "VimSuspend" }, {
+    group = group,
+    callback = function()
+      local images = api.get_images()
+      for _, current_image in ipairs(images) do
+        current_image:clear()
+      end
+      image_to_restore_on_resume = images
+    end,
+  })
+  vim.api.nvim_create_autocmd({ "VimResume" }, {
+    group = group,
+    callback = function()
+      local images = image_to_restore_on_resume
+      for _, current_image in ipairs(images) do
+        current_image:render()
+      end
+    end,
+  })
+
   -- auto-toggle on editor focus change
   if
     state.options.editor_only_render_when_focused
