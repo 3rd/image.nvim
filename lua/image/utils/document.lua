@@ -12,8 +12,15 @@ end
 
 local resolve_base64_image = function(document_file_path, image_path)
   local tmp_b64_path = vim.fn.tempname()
-  vim.fn.writefile({ image_path }, tmp_b64_path)
-  os.execute("convert inline:" .. tmp_b64_path .. " " .. tmp_b64_path)
+  local base64_part = string.sub(image_path, 23)
+  local decoded = vim.base64.decode(base64_part)
+
+  local file = io.open(tmp_b64_path, "wb")
+  if file ~= nil then
+    file:write(decoded)
+    file:close()
+  end
+
   return tmp_b64_path
 end
 
