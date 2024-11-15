@@ -3,7 +3,7 @@ local is_tmux = vim.env.TMUX ~= nil
 local has_passthrough = false
 if is_tmux then
   local ok, result = pcall(vim.fn.system, "tmux show -Apv allow-passthrough")
-  if ok and result:sub(-3) == "on\n" then has_passthrough = true end
+  if ok and (result:sub(-3) == "on\n" or result:sub(-4) == "all\n") then has_passthrough = true end
 end
 
 local create_dm_getter = function(name)
