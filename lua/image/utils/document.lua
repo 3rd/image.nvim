@@ -10,6 +10,20 @@ local resolve_absolute_path = function(document_file_path, image_path)
   return absolute_image_path
 end
 
+local resolve_base64_image = function(document_file_path, image_path)
+  local tmp_b64_path = vim.fn.tempname()
+  local base64_part = image_path:gsub("^data:image/[%w%+]+;base64,", "")
+  local decoded = vim.base64.decode(base64_part)
+
+  local file = io.open(tmp_b64_path, "wb")
+  if file ~= nil then
+    file:write(decoded)
+    file:close()
+  end
+
+  return tmp_b64_path
+end
+
 local is_remote_url = function(url)
   return string.sub(url, 1, 7) == "http://" or string.sub(url, 1, 8) == "https://"
 end
@@ -108,6 +122,8 @@ local create_document_integration = function(config)
           local path
           if ctx.options.resolve_image_path then
             path = ctx.options.resolve_image_path(item.file_path, item.match.url, resolve_absolute_path)
+          elseif string.sub(item.match.url, 1, 10) == "data:image" then
+            path = resolve_base64_image(item.file_path, item.match.url)
           else
             path = resolve_absolute_path(item.file_path, item.match.url)
           end
