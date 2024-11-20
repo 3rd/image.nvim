@@ -242,8 +242,18 @@ local from_file = function(path, options, state)
   end
 
   local absolute_original_path = vim.fn.fnamemodify(path, ":p")
-  if not vim.loop.fs_stat(absolute_original_path) then
-    utils.throw(("image.nvim: file not found: %s"):format(absolute_original_path))
+  if not vim.uv.fs_stat(absolute_original_path) then
+    local unescaped_original_path = path:gsub("%%(%x%x)", function(hex)
+      return string.char(tonumber(hex, 16))
+    end)
+    local absolute_unescaped_original_path = vim.fn.fnamemodify(unescaped_original_path, ":p")
+
+    if vim.uv.fs_stat(absolute_unescaped_original_path) then
+      path = unescaped_original_path
+      absolute_original_path = absolute_unescaped_original_path
+    else
+      utils.throw(("image.nvim: file not found: %s"):format(absolute_original_path))
+    end
   end
 
   -- bail if not an image
