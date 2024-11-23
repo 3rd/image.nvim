@@ -121,7 +121,6 @@ local render = function(image)
     local max_height_window_percentage = image.max_height_window_percentage
       or state.options.max_height_window_percentage
 
-    -- global max window width/height percentage
     if type(max_width_window_percentage) == "number" then
       width = math.min(
         -- original
