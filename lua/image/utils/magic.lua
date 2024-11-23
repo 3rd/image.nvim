@@ -1,16 +1,18 @@
+local M = {}
+
 local image_signatures = {
-  PNG = "\x89\x50\x4E\x47",
-  JPEG = "\xFF\xD8\xFF",
-  WEBP = "\x52\x49\x46\x46",
-  GIF = "\x47\x49\x46\x38",
-  BMP = "\x42\x4D",
-  HEIC = "\x66\x74\x79\x70",
-  XPM = "\x2F\x2A\x20\x58\x50\x4D\x20\x2A\x2F",
-  ICO = "\x00\x00\x01\x00",
-  AVIF = "\x66\x74\x79\x70\x61\x76\x69\x66",
-  SVG = "<svg",
-  XML = "<?xml",
-  PDF = "%PDF",
+  png = "\x89\x50\x4E\x47",
+  jpeg = "\xFF\xD8\xFF",
+  webp = "\x52\x49\x46\x46",
+  gif = "\x47\x49\x46\x38",
+  bmp = "\x42\x4D",
+  heic = "\x66\x74\x79\x70\x68\x65\x69\x63",
+  xpm = "\x2F\x2A\x20\x58\x50\x4D\x20\x2A\x2F",
+  ico = "\x00\x00\x01\x00",
+  avif = "\x66\x74\x79\x70\x61\x76\x69\x66",
+  svg = "<svg",
+  xml = "<?xml",
+  pdf = "%PDF",
 }
 
 local function read_file_header(file, num_bytes)
@@ -31,50 +33,60 @@ local function has_jpeg_end_signature(file)
   return end_signature == "\xFF\xD9", nil
 end
 
-local function is_image(path)
-  local file, _ = io.open(path, "rb")
-  if not file then return false end
+local function check_signature_match(header, format, signature)
+  local bytes = { signature:byte(1, #signature) }
+  local match = true
 
-  local max_bytes = 12
-  local header, _ = read_file_header(file, max_bytes)
-  if not header then
-    file:close()
-    return false
-  end
-
-  local is_image_flag = false
-  for key, signature in pairs(image_signatures) do
-    local bytes = { signature:byte(1, #signature) }
-    local match = true
-    if key == "AVIF" then
-      for i = 1, #bytes do
-        if header[i + 4] ~= bytes[i] then
-          match = false
-          break
-        end
-      end
-    else
-      for i = 1, #bytes do
-        if header[i] ~= bytes[i] then
-          match = false
-          break
-        end
+  -- Both AVIF and HEIC signatures start at offset 4
+  if format == "avif" or format == "heic" then
+    for i = 1, #bytes do
+      if header[i + 4] ~= bytes[i] then
+        match = false
+        break
       end
     end
-    if match then
-      if key == "JPEG" then
-        is_image_flag = has_jpeg_end_signature(file)
-      else
-        is_image_flag = true
+  else
+    for i = 1, #bytes do
+      if header[i] ~= bytes[i] then
+        match = false
+        break
       end
-      break
+    end
+  end
+
+  return match
+end
+
+M.detect_format = function(path)
+  local file, _ = io.open(path, "rb")
+  if not file then return nil end
+
+  local max_bytes = 16
+  local header = read_file_header(file, max_bytes)
+  if not header then
+    file:close()
+    return nil
+  end
+
+  for format, signature in pairs(image_signatures) do
+    if check_signature_match(header, format, signature) then
+      if format == "jpeg" then
+        local is_jpeg = has_jpeg_end_signature(file)
+        file:close()
+        return is_jpeg and format or nil
+      else
+        file:close()
+        return format
+      end
     end
   end
 
   file:close()
-  return is_image_flag
+  return nil
 end
 
-return {
-  is_image = is_image,
-}
+M.is_image = function(path)
+  return M.detect_format(path) ~= nil
+end
+
+return M
