@@ -1,3 +1,4 @@
+local dimensions = require("image/utils/dimensions")
 local hash = require("image/utils/hash")
 local logger = require("image/utils/logger")
 local magic = require("image/utils/magic")
@@ -10,6 +11,7 @@ local window = require("image/utils/window")
 local json = require("image/utils/json")
 
 return {
+  dimensions = dimensions,
   log = logger.log,
   throw = logger.throw,
   debug = logger.debug,

@@ -1,3 +1,4 @@
+local utils = require("image/utils")
 local has_magick, magick = pcall(require, "magick")
 
 local function guard()
@@ -10,6 +11,9 @@ end
 local MagickRockProcessor = {}
 
 function MagickRockProcessor.get_format(path)
+  local result = utils.magic.detect_format(path)
+  if result then return result end
+  -- fallback to slower method:
   guard()
   local image = magick.load_image(path)
   local format = image:get_format()
@@ -28,6 +32,9 @@ function MagickRockProcessor.convert_to_png(path, output_path)
 end
 
 function MagickRockProcessor.get_dimensions(path)
+  local result = utils.dimensions.get_dimensions(path)
+  if result then return result end
+  -- fallback to slower method:
   guard()
   local image = magick.load_image(path)
   local width = image:get_width()

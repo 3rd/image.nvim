@@ -13,6 +13,9 @@ end
 local MagickCliProcessor = {}
 
 function MagickCliProcessor.get_format(path)
+  local result = utils.magic.detect_format(path)
+  if result then return result end
+  -- fallback to slower method:
   guard()
   local result = nil
   local stdout = vim.loop.new_pipe()
@@ -76,8 +79,10 @@ function MagickCliProcessor.convert_to_png(path, output_path)
 end
 
 function MagickCliProcessor.get_dimensions(path)
+  local result = utils.dimensions.get_dimensions(path)
+  if result then return result end
+  -- fallback to slower method:
   guard()
-  local result = nil
   local stdout = vim.loop.new_pipe()
   local stderr = vim.loop.new_pipe()
   local output = ""
@@ -281,4 +286,3 @@ function MagickCliProcessor.hue(path, hue, output_path)
 end
 
 return MagickCliProcessor
-
