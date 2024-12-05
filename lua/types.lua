@@ -26,6 +26,7 @@
 ---@field only_render_image_at_cursor? boolean
 ---@field filetypes? string[]
 ---@field resolve_image_path? function
+---@field floating_windows? boolean
 
 ---@alias IntegrationOptions DocumentIntegrationOptions
 
