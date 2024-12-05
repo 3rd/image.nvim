@@ -67,6 +67,8 @@
 ---@field with_virtual_padding? boolean
 ---@field inline? boolean
 ---@field namespace? string
+---@field max_width_window_percentage? number
+---@field max_height_window_percentage? number
 
 ---@class ImageBounds
 ---@field top number
@@ -99,6 +101,8 @@
 ---@field original_path string
 ---@field image_width number
 ---@field image_height number
+---@field max_width_window_percentage? number
+---@field max_height_window_percentage? number
 ---@field window? number
 ---@field buffer? number
 ---@field with_virtual_padding? boolean

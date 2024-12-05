@@ -117,20 +117,20 @@ local render = function(image)
     bounds.right = bounds.right
     if utils.offsets.get_border_shape(window.id).left > 0 then bounds.right = bounds.right + 1 end
 
-    -- global max window width/height percentage
-    if type(state.options.max_width_window_percentage) == "number" then
+    local max_width_window_percentage = image.max_width_window_percentage or state.options.max_width_window_percentage
+    local max_height_window_percentage = image.max_height_window_percentage
+      or state.options.max_height_window_percentage
+
+    if type(max_width_window_percentage) == "number" then
       width = math.min(
         -- original
         width,
         -- max_window_percentage
-        math.floor((window.width - global_offsets.x) * state.options.max_width_window_percentage / 100)
+        math.floor((window.width - global_offsets.x) * max_width_window_percentage / 100)
       )
     end
-    if type(state.options.max_height_window_percentage) == "number" then
-      height = math.min(
-        height,
-        math.floor((window.height - global_offsets.y) * state.options.max_height_window_percentage / 100)
-      )
+    if type(max_height_window_percentage) == "number" then
+      height = math.min(height, math.floor((window.height - global_offsets.y) * max_height_window_percentage / 100))
     end
   end
 
