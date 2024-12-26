@@ -354,7 +354,11 @@ api.setup = function(options)
 
   -- hijack image filetypes
   if state.options.hijack_file_patterns and #state.options.hijack_file_patterns > 0 then
-    vim.api.nvim_create_autocmd("BufReadCmd", {
+    vim.api.nvim_create_autocmd({
+      "WinNew",
+      "BufWinEnter",
+      "TabEnter",
+    }, {
       group = group,
       pattern = state.options.hijack_file_patterns,
       callback = function(event)
