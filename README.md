@@ -115,7 +115,7 @@ sudo pacman -Syu imagemagick
 </details>
 
 <details>
-<summary>Ubuntu</summary>
+<summary>Ubuntu/Debian</summary>
 
 ```sh
 # for magick_cli
