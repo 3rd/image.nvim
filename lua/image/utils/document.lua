@@ -67,9 +67,19 @@ local create_document_integration = function(config)
           local cursor_row = vim.api.nvim_win_get_cursor(window.id)[1] - 1 -- 0-indexed row
 
           for _, match in ipairs(matches) do
+            -- local start_row, start_col = fix_image_offset(match.range.start_row, match.range.start_col)
+            -- local end_row, end_col = fix_image_offset(match.range.end_row, match.range.end_col)
+            --
+            -- match.range = {
+            --   start_row = start_row,
+            --   start_col = start_col,
+            --   end_row = end_row,
+            --   end_col = end_col,
+            -- }
+
             local id = string.format(
               "%d:%d:%d:%s",
-              window.id,
+              window.id, 
               window.buffer,
               match.range.start_row,
               utils.hash.sha256(match.url)
@@ -99,7 +109,41 @@ local create_document_integration = function(config)
       -- render images from queue
       for _, item in ipairs(image_queue) do
         local render_image = function(image)
+          local win_info = vim.fn.getwininfo(item.id)[1]
+
+          local row = item.match.range.start_row
+          local col = item.match.range.start_col
+          local res = vim.fn.screenpos(win_info.bufnr, row, col)
+
+          col = res.col - win_info.wincol - win_info.textoff + 1
+          row = res.row - win_info.winrow + win_info.topline -- they cancel out
+
+          local function save(data)
+            local enc = require("lua.helpers.json").encode(data)
+            print(enc)
+            vim.fn.setreg("+", enc)
+          end
+
+          local x = vim.fn.screenpos(win_info.bufnr, item.match.range.start_row, item.match.range.start_col)
+
+          save({
+            info = win_info,
+
+            init = {
+              item.match.range.start_row,
+              item.match.range.start_col,
+            },
+            pos = { x.row, x.col },
+            after = {
+              row,
+              col,
+            },
+          })
+
+          -- TODO: has to take a vis_row, vis_col value
           image:render({
+            -- x = col,
+            -- y = row,
             x = item.match.range.start_col,
             y = item.match.range.start_row,
           })
@@ -145,6 +189,7 @@ local create_document_integration = function(config)
     if vim.tbl_contains(text_change_watched_buffers, buffer) then return end
     vim.api.nvim_buf_attach(buffer, false, {
       on_lines = function()
+        print("lines")
         render(ctx)
       end,
     })
@@ -161,6 +206,17 @@ local create_document_integration = function(config)
       group = group,
       callback = function(args)
         if not has_valid_filetype(ctx, vim.bo[args.buf].filetype) then return end
+        print("window")
+        render(ctx)
+      end,
+    })
+
+    -- watch for scrolling if wrapping is turned on
+    vim.api.nvim_create_autocmd({ "WinScrolled" }, {
+      group = group,
+      callback = function(args)
+        if not has_valid_filetype(ctx, vim.bo[args.buf].filetype) then return end
+        print("scroll")
         render(ctx)
       end,
     })
@@ -171,6 +227,7 @@ local create_document_integration = function(config)
       callback = function(args)
         if not has_valid_filetype(ctx, vim.bo[args.buf].filetype) then return end
         setup_text_change_watcher(ctx, args.buf)
+        print("lines")
         render(ctx)
       end,
     })
@@ -181,6 +238,7 @@ local create_document_integration = function(config)
         group = group,
         callback = function(args)
           if not has_valid_filetype(ctx, vim.bo[args.buf].filetype) then return end
+          print("cursor")
           render(ctx)
         end,
       })
@@ -203,6 +261,7 @@ local create_document_integration = function(config)
         group = group,
         callback = function(args)
           if not has_valid_filetype(ctx, vim.bo[args.buf].filetype) then return end
+          print("cursor")
           render(ctx)
         end,
       })
@@ -221,6 +280,7 @@ local create_document_integration = function(config)
 
     vim.schedule(function()
       setup_autocommands(context)
+      print("cursor")
       render(context)
     end)
   end

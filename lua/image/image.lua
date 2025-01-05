@@ -25,6 +25,38 @@ local createImage = function(template, global_state)
   return instance
 end
 
+---@param o1 any|table First object to compare
+---@param o2 any|table Second object to compare
+---@param ignore_mt boolean True to ignore metatables (a recursive function to tests tables inside tables)
+local function equals(o1, o2, ignore_mt)
+  if o1 == o2 then return true end
+  local o1Type = type(o1)
+  local o2Type = type(o2)
+  if o1Type ~= o2Type then return false end
+  if o1Type ~= "table" then return false end
+
+  if not ignore_mt then
+    local mt1 = getmetatable(o1)
+    if mt1 and mt1.__eq then
+      --compare using built in method
+      return o1 == o2
+    end
+  end
+
+  local keySet = {}
+
+  for key1, value1 in pairs(o1) do
+    local value2 = o2[key1]
+    if value2 == nil or equals(value1, value2, ignore_mt) == false then return false end
+    keySet[key1] = true
+  end
+
+  for key2, _ in pairs(o2) do
+    if not keySet[key2] then return false end
+  end
+  return true
+end
+
 ---get the extmark id for the virtual padding for this image
 ---@return number?
 function Image:get_extmark_id()
@@ -43,9 +75,23 @@ function Image:has_extmark_moved()
   return false
 end
 
+local function save(data)
+  local enc = require("lua.helpers.json").encode(data)
+  print(enc)
+  vim.fn.setreg("+", enc)
+end
+
 ---@param geometry? ImageGeometry
 function Image:render(geometry)
+  -- if equals(geometry, self.geometry, true) then return end
+
   if geometry then self.geometry = vim.tbl_deep_extend("force", self.geometry, geometry) end
+
+  -- if geometry == nil then return end
+
+  save({ geometry, self.geometry })
+
+  -- save({ "yeah", self.geometry }) --
 
   -- don't render if we are in the conmmand-line-window, in this case previously rendered images can
   -- be left in place
@@ -78,9 +124,8 @@ function Image:render(geometry)
   -- utils.debug(("---------------- %s ----------------"):format(self.id))
   local was_rendered = renderer.render(self)
 
-  -- utils.debug(
-  --   ("[image] render: %s, success: %s x: %s, y: %s, width: %s, height: %s"):format(
-  --     self.id,
+  -- print(
+  --   ("[image] success: %s x: %s, y: %s, width: %s, height: %s"):format(
   --     was_rendered,
   --     self.geometry.x,
   --     self.geometry.y,
