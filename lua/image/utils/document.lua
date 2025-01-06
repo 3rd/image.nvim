@@ -79,7 +79,7 @@ local create_document_integration = function(config)
 
             local id = string.format(
               "%d:%d:%d:%s",
-              window.id, 
+              window.id,
               window.buffer,
               match.range.start_row,
               utils.hash.sha256(match.url)
@@ -111,41 +111,37 @@ local create_document_integration = function(config)
         local render_image = function(image)
           local win_info = vim.fn.getwininfo(item.id)[1]
 
-          local row = item.match.range.start_row
-          local col = item.match.range.start_col
+          -- NOTE: start_* seams to be 0 indexed
+          local row = item.match.range.start_row + 1
+          local col = item.match.range.start_col + 1
+          -- this is 1 indexed
           local res = vim.fn.screenpos(win_info.bufnr, row, col)
 
           col = res.col - win_info.wincol - win_info.textoff + 1
           row = res.row - win_info.winrow + win_info.topline -- they cancel out
 
-          local function save(data)
-            local enc = require("lua.helpers.json").encode(data)
-            print(enc)
-            vim.fn.setreg("+", enc)
-          end
+          -- re 0 index them since the rest of the code expects them to be
+          col = col - 1
+          row = row - 1
 
-          local x = vim.fn.screenpos(win_info.bufnr, item.match.range.start_row, item.match.range.start_col)
-
-          save({
-            info = win_info,
-
-            init = {
-              item.match.range.start_row,
-              item.match.range.start_col,
-            },
-            pos = { x.row, x.col },
-            after = {
-              row,
-              col,
-            },
+          utils.debug("diff: ", {
+            win_info.winid,
+            win_info.bufnr,
+            { col - item.match.range.start_col, row - item.match.range.start_row },
+            { item.match.range.start_col, item.match.range.start_row },
+            { col, row },
+            res
           })
-
-          -- TODO: has to take a vis_row, vis_col value
+          
+          -- FIXME: as a result of calculating the real "visual row" the 
+          --
           image:render({
             -- x = col,
-            -- y = row,
+            y = row,
             x = item.match.range.start_col,
-            y = item.match.range.start_row,
+            -- y = item.match.range.start_row,
+            row = item.match.range.start_row,
+            col = item.match.range.start_col,
           })
         end
 
@@ -211,7 +207,7 @@ local create_document_integration = function(config)
       end,
     })
 
-    -- watch for scrolling if wrapping is turned on
+    -- watch for scrolling  TODO: if wrapping is turned on
     vim.api.nvim_create_autocmd({ "WinScrolled" }, {
       group = group,
       callback = function(args)

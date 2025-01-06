@@ -62,7 +62,9 @@ local render = function(image)
   width = math.min(width, term_size.screen_cols)
   -- height = math.min(height, term_size.screen_rows)
 
-  -- utils.debug(("(1) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset))
+  -- utils.debug(
+  --   ("(1) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset)
+  -- )
 
   if image.window ~= nil then
     -- bail if the window is invalid
@@ -76,13 +78,22 @@ local render = function(image)
     end
 
     -- bail if the window is not visible
-    if not window.is_visible then return false end
+    if not window.is_visible then
+      utils.debug("windows not visible", image.id)
+      return false
+    end
 
     -- bail if the window is overlapped
-    if state.options.window_overlap_clear_enabled and #window.masks > 0 then return false end
+    if state.options.window_overlap_clear_enabled and #window.masks > 0 then
+      utils.debug("overlap", image.id)
+      return false
+    end
 
     -- if the image is tied to a buffer the window must be displaying that buffer
-    if image.buffer ~= nil and window.buffer ~= image.buffer then return false end
+    if image.buffer ~= nil and window.buffer ~= image.buffer then
+      utils.debug("bufffer not shown", image.id)
+      return false
+    end
 
     -- get topfill and check fold status
     local current_win = vim.api.nvim_get_current_win()
@@ -96,6 +107,7 @@ local render = function(image)
       -- utils.debug("image is inside a fold", image.id)
       state.images[image.id] = image
       image:clear(true)
+      utils.debug("inside fold")
       return false
     end
 
@@ -146,7 +158,10 @@ local render = function(image)
 
   width, height = utils.math.adjust_to_aspect_ratio(term_size, image.image_width, image.image_height, width, height)
 
-  if width <= 0 or height <= 0 then return false end
+  if width <= 0 or height <= 0 then
+    utils.debug("width & highy < 0")
+    return false
+  end
 
   -- utils.debug(("(3) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset))
 
@@ -161,7 +176,10 @@ local render = function(image)
 
   if image.window and image.buffer then
     local win_info = vim.fn.getwininfo(image.window)[1]
-    if not win_info then return false end
+    if not win_info then
+      utils.debug("no win info")
+      return false
+    end
     local topline = win_info.topline
     local botline = win_info.botline
 
@@ -331,6 +349,7 @@ local render = function(image)
     else
       state.images[image.id] = image
     end
+    utils.debug("out of bounds")
     return false
   end
 
@@ -447,7 +466,7 @@ local render = function(image)
   image.rendered_geometry = rendered_geometry
   cache[image.original_path] = image_cache
 
-  -- utils.debug("rendered", image)
+  utils.debug("rendered")
   return true
 end
 
