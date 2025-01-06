@@ -98,8 +98,8 @@ function Image:render(geometry)
 
   -- virtual padding
   if was_rendered and self.buffer and self.inline then
-    local row = self.geometry.row
-    local col = self.geometry.col
+    local row = self.geometry.y
+    local col = self.geometry.x
     local height = self.rendered_geometry.height
 
     local extmark_key = self.buffer .. ":" .. row .. ":" .. col
