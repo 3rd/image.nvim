@@ -1,4 +1,4 @@
 .PHONY: test
 
 test:
-	nvim -l ./tests/busted.lua tests/
+	nvim -l tests/busted.lua --minitest
