@@ -11,12 +11,14 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: rhysd/action-setup-vim@v1
+      - uses: folke/github/neovim@main
+      - name: Test Cache
+        uses: actions/cache@v4
         with:
-          neovim: true
-          version: stable
+          path: .tests
+          key: ${{ runner.os }}-tests-${{ hashFiles('tests/minit.lua', 'scripts/test') }}
       - name: Run Tests
         run: make test
