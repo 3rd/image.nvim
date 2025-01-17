@@ -31,6 +31,57 @@ We support two rendering backends, so first you need to set up one of these:
 2. [Überzug++](https://github.com/jstkdng/ueberzugpp) for the `ueberzug` backend
    - Works with any terminal emulator.
    - Has much lower performance.
+### Installing Überzug++
+   <details>
+   <summary>Pip</summary>
+
+   ```sh
+   sudo pip install ueberzugpp
+   ```  
+
+   </details>
+
+   <details>
+   <summary>Arch</summary>
+
+   ```sh
+   sudo pacman -Syu ueberzugpp
+   ```
+
+   </details>
+
+   <details>
+   <summary>Ubuntu/Debian/Fedora</summary>
+
+   Follow instructions on [this link](https://software.opensuse.org/download.html?project=home%3Ajustkidding&package=ueberzugpp)
+
+   </details>
+
+   <details>
+   <summary>macOS</summary>
+      
+   - Homebrew: `brew install jstkdng/programs/ueberzugpp`
+   - **For some users** homebrew might install it into a weird location, so you have to add `$(brew --prefix)/lib` to `DYLD_FALLBACK_LIBRARY_PATH` by adding something like `export DYLD_FALLBACK_LIBRARY_PATH="$(brew -- prefix)/lib:$DYLD_FALLBACK_LIBRARY_PATH"` to your shell profile (probably `.zshrc` or `.bashrc`)
+
+   </details>
+   
+   - Setup the configuration
+      - Put this in `~/.config/ueberzugpp/config.json` (`~/Library/Preferences/ueberzugpp/config.json` for MacOS): <!-- 3rd change this to be correct if wrong, remove this comment if it's right! -->
+      
+         ```  
+         {
+             "layer": {
+                 "silent": true,
+                 "use-escape-codes": false,
+                 "no-stdin": false,
+                 "_comment": "Replace wayland in output with iterm2, if you want tty and ssh support, x11 if you want to use it in xorg, sixel if you want to use sixels, chafa if you want to use the terminal colors.",
+                 "_comment2": "Kitty is not mentioned in the list above, because image.nvim has native support for it."
+                 "output": "wayland" 
+             }
+         }
+         ```
+	 
+      - You can remove the lines with _comment and _comment2 in them, once you are don't and have tried every available option until one or more worked!
 
 #### ImageMagick
 
