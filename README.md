@@ -32,7 +32,6 @@ We support two rendering backends, so first you need to set up one of these:
    - Works with any terminal emulator.
    - Has much lower performance.
 ### Installing Überzug++
-   - Installed with pip or your package manahger
    <details>
    <summary>Pip</summary>
 
