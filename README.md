@@ -64,6 +64,7 @@ We support two rendering backends, so first you need to set up one of these:
    - **For some users** homebrew might install it into a weird location, so you have to add `$(brew --prefix)/lib` to `DYLD_FALLBACK_LIBRARY_PATH` by adding something like `export DYLD_FALLBACK_LIBRARY_PATH="$(brew -- prefix)/lib:$DYLD_FALLBACK_LIBRARY_PATH"` to your shell profile (probably `.zshrc` or `.bashrc`)
 
    </details>
+   
    - Setup the configuration
       - Put this in `~/.config/ueberzugpp/config.json` (`~/Library/Preferences/ueberzugpp/config.json` for MacOS): [3rd change this to be correct if wrong, remove this comment if it's right!]
          ```  
