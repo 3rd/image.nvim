@@ -67,6 +67,7 @@ We support two rendering backends, so first you need to set up one of these:
    
    Setup the configuration
       Put this in `~/.config/ueberzugpp/config.json` (`~/Library/Preferences/ueberzugpp/config.json` for MacOS): <!-- 3rd change this to be correct if wrong, remove this comment if it's right! -->
+      
          ```  
          {
             "layer": {
@@ -79,6 +80,7 @@ We support two rendering backends, so first you need to set up one of these:
             }
          }
          ```
+	 
       You can remove the lines with _comment and _comment2 in them, once you are don't and have tried every available option until one or more worked!
 
 #### ImageMagick
