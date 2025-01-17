@@ -66,7 +66,7 @@ We support two rendering backends, so first you need to set up one of these:
    </details>
    
    Setup the configuration
-      Put this in `~/.config/ueberzugpp/config.json` (`~/Library/Preferences/ueberzugpp/config.json` for MacOS): [//]: # <> (3rd change this to be correct if wrong, remove this comment if it's right!)
+      Put this in `~/.config/ueberzugpp/config.json` (`~/Library/Preferences/ueberzugpp/config.json` for MacOS): <!-- 3rd change this to be correct if wrong, remove this comment if it's right! -->
          ```  
          {
             "layer": {
