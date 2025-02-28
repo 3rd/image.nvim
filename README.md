@@ -28,6 +28,7 @@ We support two rendering backends, so first you need to set up one of these:
    - You need to use Kitty or a terminal emulator that implements [Kitty's Graphics Protocol](https://sw.kovidgoyal.net/kitty/graphics-protocol/).
    - [WezTerm](https://github.com/wez/wezterm) implements it, but the performance is bad and it's not fully compliant.
      Most things work, but due to these issues it's not _officially supported_.
+   - [Ghostty](https://ghostty.org/) not that much information about this yet! SUBJECT TO CHANGE
 2. [Überzug++](https://github.com/jstkdng/ueberzugpp) for the `ueberzug` backend
    - Works with any terminal emulator.
    - Has much lower performance.
