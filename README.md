@@ -81,7 +81,7 @@ We support two rendering backends, so first you need to set up one of these:
          }
          ```
 	 
-      - You can remove the lines with _comment and _comment2 in them, once you are done and have tried every available option until one or more worked!
+      - You can remove the lines with `_comment` and `_comment2`, once you have tried every available option until one or more worked!
 
 #### ImageMagick
 
