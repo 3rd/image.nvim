@@ -66,7 +66,7 @@ We support two rendering backends, so first you need to set up one of these:
    </details>
    
    - Setup the configuration
-      - Put this in `~/.config/ueberzugpp/config.json` (`~/Library/Preferences/ueberzugpp/config.json` for MacOS): <!-- 3rd change this to be correct if wrong, remove this comment if it's right! -->
+      - Put this in `~/.config/ueberzugpp/config.json` (`the same for MacOS): <!-- 3rd change this to be correct if wrong, remove this comment if it's right! -->
       
          ```  
          {
@@ -74,14 +74,14 @@ We support two rendering backends, so first you need to set up one of these:
                  "silent": true,
                  "use-escape-codes": false,
                  "no-stdin": false,
-                 "_comment": "Replace wayland in output with iterm2, if you want tty and ssh support, x11 if you want to use it in xorg, sixel if you want to use sixels, chafa if you want to use the terminal colors.",
+                 "_comment": "Replace wayland in output with iterm2, if you want ssh support, x11 if you want to use it in xorg, sixel if you want to use sixels, chafa if you want to use the terminal colors.",
                  "_comment2": "Kitty is not mentioned in the list above, because image.nvim has native support for it."
                  "output": "wayland" 
              }
          }
          ```
 	 
-      - You can remove the lines with _comment and _comment2 in them, once you are don't and have tried every available option until one or more worked!
+      - You can remove the lines with _comment and _comment2 in them, once you are done and have tried every available option until one or more worked!
 
 #### ImageMagick
 
