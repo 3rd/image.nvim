@@ -46,7 +46,7 @@ We support two rendering backends, so first you need to set up one of these:
    <summary>Arch</summary>
 
    ```sh
-   sudo pacman -Syu ueberzugpp
+   sudo pacman -S ueberzugpp
    ```
 
    </details>
@@ -161,7 +161,7 @@ For `magick_rock` you need to install `luajitPackages.magick` as well ([thanks](
 <summary>Arch</summary>
 
 ```sh
-sudo pacman -Syu imagemagick
+sudo pacman -S imagemagick
 ```
 
 </details>
