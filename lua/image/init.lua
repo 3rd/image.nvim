@@ -408,12 +408,6 @@ api.hijack_buffer = function(path, win, buf, options)
   if not win or win == 0 then win = vim.api.nvim_get_current_win() end
   if not buf or buf == 0 then buf = vim.api.nvim_get_current_buf() end
 
-  local key = ("%s:%s"):format(win, buf)
-  if state.hijacked_win_buf_images[key] then
-    state.hijacked_win_buf_images[key]:render()
-    return state.hijacked_win_buf_images[key]
-  end
-
   vim.bo[buf].modifiable = true
   vim.api.nvim_buf_set_lines(buf, 0, -1, true, { "" })
 
@@ -424,6 +418,12 @@ api.hijack_buffer = function(path, win, buf, options)
   vim.opt_local.cursorline = false
   vim.opt_local.number = false
   vim.opt_local.signcolumn = "no"
+
+  local key = ("%s:%s"):format(win, buf)
+  if state.hijacked_win_buf_images[key] then
+    state.hijacked_win_buf_images[key]:render()
+    return state.hijacked_win_buf_images[key]
+  end
 
   local opts = options or {}
   opts.window = win
