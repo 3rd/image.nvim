@@ -226,11 +226,11 @@ require("lazy").setup({
     rocks = {
         hererocks = true,  -- recommended if you do not have global installation of Lua 5.1.
     },
-    specs = {
-    	{
-	    "3rd/image.nvim",
+    spec = {
+        {
+            "3rd/image.nvim",
             opts = {}
-    	},
+        },
     }
 })
 ```
@@ -298,7 +298,7 @@ package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/shar
     "3rd/image.nvim",
     build = false, -- so that it doesn't build the rock https://github.com/3rd/image.nvim/issues/91#issuecomment-2453430239
     opts = {
-	processor = "magick_cli",
+        processor = "magick_cli",
     }
 }
 ```
