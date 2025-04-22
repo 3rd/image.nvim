@@ -17,6 +17,13 @@ Try it out quickly by downloading [minimal-setup.lua](./minimal-setup.lua) from 
 
 ## Getting started
 
+### Quick start for the best experience
+
+1. Install the [Kitty](https://sw.kovidgoyal.net/kitty/) terminal
+2. Install [ImageMagick](#imagemagick)
+3. Install the [plugin](#plugin-installation) and tweak the [configuration](#configuration)
+4. Optionally configure [Tmux](#tmux)
+
 ### Dependencies
 
 #### Rendering backend
@@ -32,57 +39,6 @@ We support two rendering backends, so first you need to set up one of these:
 2. [Überzug++](https://github.com/jstkdng/ueberzugpp) for the `ueberzug` backend
    - Works with any terminal emulator.
    - Has much lower performance.
-### Installing Überzug++
-   <details>
-   <summary>Pip</summary>
-
-   ```sh
-   sudo pip install ueberzugpp
-   ```  
-
-   </details>
-
-   <details>
-   <summary>Arch</summary>
-
-   ```sh
-   sudo pacman -S ueberzugpp
-   ```
-
-   </details>
-
-   <details>
-   <summary>Ubuntu/Debian/Fedora</summary>
-
-   Follow instructions on [this link](https://software.opensuse.org/download.html?project=home%3Ajustkidding&package=ueberzugpp)
-
-   </details>
-
-   <details>
-   <summary>macOS</summary>
-      
-   - Homebrew: `brew install jstkdng/programs/ueberzugpp`
-   - **For some users** homebrew might install it into a weird location, so you have to add `$(brew --prefix)/lib` to `DYLD_FALLBACK_LIBRARY_PATH` by adding something like `export DYLD_FALLBACK_LIBRARY_PATH="$(brew -- prefix)/lib:$DYLD_FALLBACK_LIBRARY_PATH"` to your shell profile (probably `.zshrc` or `.bashrc`)
-
-   </details>
-   
-   - Setup the configuration
-      - Put this in `~/.config/ueberzugpp/config.json` (`the same for MacOS): <!-- 3rd change this to be correct if wrong, remove this comment if it's right! -->
-      
-         ```  
-         {
-             "layer": {
-                 "silent": true,
-                 "use-escape-codes": false,
-                 "no-stdin": false,
-                 "_comment": "Replace wayland in output with iterm2, if you want ssh support, x11 if you want to use it in xorg, sixel if you want to use sixels, chafa if you want to use the terminal colors.",
-                 "_comment2": "Kitty is not mentioned in the list above, because image.nvim has native support for it.",
-                 "output": "wayland" 
-             }
-         }
-         ```
-	 
-      - You can remove the lines with `_comment` and `_comment2`, once you have tried every available option until one or more worked!
 
 #### ImageMagick
 
@@ -90,15 +46,15 @@ We need to convert, scale, and crop images, and for that we use ImageMagick.
 \
 There are two ways we can do this, and you need to pick and follow the setup for the one you prefer.
 
-1. Via FFI bindings (default) - using the `magick_rock` processor and the [magick Lua rock](https://github.com/leafo/magick)
-   - Has slightly better performance.
-   - Requires a working LuaRocks setup and building the magick rock.
-2. Via CLI wrapping - using the `magick_cli` processor
+1. Via CLI wrapping (default) - using the `magick_cli` processor
    - Shells out to ImageMagick's CLI utilities like `identify` and `convert`.
    - Slightly scary in some scenarios as we could potentially pass untrusted input to a shell.
      We try to keep things secure, but this would be the main selling point of using the bindings instead.
+2. Via FFI bindings - using the `magick_rock` processor and the [magick Lua rock](https://github.com/leafo/magick)
+   - Has slightly better performance.
+   - Requires a working LuaRocks setup and building the magick rock.
 
-For the `magick_cli` processor you need a regular installation of ImageMagick.
+For the `magick_cli` processor (default) you need a regular installation of ImageMagick.
 \
 For the `magick_rock` processor you need to install the development version of ImageMagick.
 
@@ -214,9 +170,75 @@ This plugin will always have first class support for Tmux, to make it work make 
 
 - [cURL](https://github.com/curl/curl) for remote image support
 
+
+#### Extra: Installing Überzug++
+
+   <details>
+   <summary>Pip</summary>
+
+```sh
+sudo pip install ueberzugpp
+```
+
+   </details>
+
+   <details>
+   <summary>Arch</summary>
+
+```sh
+sudo pacman -S ueberzugpp
+```
+
+   </details>
+
+   <details>
+   <summary>Ubuntu/Debian/Fedora</summary>
+
+Follow instructions on [this link](https://software.opensuse.org/download.html?project=home%3Ajustkidding&package=ueberzugpp)
+
+   </details>
+
+   <details>
+   <summary>macOS</summary>
+
+   - Homebrew: `brew install jstkdng/programs/ueberzugpp`
+   - **For some users** homebrew might install it into a weird location, so you have to add `$(brew --prefix)/lib` to `DYLD_FALLBACK_LIBRARY_PATH` by adding something like `export DYLD_FALLBACK_LIBRARY_PATH="$(brew -- prefix)/lib:$DYLD_FALLBACK_LIBRARY_PATH"` to your shell profile (probably `.zshrc` or `.bashrc`)
+   - Setup the configuration
+      - Put this in `~/.config/ueberzugpp/config.json` (the same for MacOS):
+         ```  
+         {
+             "layer": {
+                 "silent": true,
+                 "use-escape-codes": false,
+                 "no-stdin": false,
+                 "_comment": "Replace wayland in output with iterm2, if you want ssh support, x11 if you want to use it in xorg, sixel if you want to use sixels, chafa if you want to use the terminal colors.",
+                 "_comment2": "Kitty is not mentioned in the list above, because image.nvim has native support for it.",
+                 "output": "wayland" 
+             }
+         }
+         ```
+	 
+      - You can remove the lines with `_comment` and `_comment2`, once you have tried every available option until one or more worked!
+   </details>
+
 ### Plugin installation
 
 After you've set up the dependencies, install the `image.nvim` plugin.
+
+<details>
+<summary><b>For magick_cli using Lazy</b></summary>
+
+```lua
+{
+    "3rd/image.nvim",
+    build = false, -- so that it doesn't build the rock https://github.com/3rd/image.nvim/issues/91#issuecomment-2453430239
+    opts = {
+        processor = "magick_cli",
+    }
+}
+```
+
+</details>
 
 <details>
 <summary><b>For magick_rock using Lazy >= v11.*</b></summary>
@@ -290,20 +312,6 @@ package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/shar
 
 </details>
 
-<details>
-<summary><b>For magick_cli using Lazy</b></summary>
-
-```lua
-{
-    "3rd/image.nvim",
-    build = false, -- so that it doesn't build the rock https://github.com/3rd/image.nvim/issues/91#issuecomment-2453430239
-    opts = {
-        processor = "magick_cli",
-    }
-}
-```
-
-</details>
 
 ## Configuration
 
@@ -312,7 +320,7 @@ package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/shar
 ```lua
 require("image").setup({
   backend = "kitty",
-  processor = "magick_rock", -- or "magick_cli"
+  processor = "magick_cli", -- or "magick_rock"
   integrations = {
     markdown = {
       enabled = true,
