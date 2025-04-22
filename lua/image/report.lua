@@ -37,9 +37,9 @@ local function create_report(state)
   add(string.format("TERM: %s", os.getenv("TERM")))
   if utils.tmux.is_tmux then
     add(string.format("Tmux: %s", utils.tmux.get_version()))
-    local allow_passthrough = vim.fn.system("tmux show -gv allow-passthrough"):gsub("%s+", "")
+    local allow_passthrough = vim.fn.system({ "tmux", "show", "-gv", "allow-passthrough" }):gsub("%s+", "")
     add(string.format("Tmux Allow Passthrough: %s", allow_passthrough))
-    local visual_activity = vim.fn.system("tmux show -gv visual-activity"):gsub("%s+", "")
+    local visual_activity = vim.fn.system({ "tmux", "show", "-gv", "visual-activity" }):gsub("%s+", "")
     add(string.format("Tmux Visual Activity: %s", visual_activity))
   end
   add("```")

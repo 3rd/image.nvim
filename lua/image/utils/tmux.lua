@@ -2,14 +2,14 @@ local is_tmux = vim.env.TMUX ~= nil
 
 local has_passthrough = false
 if is_tmux then
-  local ok, result = pcall(vim.fn.system, "tmux show -Apv allow-passthrough")
+  local ok, result = pcall(vim.fn.system, { "tmux", "show", "-Apv", "allow-passthrough" })
   if ok and (result:sub(-3) == "on\n" or result:sub(-4) == "all\n") then has_passthrough = true end
 end
 
 local create_dm_getter = function(name)
   return function()
     if not is_tmux then return nil end
-    local result = vim.fn.system("tmux display-message -p '#{" .. name .. "}'")
+    local result = vim.fn.system({ "tmux", "display-message", "-p", "#{" .. name .. "}" })
     return vim.fn.trim(result)
   end
 end
@@ -19,8 +19,16 @@ local get_current_session = create_dm_getter("client_session")
 local create_dm_window_getter = function(name)
   return function()
     if not is_tmux then return nil end
-    local result =
-      vim.fn.system("tmux list-windows -t " .. get_current_session() .. " -F '#{" .. name .. "}' -f '#{window_active}'")
+    local result = vim.fn.system({
+      "tmux",
+      "list-windows",
+      "-t",
+      get_current_session(),
+      "-F",
+      "#{" .. name .. "}",
+      "-f",
+      "#{window_active}",
+    })
     return vim.fn.trim(result)
   end
 end
@@ -28,8 +36,16 @@ end
 local create_dm_pane_getter = function(name)
   return function()
     if not is_tmux then return nil end
-    local result =
-      vim.fn.system("tmux list-panes -t " .. get_current_session() .. " -F '#{" .. name .. "}' -f '#{pane_active}'")
+    local result = vim.fn.system({
+      "tmux",
+      "list-panes",
+      "-t",
+      get_current_session(),
+      "-F",
+      "#{" .. name .. "}",
+      "-f",
+      "#{pane_active}",
+    })
     return vim.fn.trim(result)
   end
 end
@@ -39,7 +55,7 @@ local escape = function(sequence)
 end
 
 local get_version = function()
-  local result = vim.fn.system("tmux -V")
+  local result = vim.fn.system({ "tmux", "-V" })
   return result:match("tmux (%d+%.%d+)")
 end
 
