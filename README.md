@@ -398,6 +398,21 @@ Check https://github.com/3rd/image.nvim/issues/190#issuecomment-2378156235 for h
 
 ## How to ...?
 
+#### General
+
+<details>
+<summary>Enable / disable / get plugin status</summary>
+
+You can enable/disable the plugin and check its status on demand.
+
+```lua
+require("image").enable() -- enable the plugin
+require("image").disable() -- disable the plugin
+print(require("image").is_enabled()) -- bool
+```
+
+</details>
+
 #### Integrations
 
 <details>
@@ -415,7 +430,7 @@ require("image").setup({
 })
 ```
 
-</details
+</details>
 
 ## API
 
