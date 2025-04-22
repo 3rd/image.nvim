@@ -123,16 +123,18 @@ local render = function(image)
     local max_height_window_percentage = image.max_height_window_percentage
       or state.options.max_height_window_percentage
 
-    if type(max_width_window_percentage) == "number" then
-      width = math.min(
-        -- original
-        width,
-        -- max_window_percentage
-        math.floor((window.width - global_offsets.x) * max_width_window_percentage / 100)
-      )
-    end
-    if type(max_height_window_percentage) == "number" then
-      height = math.min(height, math.floor((window.height - global_offsets.y) * max_height_window_percentage / 100))
+    if not image.ignore_global_max_size then
+      if type(max_width_window_percentage) == "number" then
+        width = math.min(
+          -- original
+          width,
+          -- max_window_percentage
+          math.floor((window.width - global_offsets.x) * max_width_window_percentage / 100)
+        )
+      end
+      if type(max_height_window_percentage) == "number" then
+        height = math.min(height, math.floor((window.height - global_offsets.y) * max_height_window_percentage / 100))
+      end
     end
   end
 
@@ -141,8 +143,10 @@ local render = function(image)
   -- )
 
   -- global max width/height
-  if type(state.options.max_width) == "number" then width = math.min(width, state.options.max_width) end
-  if type(state.options.max_height) == "number" then height = math.min(height, state.options.max_height) end
+  if not image.ignore_global_max_size then
+    if type(state.options.max_width) == "number" then width = math.min(width, state.options.max_width) end
+    if type(state.options.max_height) == "number" then height = math.min(height, state.options.max_height) end
+  end
 
   width, height = utils.math.adjust_to_aspect_ratio(term_size, image.image_width, image.image_height, width, height)
 

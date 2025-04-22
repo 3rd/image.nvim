@@ -23,6 +23,7 @@ Try it out quickly by downloading [minimal-setup.lua](./minimal-setup.lua) from 
 2. Install [ImageMagick](#imagemagick)
 3. Install the [plugin](#plugin-installation) and tweak the [configuration](#configuration)
 4. Optionally configure [Tmux](#tmux)
+5. Check the [How to ...?](#how-to-) section
 
 ### Dependencies
 
@@ -327,6 +328,7 @@ require("image").setup({
       clear_in_insert_mode = false,
       download_remote_images = true,
       only_render_image_at_cursor = false,
+      only_render_image_at_cursor_mode = "popup",
       floating_windows = false, -- if true, images will be rendered in floating markdown windows
       filetypes = { "markdown", "vimwiki" }, -- markdown extensions (ie. quarto) can go here
     },
@@ -393,6 +395,27 @@ require('image').setup({
 ```
 
 Check https://github.com/3rd/image.nvim/issues/190#issuecomment-2378156235 for how to configure this for Obsidian.
+
+## How to ...?
+
+#### Integrations
+
+<details>
+<summary>Render images only when under the cursor</summary>
+
+This is a built-in feature that you can configure per-integration using the following options:
+
+```lua
+require("image").setup({
+  integrations = {
+    markdown = {
+        only_render_image_at_cursor = true, -- defaults to false
+        only_render_image_at_cursor_mode = "popup", -- "popup" or "inline", defaults to "popup"
+    }
+})
+```
+
+</details
 
 ## API
 

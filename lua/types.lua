@@ -24,6 +24,7 @@
 ---@field download_remote_images? boolean
 ---@field clear_in_insert_mode? boolean
 ---@field only_render_image_at_cursor? boolean
+---@field only_render_image_at_cursor_mode? "inline"|"popup"
 ---@field filetypes? string[]
 ---@field resolve_image_path? function
 ---@field floating_windows? boolean
@@ -126,6 +127,7 @@
 ---@field extmark? { id: number, row: number, col: number }
 ---@field last_modified? number
 ---@field has_extmark_moved fun (self:Image): (boolean, number?, number?)
+---@field ignore_global_max_size? boolean
 
 ---@class ImageProcessor
 --- We need to:
