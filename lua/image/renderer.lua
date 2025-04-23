@@ -8,10 +8,10 @@ local utils = require("image/utils")
 local cache = {}
 
 -- FIXME: having multiple instances of the same image that are bounded to
---  different sizes cause the virt_line calculations to break (i think the 
+--  different sizes cause the virt_line calculations to break (i think the
 --  height gets miss calculated)
 
--- FIXME: horrible performance when you resize a window so that the image 
+-- FIXME: horrible performance when you resize a window so that the image
 --  "bounding box" changes
 
 -- (both of those existed before i refactored / rewrote the renderer)
@@ -170,21 +170,14 @@ local render = function(image)
   end
 
   width, height = utils.math.adjust_to_aspect_ratio(term_size, image.image_width, image.image_height, width, height)
-  
+
   local absolute_x, absolute_y
   if image.window == nil then
     absolute_x = original_x
     absolute_y = original_y
   else
     local win_info = vim.fn.getwininfo(image.window)[1]
-    --
-    local screen_pos = vim.fn.screenpos(
-      image.window,
-      -- put it bellow the "image source"
-      original_y + 1,
-      original_x
-    )
-
+    local screen_pos = vim.fn.screenpos(image.window, original_y, original_x)
 
     if
       screen_pos.col == 0 --
