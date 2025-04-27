@@ -1,5 +1,45 @@
 # Changelog
 
+## [1.4.0](https://github.com/3rd/image.nvim/compare/v1.3.0...v1.4.0) (2025-04-23)
+
+
+### Features
+
+* add floating_windows integration option ([208661b](https://github.com/3rd/image.nvim/commit/208661b7b1a38c373d15a1bba4bfcc61a6a261ba))
+* add rockspec to avoid needs of extra plugins on Lazy >= v11 ([94319cd](https://github.com/3rd/image.nvim/commit/94319cdafec62cd5b3ac1448ed1aae1bbe731f45))
+* add unescaped image path fallback ([5f8fcec](https://github.com/3rd/image.nvim/commit/5f8fceca2d1be96a45b81de21c2f98bf6084fb34))
+* allow larger-than-window images and upscaling ([7b48e8c](https://github.com/3rd/image.nvim/commit/7b48e8c04872a4718baca6fd3cd6a39c94e4dd59))
+* allow passing max_{width,height}_window_percentage to image factory ([d5a5166](https://github.com/3rd/image.nvim/commit/d5a51669318f1e3cb5c0eb4c89b670715543886c))
+* clear/rerender images on VimSuspend/VimResume ([7f61c19](https://github.com/3rd/image.nvim/commit/7f61c1940a8b072ca47a28928d2375dc1e11f464))
+* curl always redirect ([56ddfa2](https://github.com/3rd/image.nvim/commit/56ddfa21270160126c26bc98133c0f7755d91511))
+* generalize image processors and add magick_cli and :ImageReport ([72fce55](https://github.com/3rd/image.nvim/commit/72fce550e609e41bb18e047bf615312099539504))
+* handle external source image changes ([2d0be8c](https://github.com/3rd/image.nvim/commit/2d0be8c7ea337e58abcfe43dca030703803a0e10))
+* image clipping on scroll ([79e4c59](https://github.com/3rd/image.nvim/commit/79e4c59cb886f549baa416889a195fa672781c5a))
+* render at cursor + popup ([500c01c](https://github.com/3rd/image.nvim/commit/500c01c22a6414d34f5afb790d2778e6c552530e))
+* Rewrote the renderer to use vim.fn.screenpos ([6771bbe](https://github.com/3rd/image.nvim/commit/6771bbea0ef7141fc1dd39f5e02dd965d411d63e)), closes [#62](https://github.com/3rd/image.nvim/issues/62)
+* toggle rendering ([84254ed](https://github.com/3rd/image.nvim/commit/84254ed26a7ada6fdd407268a4fa66d015e37ec0))
+* try to detect format/size in lua before falling back to magick ([17ab287](https://github.com/3rd/image.nvim/commit/17ab287afdbb748246885094c15cfa16b44d4d60))
+
+
+### Bug Fixes
+
+* add missing events for hijack mode ([b991fc7](https://github.com/3rd/image.nvim/commit/b991fc7f845bc6ab40c6ec00b39750dcd5190010))
+* bail early out of nvim_set_decoration_provider ([6fb2b84](https://github.com/3rd/image.nvim/commit/6fb2b84a739d92b781bba5f59f2678ea047332a9))
+* disable rockspec until we fix https://github.com/3rd/image.nvim/issues/191 ([61c7651](https://github.com/3rd/image.nvim/commit/61c76515cfc3cdac8123ece9e9761b20c3dc1315))
+* dont wrap tmux calls with shell ([56e58c8](https://github.com/3rd/image.nvim/commit/56e58c8e180fc3d1b62fae906a46fccc3e26476d))
+* guard magick check ([98a8999](https://github.com/3rd/image.nvim/commit/98a8999b362a15c189b07261237247911c96c319))
+* handle clipping for images with virtual padding ([6f7e2ed](https://github.com/3rd/image.nvim/commit/6f7e2ed3840a703d4e0a14a351904b4928bcb1ad))
+* images not rendered when on the first line ([25676de](https://github.com/3rd/image.nvim/commit/25676deed3d5cba3d8dda0f2a0e9c0b71a4aaab6))
+* **kitty:** image shown when switching to different tmux session [#198](https://github.com/3rd/image.nvim/issues/198) ([bcdc1e3](https://github.com/3rd/image.nvim/commit/bcdc1e3676d6e48d569f8e45db7278a93e944dbf))
+* more reliably hijack buffer ([d3914da](https://github.com/3rd/image.nvim/commit/d3914daaf47b38c024778890fd5c6f1ecdb492be))
+* plugin configuration references on readme file ([563d068](https://github.com/3rd/image.nvim/commit/563d068b9f7a0a4a7265b99d01ad3a99c05f1277))
+* **readme:** Fix typo in pacman command ([47c9470](https://github.com/3rd/image.nvim/commit/47c947061c93e19aa9dba5cf2dbf374a4b46811e))
+* remove shell substitution for compatibility ([5c5df4a](https://github.com/3rd/image.nvim/commit/5c5df4ac935e6b95543b46e05b79d68483195c78))
+* reposition if statement so the hijacked buffer's options are set correctly ([90cb2cc](https://github.com/3rd/image.nvim/commit/90cb2cce0a33812093e68e64bd1e73faeecb1455))
+* screenpos error for popup mode ([4c51d62](https://github.com/3rd/image.nvim/commit/4c51d6202628b3b51e368152c053c3fb5c5f76f2))
+* session clear & forced rerender on focusgained ([3f0cbb5](https://github.com/3rd/image.nvim/commit/3f0cbb5b540429ebae13e3229c0f75729f654b18))
+* text change watcher not working when switching to buffer ([f380265](https://github.com/3rd/image.nvim/commit/f380265e81443f590f29bbee3d7b4a71ca2b93fa))
+
 ## [1.3.0](https://github.com/3rd/image.nvim/compare/v1.2.0...v1.3.0) (2024-05-14)
 
 
