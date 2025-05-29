@@ -177,7 +177,7 @@ local render = function(image)
 		absolute_y = original_y
 	else
 		local win_info = vim.fn.getwininfo(image.window)[1]
-		local screen_pos = vim.fn.screenpos(image.window, original_y + 1, original_x)
+		local screen_pos = vim.fn.screenpos(image.window, math.max(1, original_y), original_x)
 
 		if
 				screen_pos.col == 0 --
