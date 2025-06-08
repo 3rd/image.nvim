@@ -190,7 +190,7 @@ local render = function(image)
       -- that could be partially scrolled away.
       local diff = vim.fn.screenpos(image.window, win_info.topline, 0).row - win_info.winrow
 
-      if diff <= 0 then
+      if diff < 0 then
         return false -- out of bounds
       end
 
@@ -212,10 +212,10 @@ local render = function(image)
 
   -- clear out of bounds images
   if
-    absolute_y + height <= bounds.top
-    or absolute_y >= bounds.bottom + (vim.o.laststatus == 2 and 1 or 0)
-    or absolute_x + width <= bounds.left
-    or absolute_x >= bounds.right
+    absolute_y + height < bounds.top
+    or absolute_y > bounds.bottom + (vim.o.laststatus == 2 and 1 or 0)
+    or absolute_x + width < bounds.left
+    or absolute_x > bounds.right
   then
     if image.is_rendered then
       -- utils.debug("deleting out of bounds image", { id = image.id, x = absolute_x, y = absolute_y, width = width, height = height, bounds = bounds })
