@@ -26,6 +26,9 @@ local default_options = {
     css = {
       enabled = false,
     },
+    org = {
+      enabled = false,
+    },
   },
   max_width = nil,
   max_height = nil,
