@@ -11,7 +11,7 @@ local get_windows = function(opts)
     local buffer_filetype = vim.bo[buffer].filetype
     local bufinfo = vim.fn.getbufinfo(buffer)[1]
     local buffer_is_listed = bufinfo and bufinfo.listed == 1
-    local scroll_x = 0 -- TODO:
+    local scroll_x = 0 -- TODO
     local scroll_y = tonumber(vim.fn.win_execute(id, "echo line('w0')")) - 1
     local is_visible = true
 
@@ -33,7 +33,7 @@ local get_windows = function(opts)
       rect = {
         top = pos[1],
         right = pos[2] + columns,
-        bottom = pos[1] + rows - (vim.o.laststatus == 2 and 1 or 0),
+        bottom = pos[1] + rows,
         left = pos[2],
       },
       masks = {},

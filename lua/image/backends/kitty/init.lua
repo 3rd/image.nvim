@@ -44,7 +44,7 @@ backend.render = function(image, x, y, width, height)
 
   local transmit_medium = codes.control.transmit_medium.file
 
-  if is_SSH then transmit_medium = codes.control.transmit_medium.direct end
+  if is_SSH or image.in_memory_data then transmit_medium = codes.control.transmit_medium.direct end
 
   -- transmit image
   local transmit = function()
@@ -57,7 +57,11 @@ backend.render = function(image, x, y, width, height)
       quiet = 2,
     }
     if with_virtual_placeholders then transmit_payload.display_virtual_placeholder = 1 end
-    helpers.write_graphics(transmit_payload, image.cropped_path)
+    if image.in_memory_data then
+      helpers.write_graphics(transmit_payload, image.in_memory_data, false)
+    else
+      helpers.write_graphics(transmit_payload, image.cropped_path, true)
+    end
     -- utils.debug("[kitty] transmitted image " .. image.id .. " (" .. image.internal_id .. ")")
   end
   if backend.features.crop then
@@ -165,13 +169,12 @@ backend.clear = function(image_id, shallow)
     if not image then return end
 
     if image.is_rendered then
-      local tty = get_clear_tty_override()
       helpers.write_graphics({
         action = codes.control.action.delete,
         display_delete = "i",
         image_id = image.internal_id,
         quiet = 2,
-        tty = tty,
+        tty = get_clear_tty_override(),
       })
     end
 

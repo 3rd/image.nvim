@@ -7,8 +7,6 @@ return document.create_document_integration({
     clear_in_insert_mode = false,
     download_remote_images = true,
     only_render_image_at_cursor = false,
-    only_render_image_at_cursor_mode = "popup",
-    floating_windows = false,
     filetypes = { "syslang" },
   },
   query_buffer_images = function(buffer)
@@ -22,7 +20,7 @@ return document.create_document_integration({
     local current_image = nil
 
     ---@diagnostic disable-next-line: missing-parameter
-    for id, node in query:iter_captures(root, buf) do
+    for id, node in query:iter_captures(root, 0) do
       local key = query.captures[id]
       local value = vim.treesitter.get_node_text(node, buf)
 

@@ -1,8 +1,6 @@
 ---@diagnostic disable: duplicate-doc-field
 local utils = require("image/utils")
 
-local popup_window = nil
-
 local resolve_absolute_path = function(document_file_path, image_path)
   if string.sub(image_path, 1, 1) == "/" then return image_path end
   if string.sub(image_path, 1, 1) == "~" then return vim.fn.fnamemodify(image_path, ":p") end
@@ -10,20 +8,6 @@ local resolve_absolute_path = function(document_file_path, image_path)
   local absolute_image_path = document_dir .. "/" .. image_path
   absolute_image_path = vim.fn.fnamemodify(absolute_image_path, ":p")
   return absolute_image_path
-end
-
-local resolve_base64_image = function(document_file_path, image_path)
-  local tmp_b64_path = vim.fn.tempname()
-  local base64_part = image_path:gsub("^data:image/[%w%+]+;base64,", "")
-  local decoded = vim.base64.decode(base64_part)
-
-  local file = io.open(tmp_b64_path, "wb")
-  if file ~= nil then
-    file:write(decoded)
-    file:close()
-  end
-
-  return tmp_b64_path
 end
 
 local is_remote_url = function(url)
@@ -52,9 +36,8 @@ local create_document_integration = function(config)
   local render = vim.schedule_wrap(
     ---@param ctx IntegrationContext
     function(ctx)
-      if not ctx.state.enabled then return end
+      local windows = utils.window.get_windows({ normal = true })
 
-      local windows = utils.window.get_windows({ normal = true, floating = ctx.options.floating_windows })
       local image_queue = {}
 
       for _, window in ipairs(windows) do
@@ -102,56 +85,10 @@ local create_document_integration = function(config)
       -- render images from queue
       for _, item in ipairs(image_queue) do
         local render_image = function(image)
-          if ctx.options.only_render_image_at_cursor and ctx.options.only_render_image_at_cursor_mode == "popup" then
-            if popup_window ~= nil then return end
-
-            -- Create a floating window for the image
-            local term_size = utils.term.get_size()
-            local width, height = utils.math.adjust_to_aspect_ratio(
-              term_size,
-              image.image_width,
-              image.image_height,
-              math.floor(term_size.screen_cols / 2),
-              0
-            )
-            local win_config = {
-              relative = "cursor",
-              row = 1,
-              col = 0,
-              width = width,
-              height = height,
-              style = "minimal",
-              border = "single",
-            }
-            local buf = vim.api.nvim_create_buf(false, true)
-            vim.bo[buf].filetype = "image_nvim_popup"
-            local win = vim.api.nvim_open_win(buf, false, win_config)
-            popup_window = win
-
-            image.ignore_global_max_size = true
-            image.window = win
-            image.buffer = buf
-            image:render({
-              x = 0,
-              y = 1,
-              width = width,
-              height = height,
-            })
-            -- close the floating window when the cursor moves
-            vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
-              callback = function()
-                if vim.api.nvim_win_is_valid(win) then vim.api.nvim_win_close(win, true) end
-                image:clear()
-                popup_window = nil
-              end,
-              once = true,
-            })
-          else
-            image:render({
-              x = item.match.range.start_col,
-              y = item.match.range.start_row,
-            })
-          end
+          image:render({
+            x = item.match.range.start_col,
+            y = item.match.range.start_row,
+          })
         end
 
         if is_remote_url(item.match.url) then
@@ -171,8 +108,6 @@ local create_document_integration = function(config)
           local path
           if ctx.options.resolve_image_path then
             path = ctx.options.resolve_image_path(item.file_path, item.match.url, resolve_absolute_path)
-          elseif string.sub(item.match.url, 1, 10) == "data:image" then
-            path = resolve_base64_image(item.file_path, item.match.url)
           else
             path = resolve_absolute_path(item.file_path, item.match.url)
           end
@@ -215,10 +150,11 @@ local create_document_integration = function(config)
     })
 
     -- watch for text changes
-    vim.api.nvim_create_autocmd({ "BufAdd", "BufNew", "BufNewFile", "BufWinEnter" }, {
+    vim.api.nvim_create_autocmd({ "BufAdd", "BufNew", "BufNewFile" }, {
       group = group,
       callback = function(args)
         if not has_valid_filetype(ctx, vim.bo[args.buf].filetype) then return end
+
         setup_text_change_watcher(ctx, args.buf)
         render(ctx)
       end,

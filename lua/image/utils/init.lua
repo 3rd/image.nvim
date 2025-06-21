@@ -1,4 +1,4 @@
-local dimensions = require("image/utils/dimensions")
+local base64 = require("image/utils/base64")
 local hash = require("image/utils/hash")
 local logger = require("image/utils/logger")
 local magic = require("image/utils/magic")
@@ -8,13 +8,12 @@ local random = require("image/utils/random")
 local term = require("image/utils/term")
 local tmux = require("image/utils/tmux")
 local window = require("image/utils/window")
-local json = require("image/utils/json")
 
 return {
-  dimensions = dimensions,
   log = logger.log,
   throw = logger.throw,
   debug = logger.debug,
+  base64 = base64,
   random = random,
   window = window,
   term = term,
@@ -23,5 +22,4 @@ return {
   tmux = tmux,
   magic = magic,
   hash = hash,
-  json = json,
 }

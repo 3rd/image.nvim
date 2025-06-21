@@ -2,7 +2,7 @@ local codes = require("image/backends/kitty/codes")
 local utils = require("image/utils")
 
 local uv = vim.uv
--- Allow for loop to be used on older versions
+ -- Allow for loop to be used on older versions
 if not uv then uv = vim.loop end
 
 local stdout = vim.loop.new_tty(1, false)
@@ -66,8 +66,9 @@ end
 
 ---@param config KittyControlConfig
 ---@param data? string
+---@param isPath? boolean
 -- https://github.com/edluffy/hologram.nvim/blob/main/lua/hologram/terminal.lua#L52
-local write_graphics = function(config, data)
+local write_graphics = function(config, data, isPath)
   local control_payload = ""
 
   -- utils.debug("kitty.write_graphics()", config, data)
@@ -75,30 +76,17 @@ local write_graphics = function(config, data)
   for k, v in pairs(config) do
     if v ~= nil then
       local key = codes.control.keys[k]
-      if key then
-        if type(v) == "number" then
-          -- There are currently no floating-point values in the Kitty graphics
-          -- specification. All values are either signed or unsigned 32-bit integers.
-          -- As such, we just stringify the number values here using "%d" to drop any
-          -- possible fractional portions.
-          --
-          -- (Note that string.format here is used to accommodate older versions of
-          -- Lua, in addition to the fact that we are just writing the string below
-          -- anyway).
-          v = string.format("%d", v)
-        end
-        control_payload = control_payload .. key .. "=" .. v .. ","
-      end
+      if key then control_payload = control_payload .. key .. "=" .. v .. "," end
     end
   end
   control_payload = control_payload:sub(0, -2)
 
   if data then
-    if config.transmit_medium == codes.control.transmit_medium.direct then
+    if config.transmit_medium == codes.control.transmit_medium.direct and isPath then
       local file = io.open(data, "rb")
       data = file:read("*all")
     end
-    data = vim.base64.encode(data):gsub("%-", "/")
+    data = utils.base64.encode(data):gsub("%-", "/")
     local chunks = get_chunked(data)
     local m = #chunks > 1 and 1 or 0
     control_payload = control_payload .. ",m=" .. m
