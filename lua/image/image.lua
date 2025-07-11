@@ -379,7 +379,7 @@ local from_url = function(url, options, callback, state)
     stdio = { nil, stdout, nil },
     hide = true,
   }, function(code, signal)
-    if code ~= 0 then
+    if (not state.options.ignore_download_error) and code ~= 0 then
       utils.throw("image: curl errored while downloading " .. url, {
         code = code,
         signal = signal,

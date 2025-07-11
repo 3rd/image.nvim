@@ -37,6 +37,7 @@ local default_options = {
   window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "snacks_notif", "scrollview", "scrollview_sign" },
   editor_only_render_when_focused = false,
   tmux_show_only_in_active_window = false,
+  ignore_download_error = false,
   hijack_file_patterns = { "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp", "*.avif" },
 }
 
