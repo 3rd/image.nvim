@@ -171,8 +171,63 @@ This plugin will always have first class support for Tmux, to make it work make 
 
 - [cURL](https://github.com/curl/curl) for remote image support
 
-
 #### Extra: Installing Überzug++
+
+  <summary>NixOS</summary>
+
+NixOS users need to install the `ueberzugpp` package.
+
+- <details>
+    <summary>Home Manager</summary>
+
+  ```nix
+  { pkgs, ... }:
+
+  {
+    programs.neovim = {
+        enable = true;
+        extraLuaPackages = ps: [ ps.magick ];
+        extraPackages = [
+          pkgs.ueberzugpp
+          pkgs.imagemagick
+        ];
+        # ... other config
+    };
+  }
+  ```
+
+  </details>
+
+- <details>
+    <summary>Vanilla NixOS</summary>
+
+  ```nix
+  # https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/editors/neovim/utils.nix#L27
+  { pkgs, neovimUtils, wrapNeovimUnstable, ... }:
+
+  let
+  config = pkgs.neovimUtils.makeNeovimConfig {
+    extraLuaPackages = p: [ p.magick ];
+    extraPackages = p: [
+      p.ueberzugpp
+      p.imagemagick
+    ];
+    # ... other config
+  };
+  in {
+    nixpkgs.overlays = [
+        (_: super: {
+        neovim-custom = pkgs.wrapNeovimUnstable
+            (super.neovim-unwrapped.overrideAttrs (oldAttrs: {
+            buildInputs = oldAttrs.buildInputs ++ [ super.tree-sitter ];
+            })) config;
+        })
+    ];
+    environment.systemPackages = with pkgs; [ neovim-custom ];
+  }
+  ```
+
+  </details>
 
    <details>
    <summary>Pip</summary>
@@ -202,25 +257,24 @@ Follow instructions on [this link](https://software.opensuse.org/download.html?p
    <details>
    <summary>macOS</summary>
 
-   - Homebrew: `brew install jstkdng/programs/ueberzugpp`
-   - **For some users** homebrew might install it into a weird location, so you have to add `$(brew --prefix)/lib` to `DYLD_FALLBACK_LIBRARY_PATH` by adding something like `export DYLD_FALLBACK_LIBRARY_PATH="$(brew -- prefix)/lib:$DYLD_FALLBACK_LIBRARY_PATH"` to your shell profile (probably `.zshrc` or `.bashrc`)
-   - Setup the configuration
-      - Put this in `~/.config/ueberzugpp/config.json` (the same for MacOS):
-         ```  
-         {
-             "layer": {
-                 "silent": true,
-                 "use-escape-codes": false,
-                 "no-stdin": false,
-                 "_comment": "Replace wayland in output with iterm2, if you want ssh support, x11 if you want to use it in xorg, sixel if you want to use sixels, chafa if you want to use the terminal colors.",
-                 "_comment2": "Kitty is not mentioned in the list above, because image.nvim has native support for it.",
-                 "output": "wayland" 
-             }
-         }
-         ```
-	 
-      - You can remove the lines with `_comment` and `_comment2`, once you have tried every available option until one or more worked!
-   </details>
+- Homebrew: `brew install jstkdng/programs/ueberzugpp`
+- **For some users** homebrew might install it into a weird location, so you have to add `$(brew --prefix)/lib` to `DYLD_FALLBACK_LIBRARY_PATH` by adding something like `export DYLD_FALLBACK_LIBRARY_PATH="$(brew -- prefix)/lib:$DYLD_FALLBACK_LIBRARY_PATH"` to your shell profile (probably `.zshrc` or `.bashrc`)
+- Setup the configuration
+  - Put this in `~/.config/ueberzugpp/config.json` (the same for MacOS):
+    ```
+    {
+        "layer": {
+            "silent": true,
+            "use-escape-codes": false,
+            "no-stdin": false,
+            "_comment": "Replace wayland in output with iterm2, if you want ssh support, x11 if you want to use it in xorg, sixel if you want to use sixels, chafa if you want to use the terminal colors.",
+            "_comment2": "Kitty is not mentioned in the list above, because image.nvim has native support for it.",
+            "output": "wayland"
+        }
+    }
+    ```
+  - You can remove the lines with `_comment` and `_comment2`, once you have tried every available option until one or more worked!
+  </details>
 
 ### Plugin installation
 
@@ -312,7 +366,6 @@ package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/shar
 ```
 
 </details>
-
 
 ## Configuration
 
