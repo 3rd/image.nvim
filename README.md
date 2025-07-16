@@ -172,13 +172,13 @@ This plugin will always have first class support for Tmux, to make it work make 
 - [cURL](https://github.com/curl/curl) for remote image support
 
 #### Extra: Installing Überzug++
-
-  <summary>NixOS</summary>
+<details>
+<summary>NixOS</summary>
 
 NixOS users need to install the `ueberzugpp` package.
 
 - <details>
-    <summary>Home Manager</summary>
+  <summary>Home Manager</summary>
 
   ```nix
   { pkgs, ... }:
@@ -195,9 +195,7 @@ NixOS users need to install the `ueberzugpp` package.
     };
   }
   ```
-
   </details>
-
 - <details>
     <summary>Vanilla NixOS</summary>
 
@@ -228,7 +226,7 @@ NixOS users need to install the `ueberzugpp` package.
   ```
 
   </details>
-
+  </details>
    <details>
    <summary>Pip</summary>
 
