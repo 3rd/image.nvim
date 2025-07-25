@@ -455,11 +455,17 @@ api.hijack_buffer = function(path, win, buf, options)
   local opts = options or {}
   opts.window = win
   opts.buffer = buf
+  -- For hijacked buffers, position image at line 1, column 0 (1-indexed for vim)
+  if not opts.x then opts.x = 0 end
+  if not opts.y then opts.y = 1 end
 
   local img = api.from_file(path, opts)
 
   if img then
-    img:render()
+    -- Delay rendering slightly to allow colorscheme to load first
+    vim.defer_fn(function()
+      img:render()
+    end, 100) -- 100ms delay
     state.hijacked_win_buf_images[key] = img
   end
 
