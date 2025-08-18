@@ -380,10 +380,17 @@ local from_url = function(url, options, callback, state)
     hide = true,
   }, function(code, signal)
     if code ~= 0 then
-      utils.throw("image: curl errored while downloading " .. url, {
-        code = code,
-        signal = signal,
-      })
+      if state.options.ignore_download_error then
+        utils.debug("image: curl errored while downloading " .. url, {
+          code = code,
+          signal = signal,
+        })
+      else
+        utils.throw("image: curl errored while downloading " .. url, {
+          code = code,
+          signal = signal,
+        })
+      end
       callback(nil)
     end
   end)
