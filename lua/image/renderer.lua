@@ -104,7 +104,7 @@ local render = function(image)
     -- check if image is in fold
     local current_win = vim.api.nvim_get_current_win()
     vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. image.window .. ")")
-    local is_folded = vim.fn.foldclosed(original_y) ~= -1
+    local is_folded = vim.fn.foldclosed(original_y + 1) ~= -1
     vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. current_win .. ")")
 
     -- bail if it is
