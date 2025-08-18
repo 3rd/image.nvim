@@ -70,7 +70,7 @@ function Image:render(geometry)
     end
 
     self:clear()
-    local dimensions = self.global_state.processor.get_dimensions(self.original_path)
+    local dimensions = self.global_state.processor.get_dimensions(self.path)
     self.image_width = dimensions.width
     self.image_height = dimensions.height
 

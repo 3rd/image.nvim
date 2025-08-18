@@ -42,20 +42,26 @@ function MagickCliProcessor.get_format(path)
     if data then error_output = error_output .. data end
   end)
 
-  while not result do
-    vim.loop.run("nowait")
-  end
-
+  local success = vim.wait(5000, function()
+    return result ~= nil
+  end, 10)
+  if not success then error("identify format detection timed out") end
   return result
 end
 
 function MagickCliProcessor.convert_to_png(path, output_path)
   guard()
+
+  local actual_format = MagickCliProcessor.get_format(path)
+
   local out_path = output_path or path:gsub("%.[^.]+$", ".png")
   local done = false
   local stdout = vim.loop.new_pipe()
   local stderr = vim.loop.new_pipe()
   local error_output = ""
+
+  -- for GIFs convert the first frame
+  if actual_format == "gif" then path = path .. "[0]" end
 
   vim.loop.spawn("convert", {
     args = { path, "png:" .. out_path },
@@ -71,9 +77,11 @@ function MagickCliProcessor.convert_to_png(path, output_path)
     if data then error_output = error_output .. data end
   end)
 
-  while not done do
-    vim.loop.run("nowait")
-  end
+  local success = vim.wait(10000, function()
+    return done
+  end, 10)
+
+  if not success then error("convert timed out") end
 
   return out_path
 end
@@ -83,10 +91,16 @@ function MagickCliProcessor.get_dimensions(path)
   if result then return result end
   -- fallback to slower method:
   guard()
+
+  local actual_format = MagickCliProcessor.get_format(path)
+
   local stdout = vim.loop.new_pipe()
   local stderr = vim.loop.new_pipe()
   local output = ""
   local error_output = ""
+
+  -- GIF
+  if actual_format == "gif" then path = path .. "[0]" end
 
   vim.loop.spawn("identify", {
     args = { "-format", "%wx%h", path },
@@ -108,9 +122,11 @@ function MagickCliProcessor.get_dimensions(path)
     if data then error_output = error_output .. data end
   end)
 
-  while not result do
-    vim.loop.run("nowait")
-  end
+  local success = vim.wait(5000, function()
+    return result ~= nil
+  end, 10)
+
+  if not success then error("identify dimensions timed out") end
 
   return result
 end
@@ -142,9 +158,11 @@ function MagickCliProcessor.resize(path, width, height, output_path)
     if data then error_output = error_output .. data end
   end)
 
-  while not done do
-    vim.loop.run("nowait")
-  end
+  local success = vim.wait(10000, function()
+    return done
+  end, 10)
+
+  if not success then error("operation timed out") end
 
   return out_path
 end
@@ -176,9 +194,11 @@ function MagickCliProcessor.crop(path, x, y, width, height, output_path)
     if data then error_output = error_output .. data end
   end)
 
-  while not done do
-    vim.loop.run("nowait")
-  end
+  local success = vim.wait(10000, function()
+    return done
+  end, 10)
+
+  if not success then error("operation timed out") end
 
   return out_path
 end
@@ -210,9 +230,11 @@ function MagickCliProcessor.brightness(path, brightness, output_path)
     if data then error_output = error_output .. data end
   end)
 
-  while not done do
-    vim.loop.run("nowait")
-  end
+  local success = vim.wait(10000, function()
+    return done
+  end, 10)
+
+  if not success then error("operation timed out") end
 
   return out_path
 end
@@ -244,9 +266,11 @@ function MagickCliProcessor.saturation(path, saturation, output_path)
     if data then error_output = error_output .. data end
   end)
 
-  while not done do
-    vim.loop.run("nowait")
-  end
+  local success = vim.wait(10000, function()
+    return done
+  end, 10)
+
+  if not success then error("operation timed out") end
 
   return out_path
 end
@@ -278,9 +302,11 @@ function MagickCliProcessor.hue(path, hue, output_path)
     if data then error_output = error_output .. data end
   end)
 
-  while not done do
-    vim.loop.run("nowait")
-  end
+  local success = vim.wait(10000, function()
+    return done
+  end, 10)
+
+  if not success then error("operation timed out") end
 
   return out_path
 end
