@@ -466,10 +466,17 @@ api.hijack_buffer = function(path, win, buf, options)
   local img = api.from_file(path, opts)
 
   if img then
-    -- Delay rendering slightly to allow colorscheme to load first
-    vim.defer_fn(function()
+    -- wait for vimenter
+    if vim.v.vim_did_enter == 1 then
       img:render()
-    end, 100) -- 100ms delay
+    else
+      vim.api.nvim_create_autocmd("VimEnter", {
+        once = true,
+        callback = function()
+          img:render()
+        end,
+      })
+    end
     state.hijacked_win_buf_images[key] = img
   end
 
