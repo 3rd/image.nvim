@@ -107,7 +107,8 @@ function Image:render(geometry)
 
     -- create extmark
     if was_rendered then
-      local has_up_to_date_extmark = previous_extmark and previous_extmark.height == height
+      local total_height = height + (self.padding_top or 0)
+      local has_up_to_date_extmark = previous_extmark and previous_extmark.height == total_height
 
       if not has_up_to_date_extmark then
         if previous_extmark ~= nil then
@@ -119,7 +120,8 @@ function Image:render(geometry)
         local filler = {}
         local extmark_opts = { id = self.internal_id, strict = false }
         if self.with_virtual_padding then
-          for _ = 0, height - 1 do
+          local total_lines = height + (self.padding_top or 0)
+          for _ = 0, total_lines - 1 do
             filler[#filler + 1] = { { " ", "" } }
           end
           extmark_opts.virt_lines = filler
@@ -137,7 +139,7 @@ function Image:render(geometry)
           extmark_opts
         )
         if ok then
-          buf_extmark_map[extmark_key] = { id = self.internal_id, height = height or 0 }
+          buf_extmark_map[extmark_key] = { id = self.internal_id, height = total_height or 0 }
           self.extmark = { id = extmark_id, row = extmark_row, col = extmark_col }
         end
       end
@@ -293,6 +295,7 @@ local from_file = function(path, options, state)
         with_virtual_padding = opts.with_virtual_padding or false,
         inline = opts.inline or opts.with_virtual_padding or false,
         is_rendered = false,
+        padding_top = opts.padding_top or 0,
         crop_hash = nil,
         resize_hash = nil,
         namespace = opts.namespace or nil,
@@ -351,6 +354,7 @@ local from_file = function(path, options, state)
     with_virtual_padding = opts.with_virtual_padding or false,
     inline = opts.inline or opts.with_virtual_padding or false,
     is_rendered = false,
+    padding_top = opts.padding_top or 0,
     crop_hash = nil,
     resize_hash = nil,
     namespace = opts.namespace or nil,

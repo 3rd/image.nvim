@@ -133,7 +133,7 @@ local create_document_integration = function(config)
             image.buffer = buf
             image:render({
               x = 0,
-              y = 1,
+              y = 0,
               width = width,
               height = height,
             })
@@ -156,11 +156,14 @@ local create_document_integration = function(config)
 
         if is_remote_url(item.match.url) then
           if ctx.options.download_remote_images then
+            local is_popup = ctx.options.only_render_image_at_cursor
+              and ctx.options.only_render_image_at_cursor_mode == "popup"
             pcall(ctx.api.from_url, item.match.url, {
               id = item.id,
               window = item.window.id,
               buffer = item.window.buffer,
-              with_virtual_padding = true,
+              with_virtual_padding = not is_popup,
+              padding_top = is_popup and 0 or 1,
               namespace = config.name,
             }, function(image)
               if not image then return end
@@ -176,11 +179,15 @@ local create_document_integration = function(config)
           else
             path = resolve_absolute_path(item.file_path, item.match.url)
           end
+          local is_popup = ctx.options.only_render_image_at_cursor
+            and ctx.options.only_render_image_at_cursor_mode == "popup"
+          local padding = is_popup and 0 or 1
           local ok, image = pcall(ctx.api.from_file, path, {
             id = item.id,
             window = item.window.id,
             buffer = item.window.buffer,
-            with_virtual_padding = true,
+            with_virtual_padding = not is_popup,
+            padding_top = padding,
             namespace = config.name,
           })
           if ok and image then render_image(image) end

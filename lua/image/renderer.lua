@@ -14,8 +14,6 @@ local cache = {}
 -- FIXME: horrible performance when you resize a window so that the image
 --  "bounding box" changes
 
--- (both of those existed before i refactored / rewrote the renderer)
-
 ---@param image Image
 local render = function(image)
   local state = image.global_state
@@ -175,6 +173,11 @@ local render = function(image)
   if image.window == nil then
     absolute_x = original_x
     absolute_y = original_y
+    -- apply padding_top
+    if image.padding_top and image.padding_top > 0 then
+      --
+      absolute_y = absolute_y + image.padding_top
+    end
   else
     local win_info = vim.fn.getwininfo(image.window)[1]
     local screen_pos = vim.fn.screenpos(image.window, math.max(1, original_y), original_x)
@@ -207,6 +210,13 @@ local render = function(image)
     else
       absolute_x = screen_pos.col
       absolute_y = screen_pos.row
+    end
+    -- apply padding_top offset if set (but not for floating windows)
+    local is_floating = vim.api.nvim_win_get_config(image.window).relative ~= ""
+    if is_floating and original_y == 0 then
+      absolute_y = absolute_y - 1
+    elseif image.padding_top and image.padding_top > 0 and not is_floating then
+      absolute_y = absolute_y + image.padding_top
     end
   end
 

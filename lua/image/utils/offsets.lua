@@ -6,7 +6,7 @@ local get_border_shape = function(window_id)
   -- a list of 8 or any divisor of 8. if it's less than 8 long, it's repeated
   -- here we care about the top and the left, so positions 2 and 8
   local shape = { top = 0, right = 0, bottom = 0, left = 0 }
-  if border ~= nil then
+  if border ~= nil and type(border) == "table" then
     if #border[(1 % #border) + 1] > 0 then shape.top = 1 end
     if #border[(7 % #border) + 1] > 0 then shape.left = 1 end
     if #border[(5 % #border) + 1] > 0 then shape.bottom = 1 end
@@ -47,7 +47,7 @@ end
 ---Compute the width of virtual text
 ---@param vt table[] list of (text, highlight) tuples
 ---@return number
-local virt_text_width = function (vt)
+local virt_text_width = function(vt)
   local width = 0
   for _, tuple in ipairs(vt) do
     width = width + string.len(tuple[1])
