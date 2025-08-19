@@ -76,6 +76,10 @@ backend.render = function(image, x, y, width, height)
 
   -- unicode placeholders
   if with_virtual_placeholders then
+    if backend.state.images[image.id] and backend.state.images[image.id] ~= image then
+      backend.state.images[image.id]:clear(true)
+    end
+
     helpers.write_graphics({
       action = codes.control.action.display,
       quiet = 2,
@@ -137,6 +141,10 @@ backend.render = function(image, x, y, width, height)
     display_payload.display_height = pixel_height
     display_payload.display_y = pixel_top
     display_payload.display_x = pixel_left
+  end
+
+  if backend.state.images[image.id] and backend.state.images[image.id] ~= image then
+    backend.state.images[image.id]:clear(true)
   end
 
   helpers.update_sync_start()

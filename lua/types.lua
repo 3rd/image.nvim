@@ -79,6 +79,7 @@
 ---@field namespace? string
 ---@field max_width_window_percentage? number
 ---@field max_height_window_percentage? number
+---@field render_offset_top? number
 
 ---@class ImageBounds
 ---@field top number
@@ -135,6 +136,7 @@
 ---@field last_modified? number
 ---@field has_extmark_moved fun (self:Image): (boolean, number?, number?)
 ---@field ignore_global_max_size? boolean
+---@field render_offset_top? number
 
 ---@class ImageProcessor
 --- We need to:

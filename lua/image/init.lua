@@ -266,6 +266,10 @@ api.setup = function(options)
       if not state.enabled then return end
 
       local images = api.get_images({ window = tonumber(au.file) })
+
+      -- bail if there are no images
+      if #images == 0 then return end
+
       for _, current_image in ipairs(images) do
         current_image:render()
       end

@@ -84,18 +84,24 @@ local render = function(image)
     -- bail if the window is not visible
     if not window.is_visible then
       -- utils.debug("windows not visible", image.id)
+      if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
+      state.images[image.id] = image
       return false
     end
 
     -- bail if the window is overlapped
     if state.options.window_overlap_clear_enabled and #window.masks > 0 then
       -- utils.debug("overlap", image.id)
+      if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
+      state.images[image.id] = image
       return false
     end
 
     -- if the image is tied to a buffer the window must be displaying that buffer
     if image.buffer ~= nil and window.buffer ~= image.buffer then
       -- utils.debug("bufffer not shown", image.id)
+      if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
+      state.images[image.id] = image
       return false
     end
 
@@ -108,6 +114,7 @@ local render = function(image)
     -- bail if it is
     if image.buffer and is_folded then
       -- utils.debug("image is inside a fold", image.id)
+      if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
       state.images[image.id] = image
       image:clear(true)
       return false
@@ -173,64 +180,134 @@ local render = function(image)
   if image.window == nil then
     absolute_x = original_x
     absolute_y = original_y
-    -- apply padding_top
-    if image.padding_top and image.padding_top > 0 then
+    -- apply render_offset_top
+    if image.render_offset_top and image.render_offset_top > 0 then
       --
-      absolute_y = absolute_y + image.padding_top
+      absolute_y = absolute_y + image.render_offset_top
     end
   else
     local win_info = vim.fn.getwininfo(image.window)[1]
     local screen_pos = vim.fn.screenpos(image.window, math.max(1, original_y), original_x)
 
+    local is_partial_scroll = false
     if
       screen_pos.col == 0 --
       and screen_pos.row == 0 --
     then
       -- the screen_pos is outside the window
 
-      -- Calculate the difference between the top line and top pos of window
-      -- Its the best way i found to calculate the possible extmark virt_lines
-      -- that could be partially scrolled away.
-      local diff = vim.fn.screenpos(image.window, win_info.topline, 0).row - win_info.winrow
-
-      if diff <= 0 then
-        return false -- out of bounds
+      -- check if image is below the viewport
+      if original_y > win_info.botline then
+        -- utils.debug(("Image %s is below viewport (line %d > botline %d)"):format(image.id, original_y, win_info.botline))
+        if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
+        state.images[image.id] = image
+        return false -- image is below the visible window
       end
 
-      -- there is a diff which means that there are virt_lines that the user has
-      -- partially scrolled past
+      -- special case: if the image is ON the topline, it should be visible at the top
+      if original_y + 1 == win_info.topline then
+        -- utils.debug(("DEBUG: Image %s is ON topline %d, rendering at top"):format(image.id, win_info.topline))
+        absolute_x = win_info.wincol + win_info.textoff + original_x - 1
+        absolute_y = win_info.winrow
+        -- When image is on topline, we want normal rendering with padding
+        is_partial_scroll = false
+      else
+        -- Calculate the difference between the top line and top pos of window
+        -- Its the best way i found to calculate the possible extmark virt_lines
+        -- that could be partially scrolled away.
+        local topline_screen_pos = vim.fn.screenpos(image.window, win_info.topline, 0)
+        local diff = topline_screen_pos.row - win_info.winrow
 
-      absolute_y = win_info.winrow - height + diff - 1 -- fking 1 indexing
-      -- Try to manually calculate the x pos of the image.
-      -- We cant use the "built in" one since its out of bounds of the window
-      -- and therefore returns two 0s
-      -- Maybe do that all the time so that wrapping doesn't affect the x pos of
-      -- the image.
-      absolute_x = win_info.wincol + win_info.textoff + original_x - 1 -- fking 1 indexing
+        -- utils.debug(("DEBUG: Image %s at/near topline calc"):format(image.id), {
+        --   original_y = original_y,
+        --   topline = win_info.topline,
+        --   topline_screen_row = topline_screen_pos.row,
+        --   winrow = win_info.winrow,
+        --   diff = diff,
+        --   height = height,
+        -- })
+
+        if diff <= 0 then
+          -- The topline is at a real buffer line (not in middle of virtual lines)
+          -- utils.debug(("DEBUG: Image %s diff <= 0, cannot calculate position"):format(image.id))
+          if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
+          state.images[image.id] = image
+          return false -- cannot determine proper position
+        end
+
+        -- there is a diff which means that there are virt_lines that the user has
+        -- partially scrolled past
+
+        -- This calculation only makes sense if the image is at the line being scrolled (topline - 1)
+        -- If the image is further up, it shouldn't be visible at all
+        if original_y + 1 < win_info.topline - 1 then
+          -- utils.debug(("DEBUG: Image %s is above the partially scrolled line (line %d < topline %d - 1), hiding"):format(image.id, original_y + 1, win_info.topline))
+          if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
+          state.images[image.id] = image
+          return false
+        end
+
+        is_partial_scroll = true
+        -- diff represents how many rows of virtual content are visible above the topline
+        -- When diff = height, all virtual lines visible, image should start at winrow
+        -- When diff = 1, only bottom row visible
+        -- The -1 accounts for 0-based vs 1-based indexing
+        absolute_y = win_info.winrow - height + diff - 1
+        -- Try to manually calculate the x pos of the image.
+        -- We cant use the "built in" one since its out of bounds of the window
+        -- and therefore returns two 0s
+        absolute_x = win_info.wincol + win_info.textoff + original_x - 1 -- fking 1 indexing
+
+        -- utils.debug(("DEBUG: Image %s calculated position for partial scroll"):format(image.id), {
+        --   absolute_x = absolute_x,
+        --   absolute_y = absolute_y,
+        --   calculation = string.format("winrow(%d) - height(%d) + diff(%d) - 1 = %d",
+        --     win_info.winrow, height, diff, absolute_y),
+        -- })
+      end
     else
       absolute_x = screen_pos.col
       absolute_y = screen_pos.row
     end
-    -- apply padding_top offset if set (but not for floating windows)
+    -- apply render_offset_top offset if set (but not for floating windows and not during partial scroll)
     local is_floating = vim.api.nvim_win_get_config(image.window).relative ~= ""
     if is_floating and original_y == 0 then
       absolute_y = absolute_y - 1
-    elseif image.padding_top and image.padding_top > 0 and not is_floating then
-      absolute_y = absolute_y + image.padding_top
+    elseif image.render_offset_top and image.render_offset_top > 0 and not is_floating and not is_partial_scroll then
+      absolute_y = absolute_y + image.render_offset_top
     end
   end
 
   -- clear out of bounds images
-  if
-    absolute_y + height <= bounds.top
-    or absolute_y >= bounds.bottom + (vim.o.laststatus == 2 and 1 or 0)
-    or absolute_x + width <= bounds.left
-    or absolute_x >= bounds.right
-  then
+  local laststatus_offset = (vim.o.laststatus == 2 and 1 or 0)
+  local is_above = absolute_y + height <= bounds.top
+  local is_below = absolute_y > bounds.bottom + laststatus_offset
+  local is_left = absolute_x + width <= bounds.left
+  local is_right = absolute_x >= bounds.right
+
+  -- utils.debug(("DEBUG bounds check for %s"):format(image.id), {
+  --   absolute_y = absolute_y,
+  --   height = height,
+  --   bounds_top = bounds.top,
+  --   bounds_bottom = bounds.bottom,
+  --   laststatus_offset = laststatus_offset,
+  --   is_above = is_above,
+  --   is_below = is_below,
+  --   is_left = is_left,
+  --   is_right = is_right,
+  --   is_rendered = image.is_rendered,
+  --   checks = {
+  --     above = string.format("%d + %d <= %d", absolute_y, height, bounds.top),
+  --     below = string.format("%d > %d + %d", absolute_y, bounds.bottom, laststatus_offset),
+  --   }
+  -- })
+
+  if is_above or is_below or is_left or is_right then
     if image.is_rendered then
-      -- utils.debug("deleting out of bounds image", { id = image.id, x = absolute_x, y = absolute_y, width = width, height = height, bounds = bounds })
+      -- utils.debug(("DEBUG: CLEARING out of bounds image %s"):format(image.id))
       state.backend.clear(image.id, true)
     else
+      if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
       state.images[image.id] = image
     end
     -- utils.debug("out of bounds")
@@ -255,6 +332,15 @@ local render = function(image)
   -- crop top
   if absolute_y < bounds.top then
     local visible_rows = height - (bounds.top - absolute_y)
+
+    -- if no rows are visible after cropping, don't render
+    if visible_rows <= 0 then
+      -- utils.debug(("DEBUG: Image %s has no visible rows after crop, hiding"):format(image.id))
+      if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
+      state.images[image.id] = image
+      return false
+    end
+
     cropped_pixel_height = visible_rows * term_size.cell_height
     crop_offset_top = (bounds.top - absolute_y) * term_size.cell_height
     if not state.backend.features.crop then absolute_y = bounds.top end
@@ -265,6 +351,12 @@ local render = function(image)
   if absolute_y + height > bounds.bottom then
     cropped_pixel_height = (bounds.bottom - absolute_y + 1) * term_size.cell_height
     needs_crop = true
+    -- utils.debug(("DEBUG: Image %s crop bottom"):format(image.id), {
+    --   absolute_y = absolute_y,
+    --   height = height,
+    --   bounds_bottom = bounds.bottom,
+    --   cropped_pixel_height = cropped_pixel_height
+    -- })
   end
 
   -- compute resize
@@ -343,14 +435,25 @@ local render = function(image)
     return true
   end
 
-  -- utils.debug("redering to backend", image.id, { x = absolute_x, y = absolute_y, width = width, height = height, resize_hash = image.resize_hash, crop_hash = image.crop_hash, })
+  -- utils.debug(("DEBUG: rendering to backend %s"):format(image.id), {
+  --   x = absolute_x,
+  --   y = absolute_y,
+  --   width = width,
+  --   height = height,
+  --   resize_hash = image.resize_hash,
+  --   crop_hash = image.crop_hash,
+  --   needs_crop = needs_crop,
+  --   original_y = original_y,
+  --   bounds = bounds,
+  --   extmark_line = original_y + 1,  -- extmark line in 1-indexed
+  -- })
 
   image.bounds = bounds
   state.backend.render(image, absolute_x, absolute_y, width, height)
   image.rendered_geometry = rendered_geometry
   cache[image.original_path] = image_cache
 
-  -- utils.debug("rendered")
+  -- utils.debug(("DEBUG: rendered %s"):format(image.id))
   return true
 end
 

@@ -163,7 +163,7 @@ local create_document_integration = function(config)
               window = item.window.id,
               buffer = item.window.buffer,
               with_virtual_padding = not is_popup,
-              padding_top = is_popup and 0 or 1,
+              render_offset_top = is_popup and 0 or 1,
               namespace = config.name,
             }, function(image)
               if not image then return end
@@ -187,7 +187,7 @@ local create_document_integration = function(config)
             window = item.window.id,
             buffer = item.window.buffer,
             with_virtual_padding = not is_popup,
-            padding_top = padding,
+            render_offset_top = padding,
             namespace = config.name,
           })
           if ok and image then render_image(image) end
