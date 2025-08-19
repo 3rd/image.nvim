@@ -1,4 +1,5 @@
 local utils = require("image/utils")
+local log = require("image/utils/logger").within("renderer")
 
 -- Images get resized and cropped to fit in the context they are rendered in.
 -- Each of these versions are written to the temp directory and cleared on reboot (on Linux at least).
@@ -24,13 +25,13 @@ local render = function(image)
   local image_columns = math.floor(image.image_width / term_size.cell_width * scale_factor)
   local image_cache = cache[image.original_path] or { resized = {}, cropped = {} }
 
-  -- utils.debug(("renderer.render() %s"):format(image.id), {
-  --   id = image.id,
-  --   x = image.geometry.x,
-  --   y = image.geometry.y,
-  --   width = image.geometry.width,
-  --   height = image.geometry.height,
-  -- })
+  log.debug(("render() %s"):format(image.id), {
+    id = image.id,
+    x = image.geometry.x,
+    y = image.geometry.y,
+    width = image.geometry.width,
+    height = image.geometry.height,
+  })
 
   local original_x = image.geometry.x or 0
   local original_y = image.geometry.y or 0
@@ -64,12 +65,12 @@ local render = function(image)
   width = math.min(width, term_size.screen_cols)
   -- height = math.min(height, term_size.screen_rows)
 
-  -- utils.debug(
-  --   ("(1) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset)
-  -- )
+  log.debug(
+    ("(1) x: %d, y: %d, width: %d, height: %d"):format(original_x, original_y, width, height)
+  )
 
   if image.window ~= nil then
-    -- utils.debug(vim.fn.getwininfo(image.window)[1])
+    -- log.debug("window info", vim.fn.getwininfo(image.window)[1])
 
     -- bail if the window is invalid
     local window = utils.window.get_window(image.window, {
@@ -77,13 +78,13 @@ local render = function(image)
       ignore_masking_filetypes = state.options.window_overlap_clear_ft_ignore,
     })
     if window == nil then
-      -- utils.debug("invalid window", image.id)
+      log.debug("invalid window", { id = image.id })
       return false
     end
 
     -- bail if the window is not visible
     if not window.is_visible then
-      -- utils.debug("windows not visible", image.id)
+      log.debug("windows not visible", { id = image.id })
       if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
       state.images[image.id] = image
       return false
@@ -91,7 +92,7 @@ local render = function(image)
 
     -- bail if the window is overlapped
     if state.options.window_overlap_clear_enabled and #window.masks > 0 then
-      -- utils.debug("overlap", image.id)
+      log.debug("overlap", { id = image.id })
       if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
       state.images[image.id] = image
       return false
@@ -99,7 +100,7 @@ local render = function(image)
 
     -- if the image is tied to a buffer the window must be displaying that buffer
     if image.buffer ~= nil and window.buffer ~= image.buffer then
-      -- utils.debug("bufffer not shown", image.id)
+      log.debug("buffer not shown", { id = image.id })
       if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
       state.images[image.id] = image
       return false
@@ -113,7 +114,7 @@ local render = function(image)
 
     -- bail if it is
     if image.buffer and is_folded then
-      -- utils.debug("image is inside a fold", image.id)
+      log.debug("image is inside a fold", { id = image.id })
       if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
       state.images[image.id] = image
       image:clear(true)
@@ -164,9 +165,9 @@ local render = function(image)
     end
   end
 
-  -- utils.debug(
-  --   ("(2) x: %d, y: %d, width: %d, height: %d y_offset: %d"):format(original_x, original_y, width, height, y_offset)
-  -- )
+  log.debug(
+    ("(2) x: %d, y: %d, width: %d, height: %d"):format(original_x, original_y, width, height)
+  )
 
   -- global max width/height
   if not image.ignore_global_max_size then
@@ -198,7 +199,7 @@ local render = function(image)
 
       -- check if image is below the viewport
       if original_y > win_info.botline then
-        -- utils.debug(("Image %s is below viewport (line %d > botline %d)"):format(image.id, original_y, win_info.botline))
+        log.debug(("Image %s is below viewport (line %d > botline %d)"):format(image.id, original_y, win_info.botline))
         if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
         state.images[image.id] = image
         return false -- image is below the visible window
@@ -206,7 +207,7 @@ local render = function(image)
 
       -- special case: if the image is ON the topline, it should be visible at the top
       if original_y + 1 == win_info.topline then
-        -- utils.debug(("DEBUG: Image %s is ON topline %d, rendering at top"):format(image.id, win_info.topline))
+        log.debug(("Image %s is ON topline %d, rendering at top"):format(image.id, win_info.topline))
         absolute_x = win_info.wincol + win_info.textoff + original_x - 1
         absolute_y = win_info.winrow
         -- When image is on topline, we want normal rendering with padding
@@ -218,18 +219,18 @@ local render = function(image)
         local topline_screen_pos = vim.fn.screenpos(image.window, win_info.topline, 0)
         local diff = topline_screen_pos.row - win_info.winrow
 
-        -- utils.debug(("DEBUG: Image %s at/near topline calc"):format(image.id), {
-        --   original_y = original_y,
-        --   topline = win_info.topline,
-        --   topline_screen_row = topline_screen_pos.row,
-        --   winrow = win_info.winrow,
-        --   diff = diff,
-        --   height = height,
-        -- })
+        log.debug(("Image %s at/near topline calc"):format(image.id), {
+          original_y = original_y,
+          topline = win_info.topline,
+          topline_screen_row = topline_screen_pos.row,
+          winrow = win_info.winrow,
+          diff = diff,
+          height = height,
+        })
 
         if diff <= 0 then
           -- The topline is at a real buffer line (not in middle of virtual lines)
-          -- utils.debug(("DEBUG: Image %s diff <= 0, cannot calculate position"):format(image.id))
+          log.debug(("Image %s diff <= 0, cannot calculate position"):format(image.id))
           if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
           state.images[image.id] = image
           return false -- cannot determine proper position
@@ -241,7 +242,7 @@ local render = function(image)
         -- This calculation only makes sense if the image is at the line being scrolled (topline - 1)
         -- If the image is further up, it shouldn't be visible at all
         if original_y + 1 < win_info.topline - 1 then
-          -- utils.debug(("DEBUG: Image %s is above the partially scrolled line (line %d < topline %d - 1), hiding"):format(image.id, original_y + 1, win_info.topline))
+          log.debug(("Image %s is above the partially scrolled line (line %d < topline %d - 1), hiding"):format(image.id, original_y + 1, win_info.topline))
           if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
           state.images[image.id] = image
           return false
@@ -258,12 +259,12 @@ local render = function(image)
         -- and therefore returns two 0s
         absolute_x = win_info.wincol + win_info.textoff + original_x - 1 -- fking 1 indexing
 
-        -- utils.debug(("DEBUG: Image %s calculated position for partial scroll"):format(image.id), {
-        --   absolute_x = absolute_x,
-        --   absolute_y = absolute_y,
-        --   calculation = string.format("winrow(%d) - height(%d) + diff(%d) - 1 = %d",
-        --     win_info.winrow, height, diff, absolute_y),
-        -- })
+        log.debug(("Image %s calculated position for partial scroll"):format(image.id), {
+          absolute_x = absolute_x,
+          absolute_y = absolute_y,
+          calculation = string.format("winrow(%d) - height(%d) + diff(%d) - 1 = %d",
+            win_info.winrow, height, diff, absolute_y),
+        })
       end
     else
       absolute_x = screen_pos.col
@@ -285,38 +286,38 @@ local render = function(image)
   local is_left = absolute_x + width <= bounds.left
   local is_right = absolute_x >= bounds.right
 
-  -- utils.debug(("DEBUG bounds check for %s"):format(image.id), {
-  --   absolute_y = absolute_y,
-  --   height = height,
-  --   bounds_top = bounds.top,
-  --   bounds_bottom = bounds.bottom,
-  --   laststatus_offset = laststatus_offset,
-  --   is_above = is_above,
-  --   is_below = is_below,
-  --   is_left = is_left,
-  --   is_right = is_right,
-  --   is_rendered = image.is_rendered,
-  --   checks = {
-  --     above = string.format("%d + %d <= %d", absolute_y, height, bounds.top),
-  --     below = string.format("%d > %d + %d", absolute_y, bounds.bottom, laststatus_offset),
-  --   }
-  -- })
+  log.debug(("bounds check for %s"):format(image.id), {
+    absolute_y = absolute_y,
+    height = height,
+    bounds_top = bounds.top,
+    bounds_bottom = bounds.bottom,
+    laststatus_offset = laststatus_offset,
+    is_above = is_above,
+    is_below = is_below,
+    is_left = is_left,
+    is_right = is_right,
+    is_rendered = image.is_rendered,
+    checks = {
+      above = string.format("%d + %d <= %d", absolute_y, height, bounds.top),
+      below = string.format("%d > %d + %d", absolute_y, bounds.bottom, laststatus_offset),
+    }
+  })
 
   if is_above or is_below or is_left or is_right then
     if image.is_rendered then
-      -- utils.debug(("DEBUG: CLEARING out of bounds image %s"):format(image.id))
+      log.debug(("CLEARING out of bounds image %s"):format(image.id))
       state.backend.clear(image.id, true)
     else
       if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
       state.images[image.id] = image
     end
-    -- utils.debug("out of bounds")
+    log.debug("out of bounds")
     return false
   end
 
   -- compute final geometry and prevent useless re rendering
   local rendered_geometry = { x = absolute_x, y = absolute_y, width = width, height = height }
-  -- utils.debug("rendered_geometry", rendered_geometry, vim.fn.getwininfo(image.window)[1])
+  -- log.debug("rendered_geometry", { geometry = rendered_geometry, window = vim.fn.getwininfo(image.window)[1] })
 
   -- handle crop/resize
   local pixel_width = width * term_size.cell_width
@@ -335,7 +336,7 @@ local render = function(image)
 
     -- if no rows are visible after cropping, don't render
     if visible_rows <= 0 then
-      -- utils.debug(("DEBUG: Image %s has no visible rows after crop, hiding"):format(image.id))
+      log.debug(("Image %s has no visible rows after crop, hiding"):format(image.id))
       if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
       state.images[image.id] = image
       return false
@@ -351,12 +352,12 @@ local render = function(image)
   if absolute_y + height > bounds.bottom then
     cropped_pixel_height = (bounds.bottom - absolute_y + 1) * term_size.cell_height
     needs_crop = true
-    -- utils.debug(("DEBUG: Image %s crop bottom"):format(image.id), {
-    --   absolute_y = absolute_y,
-    --   height = height,
-    --   bounds_bottom = bounds.bottom,
-    --   cropped_pixel_height = cropped_pixel_height
-    -- })
+    log.debug(("Image %s crop bottom"):format(image.id), {
+      absolute_y = absolute_y,
+      height = height,
+      bounds_bottom = bounds.bottom,
+      cropped_pixel_height = cropped_pixel_height
+    })
   end
 
   -- compute resize
@@ -372,7 +373,7 @@ local render = function(image)
 
       -- try cache
       if cached_path then
-        -- utils.debug(("using cached resized image %s"):format(cached_path))
+        log.debug(("using cached resized image %s"):format(cached_path))
         image.resized_path = cached_path
         image.resize_hash = resize_hash
       else
@@ -396,7 +397,7 @@ local render = function(image)
 
       -- try cache;
       if cached_path then
-        -- utils.debug(("using cached cropped image %s"):format(cached_path))
+        log.debug(("using cached cropped image %s"):format(cached_path))
         image.cropped_path = cached_path
         image.crop_hash = crop_hash
       else
@@ -431,29 +432,29 @@ local render = function(image)
     and image.crop_hash == initial_crop_hash
     and image.resize_hash == initial_resize_hash
   then
-    -- utils.debug("skipping render", image.id)
+    log.debug("skipping render", { id = image.id })
     return true
   end
 
-  -- utils.debug(("DEBUG: rendering to backend %s"):format(image.id), {
-  --   x = absolute_x,
-  --   y = absolute_y,
-  --   width = width,
-  --   height = height,
-  --   resize_hash = image.resize_hash,
-  --   crop_hash = image.crop_hash,
-  --   needs_crop = needs_crop,
-  --   original_y = original_y,
-  --   bounds = bounds,
-  --   extmark_line = original_y + 1,  -- extmark line in 1-indexed
-  -- })
+  log.debug(("rendering to backend %s"):format(image.id), {
+    x = absolute_x,
+    y = absolute_y,
+    width = width,
+    height = height,
+    resize_hash = image.resize_hash,
+    crop_hash = image.crop_hash,
+    needs_crop = needs_crop,
+    original_y = original_y,
+    bounds = bounds,
+    extmark_line = original_y + 1,  -- extmark line in 1-indexed
+  })
 
   image.bounds = bounds
   state.backend.render(image, absolute_x, absolute_y, width, height)
   image.rendered_geometry = rendered_geometry
   cache[image.original_path] = image_cache
 
-  -- utils.debug(("DEBUG: rendered %s"):format(image.id))
+  log.debug(("rendered %s"):format(image.id))
   return true
 end
 

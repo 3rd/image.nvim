@@ -1,5 +1,6 @@
 local codes = require("image/backends/kitty/codes")
 local utils = require("image/utils")
+local log = require("image/utils/logger").within("backend.kitty")
 
 local uv = vim.uv
 -- Allow for loop to be used on older versions
@@ -28,7 +29,7 @@ local write = function(data, tty, escape)
 
   local payload = data
   if escape and utils.tmux.is_tmux then payload = utils.tmux.escape(data) end
-  -- utils.debug("write:", vim.inspect(payload), tty)
+  log.debug("write", { payload_len = #payload, tty = tty })
   if tty then
     local handle = io.open(tty, "w")
     if not handle then error("failed to open tty") end
@@ -70,7 +71,7 @@ end
 local write_graphics = function(config, data)
   local control_payload = ""
 
-  -- utils.debug("kitty.write_graphics()", config, data)
+  log.debug("write_graphics", { config = config, has_data = data ~= nil })
 
   for k, v in pairs(config) do
     if v ~= nil then
@@ -112,7 +113,7 @@ local write_graphics = function(config, data)
       uv.sleep(1)
     end
   else
-    -- utils.debug("kitty control payload:", control_payload)
+    log.debug("control payload", { payload = control_payload })
     write("\x1b_G" .. control_payload .. "\x1b\\", config.tty, true)
   end
 end

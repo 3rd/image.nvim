@@ -1,5 +1,6 @@
 ---@diagnostic disable: duplicate-doc-field
 local utils = require("image/utils")
+local logger = require("image/utils/logger")
 
 local popup_window = nil
 
@@ -45,9 +46,7 @@ end
 
 ---@param config DocumentIntegrationConfig
 local create_document_integration = function(config)
-  local trace = function(...)
-    if config.debug then utils.log("[" .. config.name .. "]", ...) end
-  end
+  local log = logger.within("integration." .. config.name)
 
   local render = vim.schedule_wrap(
     ---@param ctx IntegrationContext
@@ -59,7 +58,9 @@ local create_document_integration = function(config)
 
       for _, window in ipairs(windows) do
         if has_valid_filetype(ctx, window.buffer_filetype) then
+          log.debug("Querying buffer images for window", { window_id = window.id, buffer = window.buffer })
           local matches = config.query_buffer_images(window.buffer)
+          log.debug("Found matches", { count = #matches })
           local previous_images = ctx.api.get_images({
             window = window.id,
             buffer = window.buffer,
@@ -78,7 +79,10 @@ local create_document_integration = function(config)
               utils.hash.sha256(match.url)
             )
 
-            if ctx.options.only_render_image_at_cursor and match.range.start_row ~= cursor_row then goto continue end
+            if ctx.options.only_render_image_at_cursor and match.range.start_row ~= cursor_row then 
+              log.debug("Skipping image not at cursor", { id = id })
+              goto continue 
+            end
 
             local to_render = {
               id = id,
@@ -86,6 +90,7 @@ local create_document_integration = function(config)
               window = window,
               file_path = file_path,
             }
+            log.debug("Adding image to queue", { id = id, url = match.url })
             table.insert(image_queue, to_render)
             table.insert(new_image_ids, id)
 
@@ -100,8 +105,10 @@ local create_document_integration = function(config)
       end
 
       -- render images from queue
+      log.debug("Processing image queue", { count = #image_queue })
       for _, item in ipairs(image_queue) do
         local render_image = function(image)
+          log.debug("render_image called", { id = image.id })
           if ctx.options.only_render_image_at_cursor and ctx.options.only_render_image_at_cursor_mode == "popup" then
             if popup_window ~= nil then return end
 
@@ -182,6 +189,7 @@ local create_document_integration = function(config)
           local is_popup = ctx.options.only_render_image_at_cursor
             and ctx.options.only_render_image_at_cursor_mode == "popup"
           local padding = is_popup and 0 or 1
+          log.debug("Creating image from file", { path_type = type(path), path_string = tostring(path), id = item.id })
           local ok, image = pcall(ctx.api.from_file, path, {
             id = item.id,
             window = item.window.id,
@@ -190,7 +198,12 @@ local create_document_integration = function(config)
             render_offset_top = padding,
             namespace = config.name,
           })
-          if ok and image then render_image(image) end
+          if ok and image then 
+            log.debug("Image created successfully", { id = item.id })
+            render_image(image) 
+          else
+            log.debug("Failed to create image", { id = item.id, error = image })
+          end
         end
       end
     end

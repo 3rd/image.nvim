@@ -1,5 +1,6 @@
 local renderer = require("image/renderer")
 local utils = require("image/utils")
+local log = require("image/utils/logger").within("image")
 
 -- { ["buf:row:col"]: { id, height } }
 ---@type table<string, { id: number, height: number }>
@@ -55,7 +56,7 @@ function Image:render(geometry)
 
   -- track last_modified and wipe cache
   local current_last_modified = vim.fn.getftime(self.original_path)
-  -- utils.debug(("timestamp: %s, last_modified: %s"):format(current_last_modified, self.last_modified))
+  log.debug(("timestamp: %s, last_modified: %s"):format(current_last_modified, self.last_modified))
   if self.last_modified ~= current_last_modified then
     self.last_modified = current_last_modified
     self.resize_hash = nil
@@ -77,18 +78,18 @@ function Image:render(geometry)
     renderer.clear_cache_for_path(self.original_path)
   end
 
-  -- utils.debug(("---------------- %s ----------------"):format(self.id))
+  log.debug(("---------------- %s ----------------"):format(self.id))
   local was_rendered = renderer.render(self)
 
-  -- utils.debug(
-  --   ("[image] success: %s x: %s, y: %s, width: %s, height: %s"):format(
-  --     was_rendered,
-  --     self.geometry.x,
-  --     self.geometry.y,
-  --     self.geometry.width,
-  --     self.geometry.height
-  --   )
-  -- )
+  log.debug(
+    ("success: %s x: %s, y: %s, width: %s, height: %s"):format(
+      was_rendered,
+      self.geometry.x,
+      self.geometry.y,
+      self.geometry.width,
+      self.geometry.height
+    )
+  )
 
   -- clear if already rendered but rendering this should be prevented
   if self.is_rendered and not was_rendered then
@@ -112,7 +113,7 @@ function Image:render(geometry)
 
       if not has_up_to_date_extmark then
         if previous_extmark ~= nil then
-          -- utils.debug(("(image.render) clearing extmark %s"):format(previous_extmark.id))
+          log.debug(("clearing extmark %s"):format(previous_extmark.id))
           vim.api.nvim_buf_del_extmark(self.buffer, self.global_state.extmarks_namespace, previous_extmark.id)
           buf_extmark_map[extmark_key] = nil
         end
@@ -128,7 +129,7 @@ function Image:render(geometry)
           extmark_opts.virt_lines = filler
         end
 
-        -- utils.debug(("(image.render) creating extmark %s"):format(self.internal_id))
+        log.debug(("creating extmark %s"):format(self.internal_id))
         local extmark_row = math.max(row or 0, 0)
         local extmark_col = math.max(col or 0, 0)
         local ok, extmark_id = pcall(
@@ -165,7 +166,7 @@ end
 
 ---@param shallow? boolean
 function Image:clear(shallow)
-  -- utils.debug(("[image] clear %s, shallow: %s"):format(self.id, shallow))
+  log.debug(("clear %s, shallow: %s"):format(self.id, shallow))
   self.global_state.backend.clear(self.id, shallow or false)
 
   self.rendered_geometry = {
@@ -262,7 +263,7 @@ local from_file = function(path, options, state)
 
   -- bail if not an image
   if not utils.magic.is_image(absolute_original_path) then
-    -- utils.debug(("image.nvim: not an image: %s"):format(absolute_original_path))
+    log.info(("not an image: %s"):format(absolute_original_path))
     return nil
   end
 
@@ -302,7 +303,7 @@ local from_file = function(path, options, state)
         namespace = opts.namespace or nil,
         last_modified = vim.fn.getftime(absolute_original_path),
       }, state)
-      -- utils.debug(("image.nvim: cloned image %s from %s"):format(clone.id, instance.id))
+      log.debug(("cloned image %s from %s"):format(clone.id, instance.id))
       return clone
     end
   end
@@ -386,7 +387,7 @@ local from_url = function(url, options, callback, state)
   }, function(code, signal)
     if code ~= 0 then
       if state.options.ignore_download_error then
-        utils.debug("image: curl errored while downloading " .. url, {
+        log.error("curl errored while downloading " .. url, {
           code = code,
           signal = signal,
         })
@@ -402,7 +403,7 @@ local from_url = function(url, options, callback, state)
 
   vim.loop.read_start(stdout, function(err, data)
     assert(not err, err)
-    if not data then utils.debug("image: downloaded " .. url .. " to " .. tmp_path) end
+    if not data then log.info("downloaded " .. url .. " to " .. tmp_path) end
     state.remote_cache[url] = tmp_path
 
     vim.defer_fn(function()

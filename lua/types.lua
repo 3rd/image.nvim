@@ -35,6 +35,12 @@
 
 ---@alias IntegrationOptions DocumentIntegrationOptions
 
+---@class DebugOptions
+---@field enabled? boolean
+---@field level? "debug"|"info"|"warn"|"error"
+---@field file_path? string
+---@field format? "compact"|"detailed"
+
 ---@class Options
 ---@field backend "kitty"|"ueberzug"
 ---@field integrations table<string, IntegrationOptions>
@@ -51,6 +57,7 @@
 ---@field ignore_download_error? boolean
 ---@field hijack_file_patterns? string[]
 ---@field processor? string
+---@field debug? DebugOptions
 
 ---@class BackendFeatures
 ---@field crop boolean

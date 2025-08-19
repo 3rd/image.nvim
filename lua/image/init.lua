@@ -1,12 +1,20 @@
 local utils = require("image/utils")
 local processors = require("image/processors")
 local report = require("image/report")
+local logger = require("image/utils/logger")
+local log = logger.within("core")
 
 ---@type Options
 local default_options = {
   -- backend = "ueberzug",
   backend = "kitty",
   processor = "magick_cli",
+  debug = {
+    enabled = false,
+    level = "debug",
+    file_path = "/tmp/image.nvim.log",
+    format = "compact",
+  },
   integrations = {
     markdown = {
       enabled = true,
@@ -69,6 +77,11 @@ api.setup = function(options)
   local opts = vim.tbl_deep_extend("force", default_options, options or {})
   state.options = opts
 
+  -- setup logger with debug configuration
+  if opts.debug then
+    logger.setup(opts.debug)
+  end
+
   vim.schedule(function()
     if opts.processor == "magick_rock" then
       local magick = require("image/magick")
@@ -94,8 +107,14 @@ api.setup = function(options)
   -- load integrations
   for integration_name, integration_options in pairs(opts.integrations) do
     if integration_options.enabled then
-      local integration = require("image/integrations/" .. integration_name)
-      if type(integration.setup) == "function" then integration.setup(api, integration_options, state) end
+      log.debug("Loading integration: " .. integration_name)
+      local ok, integration = pcall(require, "image/integrations/" .. integration_name)
+      if not ok then
+        log.error("Failed to load integration: " .. integration_name, integration)
+      elseif type(integration.setup) == "function" then
+        integration.setup(api, integration_options, state)
+        log.debug("Setup integration: " .. integration_name)
+      end
     end
   end
 
@@ -192,7 +211,7 @@ api.setup = function(options)
         { topline = topline, botline = botline, bufnr = bufnr, height = height, folded_lines = folded_lines }
 
       -- execute deferred clear / rerender
-      -- utils.debug("needs_clear", needs_clear, "needs_rerender", needs_rerender)
+      log.debug("needs_clear", { needs_clear = needs_clear, needs_rerender = needs_rerender })
       vim.schedule(function()
         if needs_clear then
           for _, curr in ipairs(api.get_images({ window = winid, buffer = prev.bufnr })) do
@@ -331,7 +350,7 @@ api.setup = function(options)
         if not state.enabled then return end
 
         vim.schedule(function()
-          -- utils.debug("FocusLost")
+          log.debug("FocusLost")
           if
             state.options.editor_only_render_when_focused
             or (utils.tmux.is_tmux and utils.tmux.get_window_id() ~= initial_tmux_window_id)
@@ -357,7 +376,7 @@ api.setup = function(options)
         -- bail if not enabled
         if not state.enabled then return end
 
-        -- utils.debug("FocusGained")
+        log.debug("FocusGained")
 
         state.disable_decorator_handling = false
 
