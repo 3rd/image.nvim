@@ -1,12 +1,17 @@
 local utils = require("image/utils")
 
+local has_magick = vim.fn.executable("magick") == 1
 local has_convert = vim.fn.executable("convert") == 1
 local has_identify = vim.fn.executable("identify") == 1
 
+-- magick v6 + v7
+local convert_cmd = has_magick and "magick" or "convert"
+
 local function guard()
-  if not has_convert or not has_identify then
-    error("image.nvim: ImageMagick CLI tools (convert, identify) not found")
+  if not (has_magick or has_convert) then
+    error("image.nvim: ImageMagick CLI tools not found (need 'magick' or 'convert')")
   end
+  if not has_identify and not has_magick then error("image.nvim: ImageMagick 'identify' command not found") end
 end
 
 ---@class MagickCliProcessor: ImageProcessor
@@ -23,8 +28,8 @@ function MagickCliProcessor.get_format(path)
   local output = ""
   local error_output = ""
 
-  vim.loop.spawn("identify", {
-    args = { "-format", "%m", path },
+  vim.loop.spawn(has_magick and "magick" or "identify", {
+    args = has_magick and { "identify", "-format", "%m", path } or { "-format", "%m", path },
     stdio = { nil, stdout, stderr },
     hide = true,
   }, function(code)
@@ -63,7 +68,7 @@ function MagickCliProcessor.convert_to_png(path, output_path)
   -- for GIFs convert the first frame
   if actual_format == "gif" then path = path .. "[0]" end
 
-  vim.loop.spawn("convert", {
+  vim.loop.spawn(convert_cmd, {
     args = { path, "png:" .. out_path },
     stdio = { nil, stdout, stderr },
     hide = true,
@@ -102,8 +107,8 @@ function MagickCliProcessor.get_dimensions(path)
   -- GIF
   if actual_format == "gif" then path = path .. "[0]" end
 
-  vim.loop.spawn("identify", {
-    args = { "-format", "%wx%h", path },
+  vim.loop.spawn(has_magick and "magick" or "identify", {
+    args = has_magick and { "identify", "-format", "%wx%h", path } or { "-format", "%wx%h", path },
     stdio = { nil, stdout, stderr },
     hide = true,
   }, function(code)
@@ -139,7 +144,7 @@ function MagickCliProcessor.resize(path, width, height, output_path)
   local stderr = vim.loop.new_pipe()
   local error_output = ""
 
-  vim.loop.spawn("convert", {
+  vim.loop.spawn(convert_cmd, {
     args = {
       path,
       "-scale",
@@ -175,7 +180,7 @@ function MagickCliProcessor.crop(path, x, y, width, height, output_path)
   local stderr = vim.loop.new_pipe()
   local error_output = ""
 
-  vim.loop.spawn("convert", {
+  vim.loop.spawn(convert_cmd, {
     args = {
       path,
       "-crop",
@@ -211,7 +216,7 @@ function MagickCliProcessor.brightness(path, brightness, output_path)
   local stderr = vim.loop.new_pipe()
   local error_output = ""
 
-  vim.loop.spawn("convert", {
+  vim.loop.spawn(convert_cmd, {
     args = {
       path,
       "-modulate",
@@ -247,7 +252,7 @@ function MagickCliProcessor.saturation(path, saturation, output_path)
   local stderr = vim.loop.new_pipe()
   local error_output = ""
 
-  vim.loop.spawn("convert", {
+  vim.loop.spawn(convert_cmd, {
     args = {
       path,
       "-modulate",
@@ -283,7 +288,7 @@ function MagickCliProcessor.hue(path, hue, output_path)
   local stderr = vim.loop.new_pipe()
   local error_output = ""
 
-  vim.loop.spawn("convert", {
+  vim.loop.spawn(convert_cmd, {
     args = {
       path,
       "-modulate",
