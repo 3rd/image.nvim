@@ -65,9 +65,7 @@ local render = function(image)
   width = math.min(width, term_size.screen_cols)
   -- height = math.min(height, term_size.screen_rows)
 
-  log.debug(
-    ("(1) x: %d, y: %d, width: %d, height: %d"):format(original_x, original_y, width, height)
-  )
+  log.debug(("(1) x: %d, y: %d, width: %d, height: %d"):format(original_x, original_y, width, height))
 
   if image.window ~= nil then
     -- log.debug("window info", vim.fn.getwininfo(image.window)[1])
@@ -165,9 +163,7 @@ local render = function(image)
     end
   end
 
-  log.debug(
-    ("(2) x: %d, y: %d, width: %d, height: %d"):format(original_x, original_y, width, height)
-  )
+  log.debug(("(2) x: %d, y: %d, width: %d, height: %d"):format(original_x, original_y, width, height))
 
   -- global max width/height
   if not image.ignore_global_max_size then
@@ -188,7 +184,7 @@ local render = function(image)
     end
   else
     local win_info = vim.fn.getwininfo(image.window)[1]
-    local screen_pos = vim.fn.screenpos(image.window, math.max(1, original_y), original_x)
+    local screen_pos = vim.fn.screenpos(image.window, math.max(1, original_y), original_x + 1)
 
     local is_partial_scroll = false
     if
@@ -208,7 +204,7 @@ local render = function(image)
       -- special case: if the image is ON the topline, it should be visible at the top
       if original_y + 1 == win_info.topline then
         log.debug(("Image %s is ON topline %d, rendering at top"):format(image.id, win_info.topline))
-        absolute_x = win_info.wincol + win_info.textoff + original_x - 1
+        absolute_x = win_info.wincol - 1 + win_info.textoff + original_x
         absolute_y = win_info.winrow
         -- When image is on topline, we want normal rendering with padding
         is_partial_scroll = false
@@ -242,7 +238,13 @@ local render = function(image)
         -- This calculation only makes sense if the image is at the line being scrolled (topline - 1)
         -- If the image is further up, it shouldn't be visible at all
         if original_y + 1 < win_info.topline - 1 then
-          log.debug(("Image %s is above the partially scrolled line (line %d < topline %d - 1), hiding"):format(image.id, original_y + 1, win_info.topline))
+          log.debug(
+            ("Image %s is above the partially scrolled line (line %d < topline %d - 1), hiding"):format(
+              image.id,
+              original_y + 1,
+              win_info.topline
+            )
+          )
           if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
           state.images[image.id] = image
           return false
@@ -257,17 +259,22 @@ local render = function(image)
         -- Try to manually calculate the x pos of the image.
         -- We cant use the "built in" one since its out of bounds of the window
         -- and therefore returns two 0s
-        absolute_x = win_info.wincol + win_info.textoff + original_x - 1 -- fking 1 indexing
+        absolute_x = win_info.wincol - 1 + win_info.textoff + original_x
 
         log.debug(("Image %s calculated position for partial scroll"):format(image.id), {
           absolute_x = absolute_x,
           absolute_y = absolute_y,
-          calculation = string.format("winrow(%d) - height(%d) + diff(%d) - 1 = %d",
-            win_info.winrow, height, diff, absolute_y),
+          calculation = string.format(
+            "winrow(%d) - height(%d) + diff(%d) - 1 = %d",
+            win_info.winrow,
+            height,
+            diff,
+            absolute_y
+          ),
         })
       end
     else
-      absolute_x = screen_pos.col
+      absolute_x = screen_pos.col - 1
       absolute_y = screen_pos.row
     end
     -- apply render_offset_top offset if set (but not for floating windows and not during partial scroll)
@@ -300,7 +307,7 @@ local render = function(image)
     checks = {
       above = string.format("%d + %d <= %d", absolute_y, height, bounds.top),
       below = string.format("%d > %d + %d", absolute_y, bounds.bottom, laststatus_offset),
-    }
+    },
   })
 
   if is_above or is_below or is_left or is_right then
@@ -356,7 +363,7 @@ local render = function(image)
       absolute_y = absolute_y,
       height = height,
       bounds_bottom = bounds.bottom,
-      cropped_pixel_height = cropped_pixel_height
+      cropped_pixel_height = cropped_pixel_height,
     })
   end
 
@@ -446,7 +453,7 @@ local render = function(image)
     needs_crop = needs_crop,
     original_y = original_y,
     bounds = bounds,
-    extmark_line = original_y + 1,  -- extmark line in 1-indexed
+    extmark_line = original_y + 1, -- extmark line in 1-indexed
   })
 
   image.bounds = bounds
