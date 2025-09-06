@@ -79,9 +79,9 @@ local create_document_integration = function(config)
               utils.hash.sha256(match.url)
             )
 
-            if ctx.options.only_render_image_at_cursor and match.range.start_row ~= cursor_row then 
+            if ctx.options.only_render_image_at_cursor and match.range.start_row ~= cursor_row then
               log.debug("Skipping image not at cursor", { id = id })
-              goto continue 
+              goto continue
             end
 
             local to_render = {
@@ -138,12 +138,20 @@ local create_document_integration = function(config)
             image.ignore_global_max_size = true
             image.window = win
             image.buffer = buf
-            image:render({
-              x = 0,
-              y = 0,
-              width = width,
-              height = height,
-            })
+
+            vim.schedule(function()
+              if vim.api.nvim_win_is_valid(win) then
+                local win_info = vim.fn.getwininfo(win)[1]
+                if win_info and win_info.wincol > 0 then
+                  image:render({
+                    x = 0,
+                    y = 0,
+                    width = width,
+                    height = height,
+                  })
+                end
+              end
+            end)
             -- close the floating window when the cursor moves
             vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
               callback = function()
@@ -198,9 +206,9 @@ local create_document_integration = function(config)
             render_offset_top = padding,
             namespace = config.name,
           })
-          if ok and image then 
+          if ok and image then
             log.debug("Image created successfully", { id = item.id })
-            render_image(image) 
+            render_image(image)
           else
             log.debug("Failed to create image", { id = item.id, error = image })
           end

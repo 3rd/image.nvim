@@ -29,7 +29,7 @@ Try it out quickly by downloading [minimal-setup.lua](./minimal-setup.lua) from 
 
 #### Rendering backend
 
-We support two rendering backends, so first you need to set up one of these:
+We support three rendering backends, so first you need to set up one of these:
 
 1. [Kitty](https://sw.kovidgoyal.net/kitty/) **(recommended)** >= 28.0 for the `kitty` backend
    - Has the best performance, native clipping, caching, etc.
@@ -40,6 +40,11 @@ We support two rendering backends, so first you need to set up one of these:
 2. [Überzug++](https://github.com/jstkdng/ueberzugpp) for the `ueberzug` backend
    - Works with any terminal emulator.
    - Has much lower performance.
+3. Sixel-supporting terminals for the `sixel` backend
+   - Works with terminals that support the Sixel graphics protocol
+   - Compatible with many terminals including XTerm, WezTerm, foot, and others
+   - No additional dependencies beyond ImageMagick (which must have Sixel support)
+   - Pretty crap performance, although very usable with `only_render_image_at_cursor=true` and `only_render_image_at_cursor_mode="popup"`
 
 #### ImageMagick
 
@@ -371,7 +376,7 @@ package.path = package.path .. ";" .. vim.fn.expand("$HOME") .. "/.luarocks/shar
 
 ```lua
 require("image").setup({
-  backend = "kitty",
+  backend = "kitty", -- or "ueberzug" or "sixel"
   processor = "magick_cli", -- or "magick_rock"
   integrations = {
     markdown = {
@@ -418,6 +423,9 @@ All the backends support rendering inside Tmux.
 - `kitty` - best in class, works great and is very snappy
 - `ueberzug` - backed by [ueberzugpp](https://github.com/jstkdng/ueberzugpp), supports any terminal, but has lower performance
   - Supports multiple images thanks to [@jstkdng](https://github.com/jstkdng/ueberzugpp/issues/74).
+- `sixel` - uses the Sixel graphics protocol, widely supported by many terminals
+  - Works with XTerm, WezTerm, foot, and other Sixel-compatible terminals
+  - ImageMagick is required for Sixel encoding
 
 ### Integrations
 
