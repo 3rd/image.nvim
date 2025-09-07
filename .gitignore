@@ -1,2 +1,16 @@
 /.tests
 /test
+.env
+.env.*
+*.private
+*.secret
+.actrc.local
+.luarocks/
+*.rock
+*.src.rock
+.DS_Store
+*.swp
+*.swo
+*~
+.vscode/
+.idea/

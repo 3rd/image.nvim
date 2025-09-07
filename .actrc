@@ -1,0 +1,3 @@
+# Act configuration for local CI testing
+--platform ubuntu-latest=catthehacker/ubuntu:act-latest
+--pull=false

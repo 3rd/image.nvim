@@ -10,13 +10,41 @@ on:
 
 jobs:
   tests:
+    name: Run tests
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    strategy:
+      matrix:
+        neovim_version: ["nightly", "stable"]
     steps:
       - uses: actions/checkout@v4
-      - uses: rhysd/action-setup-vim@v1
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc make luarocks lua5.1 liblua5.1-dev
+      - name: Setup Neovim
+        uses: rhysd/action-setup-vim@v1
         with:
           neovim: true
-          version: nightly
-      - name: Run Tests
-        run: make test
+          version: ${{ matrix.neovim_version }}
+      - name: Install test dependencies
+        run: |
+          sudo luarocks install busted
+          sudo luarocks install nlua
+          sudo luarocks install luassert
+      - name: Run tests
+        env:
+          NEOVIM_VERSION: ${{ matrix.neovim_version }}
+        run: |
+          set -euo pipefail
+          export PATH="/usr/local/bin:$PATH"
+
+          echo "Running tests for Neovim ${{ matrix.neovim_version }}..."
+          echo "================================================"
+
+          if [ -f "scripts/test-runner.sh" ]; then
+            chmod +x scripts/test-runner.sh
+            ./scripts/test-runner.sh || exit $?
+          else
+            busted --verbose tests/ || exit $?
+          fi
