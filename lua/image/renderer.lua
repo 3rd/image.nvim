@@ -119,20 +119,28 @@ local render = function(image)
       return false
     end
 
-    -- global offsets
-    local global_offsets = utils.offsets.get_global_offsets(window.id)
     -- window bounds
     bounds = window.rect
-    bounds.bottom = bounds.bottom - 1
+    -- subtract 1 for normal windows, not floating windows
+    -- TODO: do we even still need this?
+    if not window.is_floating then bounds.bottom = bounds.bottom - 1 end
 
-    -- this is ugly, and if get_global_offsets() is changed this could break
-    bounds.top = bounds.top + global_offsets.y
-    bounds.bottom = bounds.bottom + global_offsets.y
-    bounds.left = bounds.left + global_offsets.x
-    bounds.right = bounds.right
+    -- only apply global offsets to non-floating windows
+    if not window.is_floating then
+      -- global offsets
+      local global_offsets = utils.offsets.get_global_offsets(window.id)
 
-    if utils.offsets.get_border_shape(window.id).left > 0 then
-      bounds.right = bounds.right + 1 --
+      log.debug("  Applying global offsets: " .. vim.inspect(global_offsets))
+
+      -- this is ugly, and if get_global_offsets() is changed this could break
+      bounds.top = bounds.top + global_offsets.y
+      bounds.bottom = bounds.bottom + global_offsets.y
+      bounds.left = bounds.left + global_offsets.x
+      bounds.right = bounds.right
+
+      log.debug("  Bounds after offsets: " .. vim.inspect(bounds))
+    else
+      log.debug("  Floating window - NOT applying global offsets")
     end
 
     local max_width_window_percentage = --
@@ -144,12 +152,20 @@ local render = function(image)
       or state.options.max_height_window_percentage
 
     if not image.ignore_global_max_size then
+      local offset_x = 0
+      local offset_y = 0
+      if not window.is_floating then
+        local global_offsets = utils.offsets.get_global_offsets(window.id)
+        offset_x = global_offsets.x
+        offset_y = global_offsets.y
+      end
+
       if type(max_width_window_percentage) == "number" then
         width = math.min(
           -- original
           width,
           -- max_window_percentage
-          math.floor((window.width - global_offsets.x) * max_width_window_percentage / 100)
+          math.floor((window.width - offset_x) * max_width_window_percentage / 100)
         )
       end
       if type(max_height_window_percentage) == "number" then
@@ -157,7 +173,7 @@ local render = function(image)
           -- original
           height,
           -- max_window_percentage
-          math.floor((window.height - global_offsets.y) * max_height_window_percentage / 100)
+          math.floor((window.height - offset_y) * max_height_window_percentage / 100)
         )
       end
     end
@@ -183,10 +199,33 @@ local render = function(image)
       absolute_y = absolute_y + image.render_offset_top
     end
   else
-    local win_info = vim.fn.getwininfo(image.window)[1]
-    local screen_pos = vim.fn.screenpos(image.window, math.max(1, original_y), original_x + 1)
+    -- get window object
+    local window = nil
+    if image.window then
+      window = utils.window.get_window(image.window, {
+        with_masks = state.options.window_overlap_clear_enabled,
+        ignore_masking_filetypes = state.options.window_overlap_clear_ft_ignore,
+      })
+    end
 
+    local win_info = vim.fn.getwininfo(image.window)[1]
+    local win_config = vim.api.nvim_win_get_config(image.window)
+
+    local screen_pos
     local is_partial_scroll = false
+
+    -- calculate screen position based on window type
+    if window and window.is_floating then
+      -- for floating windows, the position is relative to the window's content area
+      screen_pos = {
+        row = window.rect.top + original_y + 1,
+        col = window.rect.left + original_x + 1,
+      }
+    else
+      -- for normal windows, we call screenpos
+      screen_pos = vim.fn.screenpos(image.window, math.max(1, original_y), original_x + 1)
+    end
+
     if
       screen_pos.col == 0 --
       and screen_pos.row == 0 --
@@ -278,10 +317,8 @@ local render = function(image)
       absolute_y = screen_pos.row
     end
     -- apply render_offset_top offset if set (but not for floating windows and not during partial scroll)
-    local is_floating = vim.api.nvim_win_get_config(image.window).relative ~= ""
-    if is_floating and original_y == 0 then
-      absolute_y = absolute_y - 1
-    elseif image.render_offset_top and image.render_offset_top > 0 and not is_floating and not is_partial_scroll then
+    local is_floating = window and window.is_floating or false
+    if image.render_offset_top and image.render_offset_top > 0 and not is_floating and not is_partial_scroll then
       absolute_y = absolute_y + image.render_offset_top
     end
   end
@@ -292,23 +329,6 @@ local render = function(image)
   local is_below = absolute_y > bounds.bottom + laststatus_offset
   local is_left = absolute_x + width <= bounds.left
   local is_right = absolute_x >= bounds.right
-
-  log.debug(("bounds check for %s"):format(image.id), {
-    absolute_y = absolute_y,
-    height = height,
-    bounds_top = bounds.top,
-    bounds_bottom = bounds.bottom,
-    laststatus_offset = laststatus_offset,
-    is_above = is_above,
-    is_below = is_below,
-    is_left = is_left,
-    is_right = is_right,
-    is_rendered = image.is_rendered,
-    checks = {
-      above = string.format("%d + %d <= %d", absolute_y, height, bounds.top),
-      below = string.format("%d > %d + %d", absolute_y, bounds.bottom, laststatus_offset),
-    },
-  })
 
   if is_above or is_below or is_left or is_right then
     if image.is_rendered then
@@ -359,12 +379,6 @@ local render = function(image)
   if absolute_y + height > bounds.bottom then
     cropped_pixel_height = (bounds.bottom - absolute_y + 1) * term_size.cell_height
     needs_crop = true
-    log.debug(("Image %s crop bottom"):format(image.id), {
-      absolute_y = absolute_y,
-      height = height,
-      bounds_bottom = bounds.bottom,
-      cropped_pixel_height = cropped_pixel_height,
-    })
   end
 
   -- compute resize

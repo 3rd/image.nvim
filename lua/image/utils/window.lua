@@ -1,3 +1,5 @@
+local offsets = require("image/utils/offsets")
+
 ---@param opts { normal: boolean, floating: boolean, with_masks: boolean, ignore_masking_filetypes: string[] }
 ---@return Window[]
 local get_windows = function(opts)
@@ -15,6 +17,21 @@ local get_windows = function(opts)
     local scroll_y = tonumber(vim.fn.win_execute(id, "echo line('w0')")) - 1
     local is_visible = true
 
+    local rect_top, rect_left
+    local content_width = columns
+    local content_height = rows
+
+    if config.relative ~= "" then
+      -- floating
+      local screen_pos = vim.fn.screenpos(id, 1, 1)
+      rect_top = screen_pos.row - 2
+      rect_left = screen_pos.col - 1
+    else
+      -- normal
+      rect_top = pos[1]
+      rect_left = pos[2]
+    end
+
     local window = {
       id = id,
       buffer = buffer,
@@ -31,10 +48,10 @@ local get_windows = function(opts)
       is_floating = config.relative ~= "",
       zindex = config.zindex or 0,
       rect = {
-        top = pos[1],
-        right = pos[2] + columns,
-        bottom = pos[1] + rows - (vim.o.laststatus == 2 and 1 or 0),
-        left = pos[2],
+        top = rect_top,
+        right = rect_left + content_width,
+        bottom = rect_top + content_height - (config.relative == "" and vim.o.laststatus == 2 and 1 or 0),
+        left = rect_left,
       },
       masks = {},
     }

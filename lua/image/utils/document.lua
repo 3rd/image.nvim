@@ -139,7 +139,8 @@ local create_document_integration = function(config)
             image.window = win
             image.buffer = buf
 
-            vim.schedule(function()
+            -- render after window is open
+            vim.defer_fn(function()
               if vim.api.nvim_win_is_valid(win) then
                 local win_info = vim.fn.getwininfo(win)[1]
                 if win_info and win_info.wincol > 0 then
@@ -151,7 +152,7 @@ local create_document_integration = function(config)
                   })
                 end
               end
-            end)
+            end, 10)
             -- close the floating window when the cursor moves
             vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
               callback = function()
