@@ -18,10 +18,25 @@ dependencies = {
 }
 
 source = {
-  url = "git://github.com/3rd/image.nvim"
+  url = "git://github.com/3rd/image.nvim",
 }
 
-test_dependencies = {}
+test_dependencies = {
+  "nlua",
+  "busted",
+  "luassert",
+}
+
+test = {
+  type = "busted",
+  platforms = {
+    unix = {
+      flags = {
+        "--config-file=.busted",
+      },
+    },
+  },
+}
 
 build = {
   type = "builtin",
