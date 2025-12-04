@@ -388,6 +388,15 @@ require("image").setup({
       floating_windows = false, -- if true, images will be rendered in floating markdown windows
       filetypes = { "markdown", "vimwiki" }, -- markdown extensions (ie. quarto) can go here
     },
+    asciidoc = {
+      enabled = true,
+      clear_in_insert_mode = false,
+      download_remote_images = true,
+      only_render_image_at_cursor = false,
+      only_render_image_at_cursor_mode = "popup",
+      floating_windows = false,
+      filetypes = { "asciidoc", "adoc" },
+    },
     neorg = {
       enabled = true,
       filetypes = { "norg" },
@@ -430,6 +439,7 @@ All the backends support rendering inside Tmux.
 ### Integrations
 
 - `markdown` - uses [tree-sitter-markdown](https://github.com/MDeiml/tree-sitter-markdown) and supports any Markdown-based grammars (Quarto, VimWiki Markdown)
+- `asciidoc` - scans buffers for the [image macros](https://docs.asciidoctor.org/asciidoc/latest/macros/images/)
 - `neorg` - uses [tree-sitter-norg](https://github.com/nvim-neorg/tree-sitter-norg) (also check https://github.com/nvim-neorg/neorg/issues/971)
 - `typst` - thanks to @etiennecollin (https://github.com/3rd/image.nvim/pull/223)
 - `html` and `css` - thanks to @zuloo (https://github.com/3rd/image.nvim/pull/163)

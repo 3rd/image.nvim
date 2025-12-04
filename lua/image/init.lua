@@ -19,6 +19,9 @@ local default_options = {
     markdown = {
       enabled = true,
     },
+    asciidoc = {
+      enabled = true,
+    },
     typst = {
       enabled = true,
     },
@@ -78,9 +81,7 @@ api.setup = function(options)
   state.options = opts
 
   -- setup logger with debug configuration
-  if opts.debug then
-    logger.setup(opts.debug)
-  end
+  if opts.debug then logger.setup(opts.debug) end
 
   vim.schedule(function()
     if opts.processor == "magick_rock" then
