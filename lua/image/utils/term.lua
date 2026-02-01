@@ -31,7 +31,7 @@ local update_size = function()
 
   ---@type { row: number, col: number, xpixel: number, ypixel: number }
   local sz = ffi.new("winsize")
-  assert(ffi.C.ioctl(1, TIOCGWINSZ, sz) == 0, "Failed to get terminal size")
+  if ffi.C.ioctl(1, TIOCGWINSZ, sz) ~= 0 then return end
 
   cached_size = {
     screen_x = sz.xpixel,
