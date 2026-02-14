@@ -1,4 +1,5 @@
 local document = require("image/utils/document")
+local magic = require("image/utils/magic")
 
 return document.create_document_integration({
   name = "org",
@@ -18,9 +19,8 @@ return document.create_document_integration({
 
     local images = {}
     local query = vim.treesitter.query.parse('org', [[
-      (link_desc
-        url: (expr) @image_link
-        (#match? @image_link "^(file:)?[^ ]+\\.(png|jpe?g|gif|webp)$"))
+      (link_desc url: (expr) @image_link)
+      (link url: (expr) @image_link)
     ]])
 
     for _, node in query:iter_captures(root, bufnr) do
@@ -30,20 +30,22 @@ return document.create_document_integration({
         local srcfile_abspath = vim.api.nvim_buf_get_name(0)
         local base_dir = vim.fn.fnamemodify(srcfile_abspath, ":h")
         local abspath = vim.fn.fnamemodify(base_dir .. "/" .. relpath, ":p")
-        local start_row, start_col, end_row, end_col = node:range()
-        table.insert(
-          images,
-          {
-            node = node,
-            range = {
-              start_row = start_row,
-              start_col = start_col,
-              end_row = end_row,
-              end_col = end_col,
-            },
-            url = abspath,
-          }
-        )
+        if magic.is_image(abspath) then
+          local start_row, start_col, end_row, end_col = node:range()
+          table.insert(
+            images,
+            {
+              node = node,
+              range = {
+                start_row = start_row,
+                start_col = start_col,
+                end_row = end_row,
+                end_col = end_col,
+              },
+              url = abspath,
+            }
+          )
+        end
       end
     end
 
