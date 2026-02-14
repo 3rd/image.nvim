@@ -392,6 +392,9 @@ require("image").setup({
       enabled = true,
       filetypes = { "norg" },
     },
+    rst = {
+      enabled = true,
+    },
     typst = {
       enabled = true,
       filetypes = { "typst" },
@@ -431,6 +434,7 @@ All the backends support rendering inside Tmux.
 
 - `markdown` - uses [tree-sitter-markdown](https://github.com/MDeiml/tree-sitter-markdown) and supports any Markdown-based grammars (Quarto, VimWiki Markdown)
 - `neorg` - uses [tree-sitter-norg](https://github.com/nvim-neorg/tree-sitter-norg) (also check https://github.com/nvim-neorg/neorg/issues/971)
+- `rst` (reStructuredText) - uses [tree-sitter-rst](https://github.com/stsewd/tree-sitter-rst)
 - `typst` - thanks to @etiennecollin (https://github.com/3rd/image.nvim/pull/223)
 - `html` and `css` - thanks to @zuloo (https://github.com/3rd/image.nvim/pull/163)
 
