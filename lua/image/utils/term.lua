@@ -1,11 +1,6 @@
-local cached_size = {
-  screen_x = 0,
-  screen_y = 0,
-  screen_cols = 0,
-  screen_rows = 0,
-  cell_width = 0,
-  cell_height = 0,
-}
+---@type { screen_x: number, screen_y: number, screen_cols: number, screen_rows: number, cell_width: number, cell_height: number }|nil
+local cached_size = nil
+local size_warned = false
 
 -- https://github.com/edluffy/hologram.nvim/blob/main/lua/hologram/state.lua#L15
 local update_size = function()
@@ -29,9 +24,23 @@ local update_size = function()
     TIOCGWINSZ = 0x40087468
   end
 
+  if not TIOCGWINSZ then
+    if not size_warned then
+      size_warned = true
+      vim.notify("image.nvim: unsupported OS — cannot query terminal size", vim.log.levels.WARN)
+    end
+    return
+  end
+
   ---@type { row: number, col: number, xpixel: number, ypixel: number }
   local sz = ffi.new("winsize")
-  assert(ffi.C.ioctl(1, TIOCGWINSZ, sz) == 0, "Failed to get terminal size")
+  if ffi.C.ioctl(1, TIOCGWINSZ, sz) ~= 0 then
+    if not size_warned then
+      size_warned = true
+      vim.notify("image.nvim: cannot query terminal size (non-terminal environment?)", vim.log.levels.WARN)
+    end
+    return
+  end
 
   local xpixel = sz.xpixel
   local ypixel = sz.ypixel

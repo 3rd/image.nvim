@@ -19,6 +19,7 @@ local cache = {}
 local render = function(image)
   local state = image.global_state
   local term_size = utils.term.get_size()
+  if not term_size then return end
   local scale_factor = 1.0
   if type(state.options.scale_factor) == "number" then scale_factor = state.options.scale_factor end
   local image_rows = math.floor(image.image_height / term_size.cell_height * scale_factor)

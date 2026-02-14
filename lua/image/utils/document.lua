@@ -114,6 +114,7 @@ local create_document_integration = function(config)
 
             -- Create a floating window for the image
             local term_size = utils.term.get_size()
+            if not term_size then return end
             local width, height = utils.math.adjust_to_aspect_ratio(
               term_size,
               image.image_width,

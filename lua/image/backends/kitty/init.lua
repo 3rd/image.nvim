@@ -111,6 +111,7 @@ backend.render = function(image, x, y, width, height)
   -- crop
   if backend.features.crop then
     local term_size = utils.term.get_size()
+    if not term_size then return end
     local pixel_width = width * term_size.cell_width
     local pixel_height = height * term_size.cell_height
     local pixel_top = 0
