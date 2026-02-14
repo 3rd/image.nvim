@@ -171,6 +171,7 @@ This plugin will always have first class support for Tmux, to make it work make 
 - Use Tmux [>= 3.3](https://github.com/tmux/tmux/wiki/FAQ#:~:text=tmux%203.3%2C%20the-,allow%2Dpassthrough,-option%20must%20be)
 - `set -gq allow-passthrough on`
 - `set -g visual-activity off`
+- `set-option -g focus-events on`
 
 #### Other
 
