@@ -223,8 +223,8 @@ local render = function(image)
         col = window.rect.left + original_x + 1,
       }
     else
-      -- for normal windows, we call screenpos
-      screen_pos = vim.fn.screenpos(image.window, math.max(1, original_y), original_x + 1)
+      -- for normal windows, we call screenpos (original_y is 0-indexed, screenpos wants 1-indexed)
+      screen_pos = vim.fn.screenpos(image.window, math.max(1, original_y + 1), original_x + 1)
     end
 
     if
@@ -233,9 +233,9 @@ local render = function(image)
     then
       -- the screen_pos is outside the window
 
-      -- check if image is below the viewport
-      if original_y > win_info.botline then
-        log.debug(("Image %s is below viewport (line %d > botline %d)"):format(image.id, original_y, win_info.botline))
+      -- check if image is below the viewport (original_y is 0-indexed, botline is 1-indexed)
+      if original_y + 1 > win_info.botline then
+        log.debug(("Image %s is below viewport (line %d > botline %d)"):format(image.id, original_y + 1, win_info.botline))
         if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
         state.images[image.id] = image
         return false -- image is below the visible window

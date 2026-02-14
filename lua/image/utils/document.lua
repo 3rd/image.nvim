@@ -180,7 +180,6 @@ local create_document_integration = function(config)
               window = item.window.id,
               buffer = item.window.buffer,
               with_virtual_padding = not is_popup,
-              render_offset_top = is_popup and 0 or 1,
               namespace = config.name,
             }, function(image)
               if not image then return end
@@ -198,14 +197,12 @@ local create_document_integration = function(config)
           end
           local is_popup = ctx.options.only_render_image_at_cursor
             and ctx.options.only_render_image_at_cursor_mode == "popup"
-          local padding = is_popup and 0 or 1
           log.debug("Creating image from file", { path_type = type(path), path_string = tostring(path), id = item.id })
           local ok, image = pcall(ctx.api.from_file, path, {
             id = item.id,
             window = item.window.id,
             buffer = item.window.buffer,
             with_virtual_padding = not is_popup,
-            render_offset_top = padding,
             namespace = config.name,
           })
           if ok and image then
@@ -216,6 +213,7 @@ local create_document_integration = function(config)
           end
         end
       end
+
     end
   )
 
