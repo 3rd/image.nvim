@@ -33,13 +33,26 @@ local update_size = function()
   local sz = ffi.new("winsize")
   assert(ffi.C.ioctl(1, TIOCGWINSZ, sz) == 0, "Failed to get terminal size")
 
+  local xpixel = sz.xpixel
+  local ypixel = sz.ypixel
+
+  -- Fallback when pixel dimensions are unavailable (common over SSH)
+  -- TIOCGWINSZ returns xpixel=0, ypixel=0 in SSH sessions because the
+  -- SSH protocol does not propagate client pixel dimensions. Without this
+  -- fallback, cell_width/cell_height become 0, causing integer overflow
+  -- in image geometry calculations (width becomes INT64_MIN).
+  if xpixel == 0 or ypixel == 0 then
+    xpixel = sz.col * 8
+    ypixel = sz.row * 16
+  end
+
   cached_size = {
-    screen_x = sz.xpixel,
-    screen_y = sz.ypixel,
+    screen_x = xpixel,
+    screen_y = ypixel,
     screen_cols = sz.col,
     screen_rows = sz.row,
-    cell_width = sz.xpixel / sz.col,
-    cell_height = sz.ypixel / sz.row,
+    cell_width = xpixel / sz.col,
+    cell_height = ypixel / sz.row,
   }
 end
 
