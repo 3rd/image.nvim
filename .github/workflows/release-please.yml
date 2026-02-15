@@ -1,8 +1,4 @@
-name: Release Please
-
-permissions:
-  contents: write
-  pull-requests: write
+name: Release
 
 on:
   push:
@@ -14,8 +10,33 @@ jobs:
   release:
     name: release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
     steps:
-      - uses: google-github-actions/release-please-action@v3.1.2
+      - uses: googleapis/release-please-action@v4
+        id: release
         with:
           release-type: simple
-          package-name: image.nvim
+
+  luarocks:
+    name: luarocks
+    needs: release
+    if: needs.release.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.tag_name }}
+      - name: LuaRocks Upload
+        uses: nvim-neorocks/luarocks-tag-release@v7
+        env:
+          LUAROCKS_API_KEY: ${{ secrets.LUAROCKS_API_KEY }}
+        with:
+          version: ${{ needs.release.outputs.version }}
+          dependencies: |
+            magick
