@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.5.0](https://github.com/3rd/image.nvim/compare/v1.4.0...v1.5.0) (2026-02-15)
+
+
+### Features
+
+* add Asciidoc integration ([e0f4030](https://github.com/3rd/image.nvim/commit/e0f4030042fabb7507b2053c9d6a0e9f57124b48))
+* add Asciidoc integration ([bcc6a4f](https://github.com/3rd/image.nvim/commit/bcc6a4f77c336afa33aa3b909ae9770db7903532))
+* add reStructuredText (rst) integration ([af0dc75](https://github.com/3rd/image.nvim/commit/af0dc7539b902802ba29bc7be4d3eb7a6c059a7c))
+* add reStructuredText (rst) integration ([11b86ff](https://github.com/3rd/image.nvim/commit/11b86ffe36ae1fac610844022955832d7bb03bf0))
+* **org:** support bare link syntax ([e18cf24](https://github.com/3rd/image.nvim/commit/e18cf24c8f7e0ab4f15e2bed0cfb7cefe213162e))
+
+
+### Bug Fixes
+
+* add pixel dimension fallback for SSH sessions ([193e878](https://github.com/3rd/image.nvim/commit/193e87890bf1ce66244b961520a551af96828050))
+* add pixel dimension fallback for SSH sessions ([1746a74](https://github.com/3rd/image.nvim/commit/1746a74f0e0ceaa355758b2efb51afa99d4ad34c))
+* **processors:** lazy-load magick_rock ([e624cf0](https://github.com/3rd/image.nvim/commit/e624cf0739bd1c0276f72c5bc0e198c9af855e02))
+* **renderer:** fix consecutive images rendering on top of each other ([4670431](https://github.com/3rd/image.nvim/commit/4670431894db743660687363b45ebf498ebaa9c3))
+* **term:** handle terminal size query failure gracefully ([2f80ec1](https://github.com/3rd/image.nvim/commit/2f80ec16aa3b4f3bc58fddb54b44b9cd8b3d33e5))
+
 ## [1.4.0](https://github.com/3rd/image.nvim/compare/v1.3.0...v1.4.0) (2025-09-07)
 
 
