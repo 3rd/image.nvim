@@ -483,9 +483,8 @@ api.hijack_buffer = function(path, win, buf, options)
   local opts = options or {}
   opts.window = win
   opts.buffer = buf
-  -- For hijacked buffers, position image at line 1, column 0 (1-indexed for vim)
   if not opts.x then opts.x = 0 end
-  if not opts.y then opts.y = 1 end
+  if not opts.y then opts.y = 0 end
 
   local img = api.from_file(path, opts)
 
