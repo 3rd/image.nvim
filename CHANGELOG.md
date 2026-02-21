@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/3rd/image.nvim/compare/v1.5.0...v1.5.1) (2026-02-21)
+
+
+### Bug Fixes
+
+* **hijack:** set default y=0 to prevent E966 on hijacked buffers ([e053215](https://github.com/3rd/image.nvim/commit/e053215330bbb8831d0eee84c0f1c41eb7fb5533)), closes [#343](https://github.com/3rd/image.nvim/issues/343)
+
 ## [1.5.0](https://github.com/3rd/image.nvim/compare/v1.4.0...v1.5.0) (2026-02-15)
 
 
