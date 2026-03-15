@@ -108,7 +108,8 @@ function Image:render(geometry)
 
     -- create extmark
     if was_rendered then
-      local total_height = height + (self.render_offset_top or 0)
+      -- subtract overlap lines to allow the rendered image to overlap with them
+      local total_height = math.max(0, height + (self.render_offset_top or 0) - (self.overlap or 0) + 1)
       local has_up_to_date_extmark = previous_extmark and previous_extmark.height == total_height
 
       if not has_up_to_date_extmark then
@@ -121,8 +122,7 @@ function Image:render(geometry)
         local filler = {}
         local extmark_opts = { id = self.internal_id, strict = false }
         if self.with_virtual_padding then
-          -- only reserve real height for the extmark, padding is applied during rendering
-          local total_lines = height
+          local total_lines = math.max(0, height + (self.render_offset_top or 0) - (self.overlap or 0) + 1)
           for _ = 0, total_lines - 1 do
             filler[#filler + 1] = { { " ", "" } }
           end
@@ -298,6 +298,7 @@ local from_file = function(path, options, state)
         inline = opts.inline or opts.with_virtual_padding or false,
         is_rendered = false,
         render_offset_top = opts.render_offset_top or 0,
+        overlap = opts.overlap or 0,
         crop_hash = nil,
         resize_hash = nil,
         namespace = opts.namespace or nil,
@@ -357,6 +358,7 @@ local from_file = function(path, options, state)
     inline = opts.inline or opts.with_virtual_padding or false,
     is_rendered = false,
     render_offset_top = opts.render_offset_top or 0,
+    overlap = opts.overlap or 0,
     crop_hash = nil,
     resize_hash = nil,
     namespace = opts.namespace or nil,

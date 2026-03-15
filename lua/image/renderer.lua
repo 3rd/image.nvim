@@ -194,11 +194,7 @@ local render = function(image)
   if image.window == nil then
     absolute_x = original_x
     absolute_y = original_y
-    -- apply render_offset_top
-    if image.render_offset_top and image.render_offset_top > 0 then
-      --
-      absolute_y = absolute_y + image.render_offset_top
-    end
+    absolute_y = absolute_y + (image.render_offset_top or 0)
   else
     -- get window object
     local window = nil
@@ -319,10 +315,10 @@ local render = function(image)
       absolute_x = screen_pos.col - 1
       absolute_y = screen_pos.row
     end
-    -- apply render_offset_top offset if set (but not for floating windows and not during partial scroll)
+    -- apply render_offset_top except for floating windows or during partial scroll
     local is_floating = window and window.is_floating or false
-    if image.render_offset_top and image.render_offset_top > 0 and not is_floating and not is_partial_scroll then
-      absolute_y = absolute_y + image.render_offset_top
+    if not is_floating and not is_partial_scroll then
+      absolute_y = absolute_y + (image.render_offset_top or 0)
     end
   end
 
