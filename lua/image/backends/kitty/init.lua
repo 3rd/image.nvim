@@ -54,6 +54,7 @@ backend.render = function(image, x, y, width, height)
       image_id = image.internal_id,
       transmit_format = codes.control.transmit_format.png,
       transmit_medium = transmit_medium,
+      tty = transmit_medium == codes.control.transmit_medium.direct and editor_tty or nil,
       display_cursor_policy = codes.control.display_cursor_policy.do_not_move,
       quiet = 2,
     }
