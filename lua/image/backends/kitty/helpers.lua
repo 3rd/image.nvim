@@ -12,11 +12,13 @@ if not stdout then error("failed to open stdout") end
 local is_SSH = (vim.env.SSH_CLIENT ~= nil) or (vim.env.SSH_TTY ~= nil)
 
 -- https://github.com/edluffy/hologram.nvim/blob/main/lua/hologram/terminal.lua#L77
+local DIRECT_CHUNK_SIZE = 65536
+
 local get_chunked = function(str)
   local chunks = {}
-  for i = 1, #str, 4096 do
-    local chunk = str:sub(i, i + 4096 - 1):gsub("%s", "")
-    if #chunk > 0 then table.insert(chunks, chunk) end
+  for i = 1, #str, DIRECT_CHUNK_SIZE do
+    local chunk = str:sub(i, i + DIRECT_CHUNK_SIZE - 1):gsub("%s", "")
+    table.insert(chunks, chunk)
   end
   return chunks
 end
