@@ -1,5 +1,5 @@
-local utils = require("image/utils")
 local log = require("image/utils/logger").within("backend.ueberzug")
+local utils = require("image/utils")
 
 local child = nil
 local should_be_alive = false

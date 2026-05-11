@@ -47,7 +47,6 @@ return document.create_document_integration({
                 end_col = end_col,
               },
             }
-
           elseif current_image and key == "url" then
             current_image.url = value
             table.insert(images, current_image)

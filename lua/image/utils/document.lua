@@ -1,6 +1,6 @@
 ---@diagnostic disable: duplicate-doc-field
-local utils = require("image/utils")
 local logger = require("image/utils/logger")
+local utils = require("image/utils")
 
 local popup_window = nil
 
@@ -213,7 +213,6 @@ local create_document_integration = function(config)
           end
         end
       end
-
     end
   )
 

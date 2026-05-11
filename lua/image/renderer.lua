@@ -1,5 +1,5 @@
-local utils = require("image/utils")
 local log = require("image/utils/logger").within("renderer")
+local utils = require("image/utils")
 
 -- Images get resized and cropped to fit in the context they are rendered in.
 -- Each of these versions are written to the temp directory and cleared on reboot (on Linux at least).
@@ -235,7 +235,9 @@ local render = function(image)
 
       -- check if image is below the viewport (original_y is 0-indexed, botline is 1-indexed)
       if original_y + 1 > win_info.botline then
-        log.debug(("Image %s is below viewport (line %d > botline %d)"):format(image.id, original_y + 1, win_info.botline))
+        log.debug(
+          ("Image %s is below viewport (line %d > botline %d)"):format(image.id, original_y + 1, win_info.botline)
+        )
         if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
         state.images[image.id] = image
         return false -- image is below the visible window

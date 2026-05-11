@@ -1,8 +1,15 @@
-local utils = require("image/utils")
+local logger = require("image/utils/logger")
 local processors = require("image/processors")
 local report = require("image/report")
-local logger = require("image/utils/logger")
+local utils = require("image/utils")
 local log = logger.within("core")
+
+---@type table<string, string>
+local backend_modules = {
+  kitty = "image/backends/kitty",
+  ueberzug = "image/backends/ueberzug",
+  sixel = "image/backends/sixel",
+}
 
 ---@type Options
 local default_options = {
@@ -75,6 +82,32 @@ local state = {
 ---@diagnostic disable-next-line: missing-fields
 local api = {}
 
+---@param name string
+local function validate_backend(name)
+  if not backend_modules[name] then utils.throw("image.nvim: backend not found: " .. tostring(name)) end
+end
+
+---@param name string
+---@return Backend
+local function create_lazy_backend(name)
+  validate_backend(name)
+  local backend = nil
+  local load_backend = function()
+    if backend then return backend end
+    backend = require(backend_modules[name])
+    if type(backend.setup) == "function" then backend.setup(state) end
+    return backend
+  end
+  return setmetatable({}, {
+    __index = function(_, key)
+      return load_backend()[key]
+    end,
+    __newindex = function(_, key, value)
+      load_backend()[key] = value
+    end,
+  })
+end
+
 ---@param options Options
 api.setup = function(options)
   local opts = vim.tbl_deep_extend("force", default_options, options or {})
@@ -83,27 +116,14 @@ api.setup = function(options)
   -- setup logger with debug configuration
   if opts.debug then logger.setup(opts.debug) end
 
-  vim.schedule(function()
-    if opts.processor == "magick_rock" then
-      local magick = require("image/magick")
-      -- check that magick is available
-      if not magick.has_magick then
-        vim.api.nvim_err_writeln(
-          "image.nvim: magick rock not found, please install it and restart your editor. Error: "
-            .. vim.inspect(magick.magick)
-        )
-        return
-      end
-    end
-  end)
+  if opts.processor == "magick_rock" then
+    vim.schedule(function()
+      require("image/magick").warn_if_magick_rock_missing()
+    end)
+  end
 
-  -- load processor
-  state.processor = processors.get_processor(opts.processor)
-
-  -- load backend
-  local backend = require("image/backends/" .. opts.backend)
-  if type(backend.setup) == "function" then backend.setup(state) end
-  state.backend = backend
+  state.processor = processors.create_lazy_processor(opts.processor)
+  state.backend = create_lazy_backend(opts.backend)
 
   -- load integrations
   for integration_name, integration_options in pairs(opts.integrations) do

@@ -16,12 +16,15 @@ return document.create_document_integration({
     local parser = vim.treesitter.get_parser(buf, "rst")
     parser:parse(true)
 
-    local image_directive_query = vim.treesitter.query.parse("rst", [[
+    local image_directive_query = vim.treesitter.query.parse(
+      "rst",
+      [[
       ((directive
           name: (type) @_type
           body: (body (arguments) @url)) @image
        (#any-of? @_type "image" "figure"))
-    ]])
+    ]]
+    )
 
     local images = {}
 
@@ -45,7 +48,6 @@ return document.create_document_integration({
               end_col = end_col,
             },
           }
-
         elseif current_image and key == "url" then
           current_image.url = value
           table.insert(images, current_image)
@@ -57,5 +59,5 @@ return document.create_document_integration({
     parser:for_each_tree(get_images)
 
     return images
-  end
+  end,
 })

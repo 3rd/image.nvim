@@ -1,7 +1,7 @@
 local codes = require("image/backends/kitty/codes")
 local helpers = require("image/backends/kitty/helpers")
-local utils = require("image/utils")
 local log = require("image/utils/logger").within("backend.kitty")
+local utils = require("image/utils")
 
 local editor_tty = utils.term.get_tty()
 local is_SSH = (vim.env.SSH_CLIENT ~= nil) or (vim.env.SSH_TTY ~= nil)

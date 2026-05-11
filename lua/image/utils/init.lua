@@ -1,5 +1,6 @@
 local dimensions = require("image/utils/dimensions")
 local hash = require("image/utils/hash")
+local json = require("image/utils/json")
 local logger = require("image/utils/logger")
 local magic = require("image/utils/magic")
 local math = require("image/utils/math")
@@ -8,7 +9,6 @@ local random = require("image/utils/random")
 local term = require("image/utils/term")
 local tmux = require("image/utils/tmux")
 local window = require("image/utils/window")
-local json = require("image/utils/json")
 
 return {
   dimensions = dimensions,

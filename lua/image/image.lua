@@ -1,6 +1,6 @@
+local log = require("image/utils/logger").within("image")
 local renderer = require("image/renderer")
 local utils = require("image/utils")
-local log = require("image/utils/logger").within("image")
 
 -- { ["buf:row:col"]: { id, height } }
 ---@type table<string, { id: number, height: number }>
