@@ -121,8 +121,9 @@ function Image:render(geometry)
         local filler = {}
         local extmark_opts = { id = self.internal_id, strict = false }
         if self.with_virtual_padding then
-          -- only reserve real height for the extmark, padding is applied during rendering
-          local total_lines = height
+          -- reserve image height plus render_offset_top, since the offset
+          -- shifts the rendered image down without removing any of its rows
+          local total_lines = total_height
           for _ = 0, total_lines - 1 do
             filler[#filler + 1] = { { " ", "" } }
           end
