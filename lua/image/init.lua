@@ -55,6 +55,7 @@ local default_options = {
   max_height_window_percentage = 50,
   scale_factor = 1.0,
   kitty_method = "normal",
+  kitty_direct_chunk_size = 4096,
   window_overlap_clear_enabled = false,
   window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "snacks_notif", "scrollview", "scrollview_sign" },
   editor_only_render_when_focused = false,

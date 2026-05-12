@@ -26,6 +26,7 @@ vim.api.nvim_create_autocmd("VimResized", {
 
 backend.setup = function(state)
   backend.state = state
+
   if utils.tmux.is_tmux and not utils.tmux.has_passthrough then
     utils.throw("tmux does not have allow-passthrough enabled")
     return
@@ -59,7 +60,7 @@ backend.render = function(image, x, y, width, height)
       quiet = 2,
     }
     if with_virtual_placeholders then transmit_payload.display_virtual_placeholder = 1 end
-    helpers.write_graphics(transmit_payload, image.cropped_path)
+    helpers.write_graphics(transmit_payload, image.cropped_path, backend.state.options.kitty_direct_chunk_size)
     log.debug("transmitted image " .. image.id .. " (" .. image.internal_id .. ")")
   end
   if backend.features.crop then
