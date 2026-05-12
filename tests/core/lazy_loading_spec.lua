@@ -129,13 +129,13 @@ describe("lazy loading", function()
 
   it("loads and sets up the backend on first backend use", function()
     local image = setup_image({
-      backend = "sixel",
+      backend = "kitty",
       processor = "magick_cli",
     })
 
-    assert.is_nil(package.loaded["image/backends/sixel"])
+    assert.is_nil(package.loaded["image/backends/kitty"])
     image.clear("missing")
-    assert.is_not_nil(package.loaded["image/backends/sixel"])
-    assert.is_not_nil(require("image/backends/sixel").state)
+    assert.is_not_nil(package.loaded["image/backends/kitty"])
+    assert.is_not_nil(require("image/backends/kitty").state)
   end)
 end)
