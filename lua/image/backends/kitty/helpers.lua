@@ -33,8 +33,14 @@ local write = function(data, tty, escape)
   if tty then
     local handle = io.open(tty, "w")
     if not handle then error("failed to open tty") end
-    handle:write(payload)
-    handle:close()
+    local ok, err = pcall(function()
+      handle:write(payload)
+    end)
+    local close_ok, close_err = pcall(function()
+      handle:close()
+    end)
+    if not ok then error(err) end
+    if not close_ok then error(close_err) end
   else
     -- vim.fn.chansend(vim.v.stderr, payload)
     stdout:write(payload)
@@ -97,7 +103,18 @@ local write_graphics = function(config, data)
   if data then
     if config.transmit_medium == codes.control.transmit_medium.direct then
       local file = io.open(data, "rb")
-      data = file:read("*all")
+      local ok, result = pcall(function()
+        return file:read("*all")
+      end)
+      local close_ok, close_err = true, nil
+      if file then
+        close_ok, close_err = pcall(function()
+          file:close()
+        end)
+      end
+      if not ok then error(result) end
+      if not close_ok then error(close_err) end
+      data = result
     end
     data = vim.base64.encode(data):gsub("%-", "/")
     local chunks = get_chunked(data)
