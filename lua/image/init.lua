@@ -159,9 +159,20 @@ api.setup = function(options)
       if not vim.api.nvim_win_is_valid(winid) then return false end
       if not vim.api.nvim_buf_is_valid(bufnr) then return false end
 
+      local prev = window_history[winid]
+      local buffer_changed = prev ~= nil and prev.bufnr ~= bufnr
+      if buffer_changed then
+        for _, curr in ipairs(api.get_images({ window = winid, buffer = prev.bufnr })) do
+          curr:clear(true)
+        end
+      end
+
       -- bail if there are no images
       local all_images = api.get_images()
-      if #all_images == 0 then return false end
+      if #all_images == 0 then
+        window_history[winid] = { topline = topline, botline = botline, bufnr = bufnr }
+        return false
+      end
 
       -- toggle images in overlapped windows
       if state.options.window_overlap_clear_enabled then
@@ -174,7 +185,7 @@ api.setup = function(options)
           })
 
           for _, current_window in ipairs(windows) do
-            local cur_win_images = api.get_images({ window = current_window.id, buffer = bufnr })
+            local cur_win_images = api.get_images({ window = current_window.id, buffer = current_window.buffer })
             if #current_window.masks > 0 then
               for _, current_image in ipairs(cur_win_images) do
                 current_image:clear(true)
@@ -190,28 +201,25 @@ api.setup = function(options)
 
       -- bail if there are no images tied to this window and buffer pair
       local images = api.get_images({ window = winid, buffer = bufnr })
-      if #images == 0 then return false end
+      if #images == 0 then
+        window_history[winid] = { topline = topline, botline = botline, bufnr = bufnr }
+        return false
+      end
 
       -- get current window
       local window = utils.window.get_window(winid)
       if not window then return false end
 
-      -- get history entry or init
-      local prev = window_history[winid]
       if not prev then
         window_history[winid] = { topline = topline, botline = botline, bufnr = bufnr }
         return false
       end
 
       local height = vim.api.nvim_win_get_height(winid)
-      local needs_clear = false
-      local needs_rerender = false
-
-      -- clear if buffer changed
-      needs_clear = prev.bufnr ~= bufnr
+      local needs_rerender = buffer_changed
 
       -- rerender if height, topline, or botline changed
-      needs_rerender = prev.topline ~= topline or prev.botline ~= botline or prev.height ~= height
+      needs_rerender = needs_rerender or prev.topline ~= topline or prev.botline ~= botline or prev.height ~= height
 
       -- rerender if the amount of folded lines changed
       local folded_lines = 0
@@ -232,16 +240,14 @@ api.setup = function(options)
         { topline = topline, botline = botline, bufnr = bufnr, height = height, folded_lines = folded_lines }
 
       -- execute deferred clear / rerender
-      log.debug("needs_clear", { needs_clear = needs_clear, needs_rerender = needs_rerender })
+      log.debug("needs_rerender", { needs_rerender = needs_rerender })
       vim.schedule(function()
-        if needs_clear then
-          for _, curr in ipairs(api.get_images({ window = winid, buffer = prev.bufnr })) do
-            curr:clear(true)
-          end
-        elseif needs_rerender then
-          for _, curr in ipairs(api.get_images({ window = winid, buffer = bufnr })) do
-            curr:render()
-          end
+        if not needs_rerender then return end
+        if not vim.api.nvim_win_is_valid(winid) then return end
+        if vim.api.nvim_win_get_buf(winid) ~= bufnr then return end
+
+        for _, curr in ipairs(api.get_images({ window = winid, buffer = bufnr })) do
+          curr:render()
         end
       end)
 

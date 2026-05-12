@@ -186,10 +186,8 @@ backend.clear = function(image_id, shallow)
     end
 
     image.is_rendered = false
-    if not shallow then
-      backend.state.images[image_id] = nil
-      transmitted_images[image.id] = nil
-    end
+    transmitted_images[image.id] = nil
+    if not shallow then backend.state.images[image_id] = nil end
     log.debug("cleared image", { id = image.id, internal_id = image.internal_id, shallow = shallow })
     return
   end
@@ -205,10 +203,8 @@ backend.clear = function(image_id, shallow)
   log.debug("cleared all")
   for id, image in pairs(backend.state.images) do
     image.is_rendered = false
-    if not shallow then
-      backend.state.images[id] = nil
-      transmitted_images[image.id] = nil
-    end
+    transmitted_images[image.id] = nil
+    if not shallow then backend.state.images[id] = nil end
     log.debug("cleared image (all)", { id = image.id, shallow = shallow })
   end
 end
