@@ -326,6 +326,30 @@ local render = function(image)
     -- apply render_offset_top except for floating windows or during partial scroll
     local is_floating = window and window.is_floating or false
     if not is_floating and not is_partial_scroll then absolute_y = absolute_y + (image.render_offset_top or 0) end
+
+    -- account for inline virtual text (e.g. render-markdown indent) at the image row.
+    -- only when x=0, since treesitter node:range() already includes virt text offsets
+    -- for non-zero positions.
+    if original_x == 0 and image.buffer then
+      local ok_marks, extmarks = pcall(
+        vim.api.nvim_buf_get_extmarks,
+        image.buffer,
+        -1,
+        { original_y, 0 },
+        { original_y, 0 },
+        { details = true }
+      )
+      if ok_marks then
+        for _, mark in ipairs(extmarks) do
+          local details = mark[4]
+          if details and details.virt_text and details.virt_text_pos == "inline" then
+            for _, chunk in ipairs(details.virt_text) do
+              absolute_x = absolute_x + vim.fn.strdisplaywidth(chunk[1])
+            end
+          end
+        end
+      end
+    end
   end
 
   -- clear out of bounds images
