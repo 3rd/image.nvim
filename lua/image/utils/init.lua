@@ -8,6 +8,7 @@ local offsets = require("image/utils/offsets")
 local random = require("image/utils/random")
 local term = require("image/utils/term")
 local tmux = require("image/utils/tmux")
+local virtual_padding = require("image/utils/virtual_padding")
 local window = require("image/utils/window")
 
 return {
@@ -24,4 +25,5 @@ return {
   magic = magic,
   hash = hash,
   json = json,
+  virtual_padding = virtual_padding,
 }

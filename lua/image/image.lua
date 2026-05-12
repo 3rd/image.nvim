@@ -108,9 +108,9 @@ function Image:render(geometry)
 
     -- create extmark
     if was_rendered then
-      -- subtract overlap lines to allow the rendered image to overlap with them
-      local total_height = math.max(0, height + (self.render_offset_top or 0) - (self.overlap or 0) + 1)
-      local has_up_to_date_extmark = previous_extmark and previous_extmark.height == total_height
+      -- reserve virtual lines for inline images, reduced only when overlap is explicitly set
+      local reserved_lines = utils.virtual_padding.get_reserved_lines(height, self.render_offset_top, self.overlap)
+      local has_up_to_date_extmark = previous_extmark and previous_extmark.height == reserved_lines
 
       if not has_up_to_date_extmark then
         if previous_extmark ~= nil then
@@ -122,8 +122,8 @@ function Image:render(geometry)
         local filler = {}
         local extmark_opts = { id = self.internal_id, strict = false }
         if self.with_virtual_padding then
-          local total_lines = math.max(0, height + (self.render_offset_top or 0) - (self.overlap or 0) + 1)
-          for _ = 0, total_lines - 1 do
+          -- only reserve the needed virtual height; actual rendering still happens in the renderer
+          for _ = 0, reserved_lines - 1 do
             filler[#filler + 1] = { { " ", "" } }
           end
           extmark_opts.virt_lines = filler
@@ -141,7 +141,7 @@ function Image:render(geometry)
           extmark_opts
         )
         if ok then
-          buf_extmark_map[extmark_key] = { id = self.internal_id, height = total_height or 0 }
+          buf_extmark_map[extmark_key] = { id = self.internal_id, height = reserved_lines }
           self.extmark = { id = extmark_id, row = extmark_row, col = extmark_col }
         end
       end
@@ -298,7 +298,7 @@ local from_file = function(path, options, state)
         inline = opts.inline or opts.with_virtual_padding or false,
         is_rendered = false,
         render_offset_top = opts.render_offset_top or 0,
-        overlap = opts.overlap or 0,
+        overlap = opts.overlap,
         crop_hash = nil,
         resize_hash = nil,
         namespace = opts.namespace or nil,
@@ -358,7 +358,7 @@ local from_file = function(path, options, state)
     inline = opts.inline or opts.with_virtual_padding or false,
     is_rendered = false,
     render_offset_top = opts.render_offset_top or 0,
-    overlap = opts.overlap or 0,
+    overlap = opts.overlap,
     crop_hash = nil,
     resize_hash = nil,
     namespace = opts.namespace or nil,

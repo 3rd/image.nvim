@@ -247,69 +247,77 @@ local render = function(image)
         -- When image is on topline, we want normal rendering with padding
         is_partial_scroll = false
       else
-        -- Calculate the difference between the top line and top pos of window
-        -- Its the best way i found to calculate the possible extmark virt_lines
-        -- that could be partially scrolled away.
-        local topline_screen_pos = vim.fn.screenpos(image.window, win_info.topline, 0)
-        local diff = topline_screen_pos.row - win_info.winrow
+        local overlap_absolute_y = utils.virtual_padding.get_overlap_scroll_position(
+          original_y,
+          win_info.topline,
+          win_info.winrow,
+          height,
+          image.render_offset_top,
+          image.overlap
+        )
 
-        log.debug(("Image %s at/near topline calc"):format(image.id), {
-          original_y = original_y,
-          topline = win_info.topline,
-          topline_screen_row = topline_screen_pos.row,
-          winrow = win_info.winrow,
-          diff = diff,
-          height = height,
-        })
+        if overlap_absolute_y then
+          -- explicit overlap can keep the image visible by covering real buffer lines, not virt_lines.
+          is_partial_scroll = true
+          absolute_y = overlap_absolute_y
+          absolute_x = win_info.wincol - 1 + win_info.textoff + original_x
+        else
+          -- Calculate the difference between the top line and top pos of window
+          -- Its the best way i found to calculate the possible extmark virt_lines
+          -- that could be partially scrolled away.
+          local topline_screen_pos = vim.fn.screenpos(image.window, win_info.topline, 0)
+          local diff = topline_screen_pos.row - win_info.winrow
 
-        if diff <= 0 then
-          -- The topline is at a real buffer line (not in middle of virtual lines)
-          log.debug(("Image %s diff <= 0, cannot calculate position"):format(image.id))
-          if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
-          state.images[image.id] = image
-          return false -- cannot determine proper position
-        end
+          log.debug(("Image %s at/near topline calc"):format(image.id), {
+            original_y = original_y,
+            topline = win_info.topline,
+            topline_screen_row = topline_screen_pos.row,
+            winrow = win_info.winrow,
+            diff = diff,
+            height = height,
+          })
 
-        -- there is a diff which means that there are virt_lines that the user has
-        -- partially scrolled past
-
-        -- This calculation only makes sense if the image is at the line being scrolled (topline - 1)
-        -- If the image is further up, it shouldn't be visible at all
-        if original_y + 1 < win_info.topline - 1 then
-          log.debug(
-            ("Image %s is above the partially scrolled line (line %d < topline %d - 1), hiding"):format(
-              image.id,
-              original_y + 1,
-              win_info.topline
+          if diff <= 0 then
+            -- The topline is at a real buffer line, not in the middle of virtual lines.
+            log.debug(("Image %s diff <= 0, cannot calculate position"):format(image.id))
+            if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
+            state.images[image.id] = image
+            return false
+          elseif original_y + 1 < win_info.topline - 1 then
+            -- This calculation only makes sense if the image is at the line being scrolled (topline - 1).
+            -- If the image is further up, it should not be visible unless explicit overlap handled it above.
+            log.debug(
+              ("Image %s is above the partially scrolled line (line %d < topline %d - 1), hiding"):format(
+                image.id,
+                original_y + 1,
+                win_info.topline
+              )
             )
-          )
-          if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
-          state.images[image.id] = image
-          return false
+            if state.images[image.id] and state.images[image.id] ~= image then state.images[image.id]:clear(true) end
+            state.images[image.id] = image
+            return false
+          else
+            -- diff represents how many virtual rows are visible above the topline.
+            -- When diff = height, all virtual lines are visible and the image starts at winrow.
+            -- When diff = 1, only the bottom row is visible; the -1 accounts for 0-based math.
+            is_partial_scroll = true
+            absolute_y = win_info.winrow - height + diff - 1
+            -- screenpos is out of bounds here, so calculate x from the window origin and text offset.
+            absolute_x = win_info.wincol - 1 + win_info.textoff + original_x
+
+            log.debug(("Image %s calculated position for partial scroll"):format(image.id), {
+              absolute_x = absolute_x,
+              absolute_y = absolute_y,
+              calculation = string.format(
+                "winrow(%d) - height(%d) + diff(%d) - 1 = %d",
+                win_info.winrow,
+                height,
+                diff,
+                absolute_y
+              ),
+            })
+          end
         end
-
-        is_partial_scroll = true
-        -- diff represents how many rows of virtual content are visible above the topline
-        -- When diff = height, all virtual lines visible, image should start at winrow
-        -- When diff = 1, only bottom row visible
-        -- The -1 accounts for 0-based vs 1-based indexing
-        absolute_y = win_info.winrow - height + diff - 1
-        -- Try to manually calculate the x pos of the image.
-        -- We cant use the "built in" one since its out of bounds of the window
-        -- and therefore returns two 0s
-        absolute_x = win_info.wincol - 1 + win_info.textoff + original_x
-
-        log.debug(("Image %s calculated position for partial scroll"):format(image.id), {
-          absolute_x = absolute_x,
-          absolute_y = absolute_y,
-          calculation = string.format(
-            "winrow(%d) - height(%d) + diff(%d) - 1 = %d",
-            win_info.winrow,
-            height,
-            diff,
-            absolute_y
-          ),
-        })
       end
     else
       absolute_x = screen_pos.col - 1
@@ -317,9 +325,7 @@ local render = function(image)
     end
     -- apply render_offset_top except for floating windows or during partial scroll
     local is_floating = window and window.is_floating or false
-    if not is_floating and not is_partial_scroll then
-      absolute_y = absolute_y + (image.render_offset_top or 0)
-    end
+    if not is_floating and not is_partial_scroll then absolute_y = absolute_y + (image.render_offset_top or 0) end
   end
 
   -- clear out of bounds images

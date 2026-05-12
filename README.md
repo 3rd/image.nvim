@@ -520,6 +520,9 @@ local image = api.from_file("/path/to/image.png", {
   window = 1000, -- optional, binds image to a window and its bounds
   buffer = 1000, -- optional, binds image to a buffer (paired with window binding)
   with_virtual_padding = true, -- optional, pads vertically with extmarks, defaults to false
+  -- optional positive integer, number of existing buffer lines intentionally covered by the image.
+  -- Omit for normal virtual padding.
+  overlap = nil,
 
   -- optional, binds image to an extmark which it follows. Forced to be true when
   -- `with_virtual_padding` is true. defaults to false.
