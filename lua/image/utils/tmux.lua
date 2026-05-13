@@ -1,4 +1,5 @@
 local is_tmux = vim.env.TMUX ~= nil
+local pane_id = vim.env.TMUX_PANE
 local pane_position = nil
 local pane_position_clear_scheduled = false
 
@@ -25,7 +26,10 @@ local get_pane_position = function()
   if not is_tmux then return { left = 0, top = 0 } end
   if pane_position then return pane_position end
 
-  local result = vim.fn.system({ "tmux", "display-message", "-p", "#{pane_left} #{pane_top}" })
+  local command = { "tmux", "display-message", "-p", "#{pane_left} #{pane_top}" }
+  if pane_id then command = { "tmux", "display-message", "-p", "-t", pane_id, "#{pane_left} #{pane_top}" } end
+
+  local result = vim.fn.system(command)
   local left, top = result:match("(%-?%d+)%s+(%-?%d+)")
   pane_position = {
     left = tonumber(left) or 0,

@@ -14,3 +14,5 @@
 *~
 .vscode/
 .idea/
+
+/nvim.log
