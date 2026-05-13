@@ -23,6 +23,9 @@ local with_backend = function(callback)
     write_graphics = function(payload, data)
       writes[#writes + 1] = { payload = payload, data = data }
     end,
+    write_graphics_at = function(payload)
+      writes[#writes + 1] = { payload = payload }
+    end,
   }
   package.loaded["image/utils/logger"] = {
     within = function()

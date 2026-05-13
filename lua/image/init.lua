@@ -1,5 +1,6 @@
 local logger = require("image/utils/logger")
 local processors = require("image/processors")
+local render_scheduler = require("image/utils/render_scheduler")
 local report = require("image/report")
 local utils = require("image/utils")
 local log = logger.within("core")
@@ -124,6 +125,7 @@ api.setup = function(options)
 
   state.processor = processors.create_lazy_processor(opts.processor)
   state.backend = create_lazy_backend(opts.backend)
+  render_scheduler.clear()
 
   -- load integrations
   for integration_name, integration_options in pairs(opts.integrations) do
@@ -141,6 +143,40 @@ api.setup = function(options)
 
   -- create tmp dir
   vim.fn.mkdir(state.tmp_dir, "p")
+
+  local render_window_images = function(winid)
+    if not state.enabled then return end
+    if not winid or not vim.api.nvim_win_is_valid(winid) then return end
+
+    local bufnr = vim.api.nvim_win_get_buf(winid)
+    for _, current_image in ipairs(api.get_images({ window = winid, buffer = bufnr })) do
+      current_image:render()
+    end
+  end
+
+  local schedule_window_render = function(winid)
+    if not winid then return end
+    render_scheduler.schedule(("core:window:%d"):format(winid), function()
+      render_window_images(winid)
+    end)
+  end
+
+  local schedule_all_window_render = function()
+    render_scheduler.schedule("core:all-windows", function()
+      if not state.enabled then return end
+
+      local windows_to_render = {}
+      for _, current_image in ipairs(api.get_images()) do
+        if current_image.window ~= nil then
+          state.backend.clear(current_image.id, true)
+          windows_to_render[current_image.window] = true
+        end
+      end
+      for winid in pairs(windows_to_render) do
+        render_window_images(winid)
+      end
+    end)
+  end
 
   -- handle folds / scroll extra
   ---@type table<number, { topline: number, botline: number, bufnr: number, height: number; folded_lines: number }>
@@ -176,7 +212,7 @@ api.setup = function(options)
 
       -- toggle images in overlapped windows
       if state.options.window_overlap_clear_enabled then
-        vim.schedule(function()
+        render_scheduler.schedule("core:overlap", function()
           local windows = utils.window.get_windows({
             normal = true,
             floating = true,
@@ -241,14 +277,11 @@ api.setup = function(options)
 
       -- execute deferred clear / rerender
       log.debug("needs_rerender", { needs_rerender = needs_rerender })
-      vim.schedule(function()
+      render_scheduler.schedule(("core:decorator:%d"):format(winid), function()
         if not needs_rerender then return end
         if not vim.api.nvim_win_is_valid(winid) then return end
         if vim.api.nvim_win_get_buf(winid) ~= bufnr then return end
-
-        for _, curr in ipairs(api.get_images({ window = winid, buffer = bufnr })) do
-          curr:render()
-        end
+        render_window_images(winid)
       end)
 
       return false
@@ -308,17 +341,8 @@ api.setup = function(options)
   vim.api.nvim_create_autocmd({ "WinScrolled" }, {
     group = group,
     callback = function(au)
-      -- bail if not enabled
       if not state.enabled then return end
-
-      local images = api.get_images({ window = tonumber(au.file) })
-
-      -- bail if there are no images
-      if #images == 0 then return end
-
-      for _, current_image in ipairs(images) do
-        current_image:render()
-      end
+      schedule_window_render(tonumber(au.file))
     end,
   })
 
@@ -326,16 +350,8 @@ api.setup = function(options)
   vim.api.nvim_create_autocmd({ "WinResized", "WinNew" }, {
     group = group,
     callback = function()
-      -- bail if not enabled
       if not state.enabled then return end
-
-      local images = api.get_images()
-      for _, current_image in ipairs(images) do
-        if current_image.window ~= nil then
-          current_image:clear()
-          current_image:render()
-        end
-      end
+      schedule_all_window_render()
     end,
   })
 

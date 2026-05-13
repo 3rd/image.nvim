@@ -1,8 +1,38 @@
 local offsets = require("image/utils/offsets")
 
----@param opts { normal: boolean, floating: boolean, with_masks: boolean, ignore_masking_filetypes: string[] }
+---@param id number
+---@param opts { with_scroll?: boolean }
+---@return number
+local get_scroll_y = function(id, opts)
+  if not opts.with_scroll then return 0 end
+
+  local ok, topline = pcall(vim.fn.win_execute, id, "echo line('w0')")
+  if not ok then return 0 end
+
+  return (tonumber(topline) or 1) - 1
+end
+
+local is_treesitter_context_window = function(window, target_window)
+  if not window.is_floating then return false end
+
+  local config = vim.api.nvim_win_get_config(window.id)
+  if config.relative ~= "win" then return false end
+  if config.win ~= target_window.id then return false end
+  if config.row ~= 0 then return false end
+  if config.focusable ~= false then return false end
+  if config.mouse ~= false then return false end
+  if (config.zindex or 0) ~= 20 then return false end
+  if window.buffer_filetype ~= "" then return false end
+  if vim.bo[window.buffer].buftype ~= "nofile" then return false end
+  if vim.api.nvim_buf_get_name(window.buffer) ~= "" then return false end
+
+  return true
+end
+
+---@param opts? { normal?: boolean, floating?: boolean, with_masks?: boolean, with_scroll?: boolean, ignore_masking_filetypes?: string[] }
 ---@return Window[]
 local get_windows = function(opts)
+  opts = opts or {}
   local windows = {} ---@type Window[]
   for _, id in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
     local buffer = vim.api.nvim_win_get_buf(id)
@@ -14,7 +44,7 @@ local get_windows = function(opts)
     local bufinfo = vim.fn.getbufinfo(buffer)[1]
     local buffer_is_listed = bufinfo and bufinfo.listed == 1
     local scroll_x = 0 -- TODO:
-    local scroll_y = tonumber(vim.fn.win_execute(id, "echo line('w0')")) - 1
+    local scroll_y = get_scroll_y(id, opts)
     local is_visible = true
 
     local rect_top, rect_left
@@ -69,6 +99,8 @@ local get_windows = function(opts)
       for _, other_window in ipairs(windows) do
         if window.id == other_window.id then goto continue_inner end
         if not other_window.is_floating then goto continue_inner end
+        if vim.w[other_window.id].treesitter_context then goto continue_inner end
+        if is_treesitter_context_window(other_window, window) then goto continue_inner end
         if vim.tbl_contains(ignore_masking_filetypes, other_window.buffer_filetype) then goto continue_inner end
 
         local is_overlapping = (
@@ -111,7 +143,7 @@ local get_windows = function(opts)
   return result
 end
 
----@param opts? { with_masks: boolean, ignore_masking_filetypes: string[] }
+---@param opts? { with_masks?: boolean, with_scroll?: boolean, ignore_masking_filetypes?: string[] }
 ---@return Window|nil
 local get_window = function(id, opts)
   if not vim.api.nvim_win_is_valid(id) then return nil end

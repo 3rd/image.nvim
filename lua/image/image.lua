@@ -60,15 +60,15 @@ function Image:render(geometry)
   if self.last_modified ~= current_last_modified then
     self.last_modified = current_last_modified
     self.resize_hash = nil
-    self.cropped_hash = nil
-    self.resize_hash = nil
+    self.crop_hash = nil
+    self.transform_key = nil
+    self.transform_signature = nil
+    self.pending_transform_key = nil
 
-    local format = self.global_state.processor.get_format(self.original_path)
-
-    if format ~= "png" then
-      local converted_path = self.global_state.tmp_dir .. "/" .. vim.base64.encode(self.id) .. "-source.png"
-      self.path = self.global_state.processor.convert_to_png(self.original_path, converted_path)
-    end
+    self.source_format = self.global_state.processor.get_format(self.original_path)
+    self.path = self.original_path
+    self.resized_path = self.path
+    self.cropped_path = self.path
 
     self:clear()
     local dimensions = self.global_state.processor.get_dimensions(self.path)
@@ -167,6 +167,7 @@ end
 ---@param shallow? boolean
 function Image:clear(shallow)
   log.debug(("clear %s, shallow: %s"):format(self.id, shallow))
+  self.pending_transform_key = nil
   self.global_state.backend.clear(self.id, shallow or false)
 
   self.rendered_geometry = {
@@ -198,8 +199,11 @@ function Image:brightness(brightness)
   self.path = self.global_state.processor.brightness(self.path, brightness, altered_path)
   self.cropped_path = self.path
   self.resize_hash = nil
-  self.cropped_hash = nil
-  self.resize_hash = nil
+  self.crop_hash = nil
+  self.transform_key = nil
+  self.transform_signature = nil
+  self.pending_transform_key = nil
+  self.source_format = "png"
   if self.is_rendered then
     self:clear()
     self:render()
@@ -212,8 +216,11 @@ function Image:saturation(saturation)
   self.path = self.global_state.processor.saturation(self.path, saturation, altered_path)
   self.cropped_path = self.path
   self.resize_hash = nil
-  self.cropped_hash = nil
-  self.resize_hash = nil
+  self.crop_hash = nil
+  self.transform_key = nil
+  self.transform_signature = nil
+  self.pending_transform_key = nil
+  self.source_format = "png"
   if self.is_rendered then
     self:clear()
     self:render()
@@ -226,8 +233,11 @@ function Image:hue(hue)
   self.path = self.global_state.processor.hue(self.path, hue, altered_path)
   self.cropped_path = self.path
   self.resize_hash = nil
-  self.cropped_hash = nil
-  self.resize_hash = nil
+  self.crop_hash = nil
+  self.transform_key = nil
+  self.transform_signature = nil
+  self.pending_transform_key = nil
+  self.source_format = "png"
   if self.is_rendered then
     self:clear()
     self:render()
@@ -276,6 +286,7 @@ local from_file = function(path, options, state)
         resized_path = instance.path,
         cropped_path = instance.path,
         original_path = instance.original_path,
+        source_format = instance.source_format,
         image_width = instance.image_width,
         image_height = instance.image_height,
         max_width_window_percentage = instance.max_width_window_percentage,
@@ -311,22 +322,9 @@ local from_file = function(path, options, state)
 
   local id = opts.id or utils.random.id()
 
-  -- convert non-png images to png and read the dimensions
+  -- keep the original source; renderer performs conversion, resize, and crop as one cached transform.
   local source_path = absolute_original_path
-  local converted_path = state.tmp_dir .. "/" .. vim.base64.encode(id) .. "-source.png"
-
-  -- case 1: non-png, already converted
-  if
-    vim.fn.filereadable(converted_path) == 1
-    and vim.fn.getftime(converted_path) > vim.fn.getftime(absolute_original_path)
-  then
-    source_path = converted_path
-  else
-    local format = state.processor.get_format(absolute_original_path)
-    -- case 3: non-png, not converted
-    if format ~= "png" then source_path = state.processor.convert_to_png(absolute_original_path, converted_path) end
-    -- case 2: png
-  end
+  local source_format = state.processor.get_format(source_path)
 
   local dimensions = state.processor.get_dimensions(source_path)
 
@@ -335,7 +333,8 @@ local from_file = function(path, options, state)
     path = source_path,
     resized_path = source_path,
     cropped_path = source_path,
-    original_path = path,
+    original_path = absolute_original_path,
+    source_format = source_format,
     image_width = dimensions.width,
     image_height = dimensions.height,
     max_width_window_percentage = opts.max_width_window_percentage,

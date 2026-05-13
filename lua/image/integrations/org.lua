@@ -30,7 +30,7 @@ return document.create_document_integration({
       local text = vim.treesitter.get_node_text(node, bufnr)
       if text then
         local relpath = vim.fn.expand(text:gsub("^file:", ""))
-        local srcfile_abspath = vim.api.nvim_buf_get_name(0)
+        local srcfile_abspath = vim.api.nvim_buf_get_name(bufnr)
         local base_dir = vim.fn.fnamemodify(srcfile_abspath, ":h")
         local abspath = vim.fn.fnamemodify(base_dir .. "/" .. relpath, ":p")
         if magic.is_image(abspath) then

@@ -34,7 +34,7 @@ return document.create_document_integration({
         if path:sub(1, 1) == "/" then
           path = vim.fs.find(path:sub(2), {
             upward = true,
-            path = vim.fs.dirname(vim.api.nvim_buf_get_name(0)),
+            path = vim.fs.dirname(vim.api.nvim_buf_get_name(buf)),
           })[1]
         end
 

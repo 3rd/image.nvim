@@ -47,6 +47,27 @@ local write = function(data, tty, escape)
   end
 end
 
+local build_control_payload = function(config)
+  local control_payload = ""
+
+  for k, v in pairs(config) do
+    if v ~= nil then
+      local key = codes.control.keys[k]
+      if key then
+        -- kitty graphics control values are integers; drop fractional Lua number parts before writing.
+        if type(v) == "number" then v = string.format("%d", v) end
+        control_payload = control_payload .. key .. "=" .. v .. ","
+      end
+    end
+  end
+
+  return control_payload:sub(0, -2)
+end
+
+local graphics_control_sequence = function(config)
+  return "\x1b_G" .. build_control_payload(config) .. "\x1b\\"
+end
+
 local move_cursor = function(x, y, save)
   if is_SSH and utils.tmux.is_tmux then
     -- When tmux is running over ssh, set-cursor sometimes doesn't actually get sent
@@ -75,30 +96,9 @@ end
 ---@param data? string
 -- https://github.com/edluffy/hologram.nvim/blob/main/lua/hologram/terminal.lua#L52
 local write_graphics = function(config, data)
-  local control_payload = ""
-
   log.debug("write_graphics", { config = config, has_data = data ~= nil })
 
-  for k, v in pairs(config) do
-    if v ~= nil then
-      local key = codes.control.keys[k]
-      if key then
-        if type(v) == "number" then
-          -- There are currently no floating-point values in the Kitty graphics
-          -- specification. All values are either signed or unsigned 32-bit integers.
-          -- As such, we just stringify the number values here using "%d" to drop any
-          -- possible fractional portions.
-          --
-          -- (Note that string.format here is used to accommodate older versions of
-          -- Lua, in addition to the fact that we are just writing the string below
-          -- anyway).
-          v = string.format("%d", v)
-        end
-        control_payload = control_payload .. key .. "=" .. v .. ","
-      end
-    end
-  end
-  control_payload = control_payload:sub(0, -2)
+  local control_payload = build_control_payload(config)
 
   if data then
     if config.transmit_medium == codes.control.transmit_medium.direct then
@@ -131,8 +131,25 @@ local write_graphics = function(config, data)
     end
   else
     log.debug("control payload", { payload = control_payload })
-    write("\x1b_G" .. control_payload .. "\x1b\\", config.tty, true)
+    write(graphics_control_sequence(config), config.tty, true)
   end
+end
+
+local write_graphics_at = function(config, x, y)
+  if utils.tmux.is_tmux then
+    local pane_position = utils.tmux.get_pane_position()
+    x = x + pane_position.left
+    y = y + pane_position.top
+  end
+
+  local sequence = "\x1b[?2026h\x1b[s\x1b["
+    .. y
+    .. ";"
+    .. x
+    .. "H"
+    .. graphics_control_sequence(config)
+    .. "\x1b[u\x1b[?2026l"
+  write(sequence, nil, true)
 end
 
 local write_placeholder = function(image_id, x, y, width, height)
@@ -154,6 +171,7 @@ return {
   restore_cursor = restore_cursor,
   write = write,
   write_graphics = write_graphics,
+  write_graphics_at = write_graphics_at,
   write_placeholder = write_placeholder,
   update_sync_start = update_sync_start,
   update_sync_end = update_sync_end,

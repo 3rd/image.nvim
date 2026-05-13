@@ -208,6 +208,68 @@ function MagickCliProcessor.crop(path, x, y, width, height, output_path)
   return out_path
 end
 
+local build_transform_args = function(path, request, output_path)
+  local source_path = path
+  if (request.source_format or ""):lower() == "gif" then source_path = source_path .. "[0]" end
+
+  local args = { source_path }
+  if request.target_width and request.target_height then
+    args[#args + 1] = "-scale"
+    args[#args + 1] = string.format("%dx%d", request.target_width, request.target_height)
+  end
+
+  if request.crop then
+    args[#args + 1] = "-crop"
+    args[#args + 1] =
+      string.format("%dx%d+%d+%d", request.crop.width, request.crop.height, request.crop.x, request.crop.y)
+  end
+
+  args[#args + 1] = (request.output_format or "png") .. ":" .. output_path
+  return args
+end
+
+function MagickCliProcessor.transform(path, request, output_path, callback)
+  guard()
+  local stderr = vim.loop.new_pipe()
+  local error_output = ""
+  local handle = nil
+
+  local close_stderr = function()
+    if not stderr or stderr:is_closing() then return end
+    pcall(vim.loop.read_stop, stderr)
+    stderr:close()
+  end
+
+  handle = vim.loop.spawn(convert_cmd, {
+    args = build_transform_args(path, request, output_path),
+    stdio = { nil, nil, stderr },
+    hide = true,
+  }, function(code)
+    close_stderr()
+    if handle and not handle:is_closing() then handle:close() end
+    if code == 0 then
+      callback({ ok = true, path = output_path })
+    else
+      callback({ ok = false, error = error_output ~= "" and error_output or "Failed to transform image" })
+    end
+  end)
+
+  if not handle then
+    close_stderr()
+    callback({ ok = false, error = "Failed to start image transform" })
+    return
+  end
+
+  vim.loop.read_start(stderr, function(err, data)
+    if err then
+      error_output = error_output .. tostring(err)
+      return
+    end
+    if data then error_output = error_output .. data end
+    if data == nil then close_stderr() end
+  end)
+end
+
 function MagickCliProcessor.brightness(path, brightness, output_path)
   guard()
   local out_path = output_path or path:gsub("%.([^.]+)$", "-bright.%1")

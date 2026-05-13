@@ -52,6 +52,32 @@ function MagickRockProcessor.crop(path, x, y, width, height, output_path)
   return out_path
 end
 
+function MagickRockProcessor.transform(path, request, output_path, callback)
+  vim.schedule(function()
+    local image = nil
+    local ok, err = pcall(function()
+      image = magick.load_image(path)
+      if request.target_width and request.target_height then
+        image:scale(request.target_width, request.target_height)
+      end
+      if request.crop then image:crop(request.crop.width, request.crop.height, request.crop.x, request.crop.y) end
+      image:set_format(request.output_format or "png")
+      image:write(output_path)
+      image:destroy()
+      image = nil
+    end)
+
+    if image then pcall(function()
+      image:destroy()
+    end) end
+    if ok then
+      callback({ ok = true, path = output_path })
+    else
+      callback({ ok = false, error = tostring(err) })
+    end
+  end)
+end
+
 function MagickRockProcessor.brightness(path, brightness, output_path)
   local image = magick.load_image(path)
   image:modulate(brightness)

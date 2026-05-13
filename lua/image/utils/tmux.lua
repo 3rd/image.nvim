@@ -1,4 +1,6 @@
 local is_tmux = vim.env.TMUX ~= nil
+local pane_position = nil
+local pane_position_clear_scheduled = false
 
 local has_passthrough = false
 if is_tmux then
@@ -12,6 +14,30 @@ local create_dm_getter = function(name)
     local result = vim.fn.system({ "tmux", "display-message", "-p", "#{" .. name .. "}" })
     return vim.fn.trim(result)
   end
+end
+
+local clear_pane_position = function()
+  pane_position = nil
+  pane_position_clear_scheduled = false
+end
+
+local get_pane_position = function()
+  if not is_tmux then return { left = 0, top = 0 } end
+  if pane_position then return pane_position end
+
+  local result = vim.fn.system({ "tmux", "display-message", "-p", "#{pane_left} #{pane_top}" })
+  local left, top = result:match("(%-?%d+)%s+(%-?%d+)")
+  pane_position = {
+    left = tonumber(left) or 0,
+    top = tonumber(top) or 0,
+  }
+
+  if not pane_position_clear_scheduled then
+    pane_position_clear_scheduled = true
+    vim.schedule(clear_pane_position)
+  end
+
+  return pane_position
 end
 
 local get_current_session = create_dm_getter("client_session")
@@ -69,6 +95,9 @@ return {
   get_window_name = create_dm_window_getter("window_name"),
   get_pane_id = create_dm_pane_getter("pane_id"),
   get_pane_pid = create_dm_pane_getter("pane_pid"),
+  get_pane_left = create_dm_getter("pane_left"),
+  get_pane_position = get_pane_position,
+  get_pane_top = create_dm_getter("pane_top"),
   get_pane_tty = create_dm_pane_getter("pane_tty"),
   get_cursor_x = create_dm_getter("cursor_x"),
   get_cursor_y = create_dm_getter("cursor_y"),

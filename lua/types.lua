@@ -118,6 +118,7 @@
 ---@field resized_path string
 ---@field cropped_path string
 ---@field original_path string
+---@field source_format? string
 ---@field image_width number
 ---@field image_height number
 ---@field max_width_window_percentage? number
@@ -132,6 +133,9 @@
 ---@field is_rendered boolean
 ---@field resize_hash? string
 ---@field crop_hash? string
+---@field transform_key? string
+---@field transform_signature? string
+---@field pending_transform_key? string
 ---@field global_state State
 ---@field render fun(self: Image, geometry?: ImageGeometry)
 ---@field clear fun(self: Image, shallow?: boolean)
@@ -147,6 +151,33 @@
 ---@field render_offset_top? number
 ---@field overlap? integer
 
+---@class TransformSource
+---@field path string
+---@field mtime string
+---@field size number
+
+---@class TransformCrop
+---@field x number
+---@field y number
+---@field width number
+---@field height number
+
+---@class TransformRequest
+---@field key? string
+---@field source TransformSource
+---@field source_format string
+---@field target_width number
+---@field target_height number
+---@field crop? TransformCrop
+---@field processor? string
+---@field backend_crop boolean
+---@field output_format string
+
+---@class TransformResult
+---@field ok boolean
+---@field path? string
+---@field error? string
+
 ---@class ImageProcessor
 --- We need to:
 --- - get image format
@@ -158,6 +189,7 @@
 ---@field get_format fun(path: string): string
 ---@field convert_to_png fun(path: string, output_path?: string): string
 ---@field get_dimensions fun(path: string): { width: number, height: number }
+---@field transform fun(path: string, request: TransformRequest, output_path: string, callback: fun(result: TransformResult))
 ---@field resize fun(path: string, width: number, height: number, output_path?: string): string
 ---@field crop fun(path: string, x: number, y: number, width: number, height: number, output_path?: string): string
 ---@field brightness fun(path: string, brightness: number, output_path?: string): string

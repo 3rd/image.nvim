@@ -1,12 +1,33 @@
 local log = require("image/utils/logger").within("renderer")
+local transform_cache = require("image/utils/transform_cache")
 local utils = require("image/utils")
 
--- Images get resized and cropped to fit in the context they are rendered in.
--- Each of these versions are written to the temp directory and cleared on reboot (on Linux at least).
--- This is where we keep track of the hashes of the resized and cropped versions of the images so we
--- can avoid processing and writing the same cropped/resized image variant multiple times.
----@type table<string, { resized: table<string>, cropped: table<string> }>
-local cache = {}
+-- document scans can recreate image objects for one id while a transform is still pending.
+local pending_transform_owners = {}
+
+local transform_crop_key = function(crop)
+  if not crop then return "none" end
+  return ("%d:%d:%d:%d"):format(crop.x, crop.y, crop.width, crop.height)
+end
+
+local transform_signature_for_request = function(
+  source_format,
+  pixel_width,
+  pixel_height,
+  crop,
+  processor,
+  backend_crop
+)
+  return table.concat({
+    source_format,
+    tostring(pixel_width),
+    tostring(pixel_height),
+    transform_crop_key(crop),
+    processor or "",
+    tostring(backend_crop or false),
+    "png",
+  }, "|")
+end
 
 -- FIXME: having multiple instances of the same image that are bounded to
 --  different sizes cause the virt_line calculations to break (i think the
@@ -24,7 +45,6 @@ local render = function(image)
   if type(state.options.scale_factor) == "number" then scale_factor = state.options.scale_factor end
   local image_rows = math.floor(image.image_height / term_size.cell_height * scale_factor)
   local image_columns = math.floor(image.image_width / term_size.cell_width * scale_factor)
-  local image_cache = cache[image.original_path] or { resized = {}, cropped = {} }
 
   log.debug(("render() %s"):format(image.id), {
     id = image.id,
@@ -360,6 +380,7 @@ local render = function(image)
   local needs_resize = false
   local initial_crop_hash = image.crop_hash
   local initial_resize_hash = image.resize_hash
+  local initial_transform_key = image.transform_key
 
   -- compute crop top/bottom
   -- crop top
@@ -386,68 +407,110 @@ local render = function(image)
     needs_crop = true
   end
 
-  -- compute resize
-  local resize_hash = ("%d-%d"):format(pixel_width, pixel_height)
   if image.image_width ~= pixel_width then needs_resize = true end
 
-  -- TODO make this non-blocking
+  local crop_hash = ("%d-%d-%d-%d"):format(0, crop_offset_top, pixel_width, cropped_pixel_height)
+  local source_format = (image.source_format or "png"):lower()
+  local transform_crop = nil
+  if needs_crop and not state.backend.features.crop then
+    transform_crop = {
+      x = 0,
+      y = crop_offset_top,
+      width = pixel_width,
+      height = cropped_pixel_height,
+    }
+  end
 
-  -- resize
-  if needs_resize then
-    if image.resize_hash ~= resize_hash then
-      local cached_path = image_cache.resized[resize_hash]
+  local needs_transform = needs_resize or transform_crop ~= nil or source_format ~= "png"
+  local transform_key = nil
 
-      -- try cache
-      if cached_path then
-        log.debug(("using cached resized image %s"):format(cached_path))
-        image.resized_path = cached_path
-        image.resize_hash = resize_hash
-      else
-        -- perform resize
-        local tmp_path = state.tmp_dir .. "/" .. vim.base64.encode(image.id) .. "-resized-" .. resize_hash .. ".png"
-        image.resized_path = state.processor.resize(image.path, pixel_width, pixel_height, tmp_path)
-        image.resize_hash = resize_hash
-        image_cache.resized[resize_hash] = image.resized_path
+  if needs_transform then
+    local transform_signature = transform_signature_for_request(
+      source_format,
+      pixel_width,
+      pixel_height,
+      transform_crop,
+      state.options.processor,
+      state.backend.features.crop
+    )
+
+    local source, source_error = transform_cache.source_identity(image.path)
+    if not source then
+      if pending_transform_owners[image.id] == image then pending_transform_owners[image.id] = nil end
+      image.pending_transform_key = nil
+      image.transform_signature = nil
+      log.error(source_error)
+      return image.is_rendered == true
+    end
+
+    local request = {
+      source = source,
+      source_format = source_format,
+      target_width = pixel_width,
+      target_height = pixel_height,
+      crop = transform_crop,
+      processor = state.options.processor,
+      backend_crop = state.backend.features.crop,
+      output_format = "png",
+    }
+    request.key = transform_cache.build_key(request)
+    transform_key = request.key
+
+    if image.transform_key == request.key and not image.pending_transform_key then
+      image.transform_signature = transform_signature
+    else
+      if image.pending_transform_key == request.key and pending_transform_owners[image.id] == image then
+        return image.is_rendered == true
       end
+
+      local entry = transform_cache.get_or_queue(request, state.tmp_dir, function(output_path, complete)
+        state.processor.transform(request.source.path, request, output_path, complete)
+      end, function(completed_entry)
+        if image.pending_transform_key ~= request.key then return end
+        if pending_transform_owners[image.id] ~= image then return end
+
+        pending_transform_owners[image.id] = nil
+        image.pending_transform_key = nil
+        if completed_entry.status ~= "complete" then
+          log.error(("image transform failed for %s: %s"):format(image.id, completed_entry.error or "unknown error"))
+          return
+        end
+
+        image:render()
+      end)
+
+      if entry.status == "pending" then
+        image.pending_transform_key = request.key
+        pending_transform_owners[image.id] = image
+        local current_image = state.images[image.id]
+        if not current_image or not current_image.is_rendered or current_image == image then
+          state.images[image.id] = image
+        end
+        log.debug(("queued image transform %s"):format(image.id), { key = request.key })
+        return image.is_rendered == true
+      end
+
+      if entry.status == "failed" then
+        if pending_transform_owners[image.id] == image then pending_transform_owners[image.id] = nil end
+        if image.pending_transform_key == request.key then image.pending_transform_key = nil end
+        log.error(("image transform failed for %s: %s"):format(image.id, entry.error or "unknown error"))
+        return image.is_rendered == true
+      end
+
+      image.resized_path = entry.output_path
+      image.cropped_path = entry.output_path
+      image.resize_hash = request.key
+      image.transform_signature = transform_signature
     end
   else
     image.resized_path = image.path
+    image.cropped_path = image.path
     image.resize_hash = nil
+    image.transform_signature = nil
   end
 
-  -- crop
-  local crop_hash = ("%d-%d-%d-%d"):format(0, crop_offset_top, pixel_width, cropped_pixel_height)
-  if needs_crop and not state.backend.features.crop then
-    if (needs_resize and image.resize_hash ~= resize_hash) or image.crop_hash ~= crop_hash then
-      local cached_path = image_cache.cropped[crop_hash]
-
-      -- try cache;
-      if cached_path then
-        log.debug(("using cached cropped image %s"):format(cached_path))
-        image.cropped_path = cached_path
-        image.crop_hash = crop_hash
-      else
-        -- perform crop
-        local tmp_path = state.tmp_dir .. "/" .. vim.base64.encode(image.id) .. "-cropped-" .. crop_hash .. ".png"
-        image.cropped_path = state.processor.crop(
-          image.resized_path or image.path,
-          0,
-          crop_offset_top,
-          pixel_width,
-          cropped_pixel_height,
-          tmp_path
-        )
-        image.crop_hash = crop_hash
-        image_cache.cropped[crop_hash] = image.cropped_path
-      end
-    end
-  elseif needs_crop then
-    image.cropped_path = image.resized_path
-    image.crop_hash = crop_hash
-  else
-    image.cropped_path = image.resized_path
-    image.crop_hash = nil
-  end
+  image.transform_key = transform_key
+  image.crop_hash = needs_crop and crop_hash or nil
 
   if
     image.is_rendered
@@ -457,6 +520,7 @@ local render = function(image)
     and image.rendered_geometry.height == rendered_geometry.height
     and image.crop_hash == initial_crop_hash
     and image.resize_hash == initial_resize_hash
+    and initial_transform_key == transform_key
   then
     log.debug("skipping render", { id = image.id })
     return true
@@ -478,14 +542,13 @@ local render = function(image)
   image.bounds = bounds
   state.backend.render(image, absolute_x, absolute_y, width, height)
   image.rendered_geometry = rendered_geometry
-  cache[image.original_path] = image_cache
 
   log.debug(("rendered %s"):format(image.id))
   return true
 end
 
 local clear_cache_for_path = function(path)
-  cache[path] = nil
+  transform_cache.clear_for_path(path)
 end
 
 return {

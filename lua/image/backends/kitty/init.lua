@@ -149,11 +149,7 @@ backend.render = function(image, x, y, width, height)
     backend.state.images[image.id]:clear(true)
   end
 
-  helpers.update_sync_start()
-  helpers.move_cursor(x + 1, y + 1, true)
-  helpers.write_graphics(display_payload)
-  helpers.restore_cursor()
-  helpers.update_sync_end()
+  helpers.write_graphics_at(display_payload, x + 1, y + 1)
 
   backend.state.images[image.id] = image
   image.is_rendered = true
