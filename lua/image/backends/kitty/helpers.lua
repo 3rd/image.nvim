@@ -12,11 +12,18 @@ if not stdout then error("failed to open stdout") end
 local is_SSH = (vim.env.SSH_CLIENT ~= nil) or (vim.env.SSH_TTY ~= nil)
 
 -- https://github.com/edluffy/hologram.nvim/blob/main/lua/hologram/terminal.lua#L77
-local get_chunked = function(str)
+local DEFAULT_DIRECT_CHUNK_SIZE = 4096
+
+local get_chunk_size = function(chunk_size)
+  return type(chunk_size) == "number" and chunk_size > 0 and chunk_size or DEFAULT_DIRECT_CHUNK_SIZE
+end
+
+local get_chunked = function(str, chunk_size)
+  chunk_size = get_chunk_size(chunk_size)
   local chunks = {}
-  for i = 1, #str, 4096 do
-    local chunk = str:sub(i, i + 4096 - 1):gsub("%s", "")
-    if #chunk > 0 then table.insert(chunks, chunk) end
+  for i = 1, #str, chunk_size do
+    local chunk = str:sub(i, i + chunk_size - 1):gsub("%s", "")
+    table.insert(chunks, chunk)
   end
   return chunks
 end
@@ -94,8 +101,9 @@ end
 
 ---@param config KittyControlConfig
 ---@param data? string
+---@param direct_chunk_size? number
 -- https://github.com/edluffy/hologram.nvim/blob/main/lua/hologram/terminal.lua#L52
-local write_graphics = function(config, data)
+local write_graphics = function(config, data, direct_chunk_size)
   log.debug("write_graphics", { config = config, has_data = data ~= nil })
 
   local control_payload = build_control_payload(config)
@@ -117,7 +125,7 @@ local write_graphics = function(config, data)
       data = result
     end
     data = vim.base64.encode(data):gsub("%-", "/")
-    local chunks = get_chunked(data)
+    local chunks = get_chunked(data, direct_chunk_size)
     local m = #chunks > 1 and 1 or 0
     control_payload = control_payload .. ",m=" .. m
     for i = 1, #chunks do
