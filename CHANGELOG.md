@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.6.0](https://github.com/3rd/image.nvim/compare/v1.5.1...v1.6.0) (2026-05-13)
+
+
+### Features
+
+* add overlap option and support negative render_offset_top ([faccd45](https://github.com/3rd/image.nvim/commit/faccd45b2e70e50d575be9e353534157b928bbf3))
+* add overlap option to reduce virtual padding for overlapping images ([1296220](https://github.com/3rd/image.nvim/commit/12962207e93884ed4ada07f73eb6f8484360aa02))
+* **kitty:** make direct chunk size configurable ([aa67a40](https://github.com/3rd/image.nvim/commit/aa67a40c0affdc1ef387a6f609d21c4abdc96811))
+* lazy load image stack and add dev shell ([9d3c45c](https://github.com/3rd/image.nvim/commit/9d3c45cf214c63e4daa1dabe74301b01a994ed51)), closes [#361](https://github.com/3rd/image.nvim/issues/361)
+
+
+### Bug Fixes
+
+* add BufEnter to document integration autocmds ([72e5a91](https://github.com/3rd/image.nvim/commit/72e5a916d40968feeb999bf7f18ab4cf9783d85e))
+* add BufEnter to document integration autocmds ([7944093](https://github.com/3rd/image.nvim/commit/7944093238f5678c1286c46545f06cf861774547))
+* **core:** prevent stale images after buffer switch ([73a6461](https://github.com/3rd/image.nvim/commit/73a64613048216bda1a4f464bf7bed2dbaaf4cec))
+* **core:** stabilize image redraw & scheduling 🔥 ([ffdffef](https://github.com/3rd/image.nvim/commit/ffdffef10fc2e3c4b8e052317016e26911e0fa0b))
+* **kitty:** close handles after write ([7d3ae93](https://github.com/3rd/image.nvim/commit/7d3ae939a26b31ac75edb5eb4ca83462e5ab2d8f)), closes [#363](https://github.com/3rd/image.nvim/issues/363)
+* **kitty:** target tmux pane for image placement ([c241753](https://github.com/3rd/image.nvim/commit/c2417539abbd351505a8cb61785accc3d0054801))
+* large Kitty direct image transfers over SSH. ([44e0712](https://github.com/3rd/image.nvim/commit/44e07129cd0ea0c60afa7a1991d35b5765b51a6b))
+* **performance:** increase throughput via bigger direct_chunk_size ([d1d3d27](https://github.com/3rd/image.nvim/commit/d1d3d27bf520780b6f7a6e54cac2268591b4c3c3))
+* **renderer:** preserve default virtual padding ([9adf7c7](https://github.com/3rd/image.nvim/commit/9adf7c735afa3d3cc40b60297980c5c90abc10b1))
+* **tty+ssh:** renderer should know when it is in a tty (fixes [#95](https://github.com/3rd/image.nvim/issues/95)) ([5cade29](https://github.com/3rd/image.nvim/commit/5cade297db79ee0a4cb80f3e53028ad9b91e0ee3))
+
 ## [1.5.1](https://github.com/3rd/image.nvim/compare/v1.5.0...v1.5.1) (2026-02-21)
 
 
