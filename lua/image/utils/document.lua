@@ -141,12 +141,34 @@ local create_document_integration = function(config)
 
     local term_size = utils.term.get_size()
     if not term_size then return end
-    local width, height = utils.math.adjust_to_aspect_ratio(
+    local state = image.global_state
+    local scale_factor = state.options.scale_factor or 1.0
+
+    -- compute the image's scaled natural width and apply same constraints as the renderer
+    local natural_width = math.max(1, math.floor(image.image_width / term_size.cell_width * scale_factor))
+    local width = math.min(natural_width, math.floor(term_size.screen_cols / 2))
+    if state.options.max_width then width = math.min(width, state.options.max_width) end
+    if state.options.max_width_window_percentage then
+      width = math.min(width, math.floor(term_size.screen_cols * state.options.max_width_window_percentage / 100))
+    end
+    local height = 0
+    width, height = utils.math.adjust_to_aspect_ratio(
       term_size,
       image.image_width,
       image.image_height,
-      math.floor(term_size.screen_cols / 2),
-      0
+      width,
+      height
+    )
+    if state.options.max_height then height = math.min(height, state.options.max_height) end
+    if state.options.max_height_window_percentage then
+      height = math.min(height, math.floor(term_size.screen_rows * state.options.max_height_window_percentage / 100))
+    end
+    width, height = utils.math.adjust_to_aspect_ratio(
+      term_size,
+      image.image_width,
+      image.image_height,
+      width,
+      height
     )
     local win_config = {
       relative = "cursor",
