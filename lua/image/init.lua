@@ -53,6 +53,7 @@ local default_options = {
   max_height = nil,
   max_width_window_percentage = 100,
   max_height_window_percentage = 50,
+  popup_border = "single",
   scale_factor = 1.0,
   kitty_method = "normal",
   kitty_direct_chunk_size = 4096,

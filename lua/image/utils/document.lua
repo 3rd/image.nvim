@@ -136,7 +136,7 @@ local create_document_integration = function(config)
     return should_render_match(ctx, window, item.match, cursor_row)
   end
 
-  local render_popup_image = function(image)
+  local render_popup_image = function(image, popup_border)
     if popup_window ~= nil then return end
 
     local term_size = utils.term.get_size()
@@ -155,7 +155,7 @@ local create_document_integration = function(config)
       width = width,
       height = height,
       style = "minimal",
-      border = "single",
+      border = popup_border,
     }
     local buf = vim.api.nvim_create_buf(false, true)
     vim.bo[buf].filetype = "image_nvim_popup"
@@ -192,7 +192,8 @@ local create_document_integration = function(config)
   local render_image = function(ctx, item, image)
     log.debug("render_image called", { id = image.id })
     if ctx.options.only_render_image_at_cursor and ctx.options.only_render_image_at_cursor_mode == "popup" then
-      render_popup_image(image)
+      local popup_border = ctx.state.options.popup_border or "single"
+      render_popup_image(image, popup_border)
       return
     end
 
