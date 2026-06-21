@@ -12,6 +12,12 @@ local backend_modules = {
   sixel = "image/backends/sixel",
 }
 
+---@return string
+local winborder_or_fallback = function()
+  if vim.o.winborder == "" then return "single" end
+  return vim.o.winborder
+end
+
 ---@type Options
 local default_options = {
   -- backend = "ueberzug",
@@ -53,7 +59,7 @@ local default_options = {
   max_height = nil,
   max_width_window_percentage = 100,
   max_height_window_percentage = 50,
-  popup_border = "single",
+  popup_border = winborder_or_fallback(),
   scale_factor = 1.0,
   kitty_method = "normal",
   kitty_direct_chunk_size = 4096,

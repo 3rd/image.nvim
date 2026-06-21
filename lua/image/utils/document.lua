@@ -192,8 +192,7 @@ local create_document_integration = function(config)
   local render_image = function(ctx, item, image)
     log.debug("render_image called", { id = image.id })
     if ctx.options.only_render_image_at_cursor and ctx.options.only_render_image_at_cursor_mode == "popup" then
-      local popup_border = ctx.state.options.popup_border or "single"
-      render_popup_image(image, popup_border)
+      render_popup_image(image, ctx.state.options.popup_border)
       return
     end
 
