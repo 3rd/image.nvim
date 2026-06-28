@@ -28,13 +28,19 @@ function MagickCliProcessor.get_format(path)
   local output = ""
   local error_output = ""
 
+  local failed = nil
+
   vim.loop.spawn(has_magick and "magick" or "identify", {
     args = has_magick and { "identify", "-format", "%m", path } or { "-format", "%m", path },
     stdio = { nil, stdout, stderr },
     hide = true,
   }, function(code)
-    if code ~= 0 then error(error_output ~= "" and error_output or "Failed to get format") end
-    result = output:lower():gsub("%s+$", "")
+    -- can't error() here, it's a libuv callback and escapes the caller's pcall (#370)
+    if code ~= 0 then
+      failed = error_output ~= "" and error_output or "Failed to get format"
+    else
+      result = output:lower():gsub("%s+$", "")
+    end
   end)
 
   vim.loop.read_start(stdout, function(err, data)
@@ -48,8 +54,9 @@ function MagickCliProcessor.get_format(path)
   end)
 
   local success = vim.wait(5000, function()
-    return result ~= nil
+    return result ~= nil or failed ~= nil
   end, 10)
+  if failed then error(failed) end
   if not success then error("identify format detection timed out") end
   return result
 end
@@ -107,14 +114,20 @@ function MagickCliProcessor.get_dimensions(path)
   -- GIF
   if actual_format == "gif" then path = path .. "[0]" end
 
+  local failed = nil
+
   vim.loop.spawn(has_magick and "magick" or "identify", {
     args = has_magick and { "identify", "-format", "%wx%h", path } or { "-format", "%wx%h", path },
     stdio = { nil, stdout, stderr },
     hide = true,
   }, function(code)
-    if code ~= 0 then error(error_output ~= "" and error_output or "Failed to get dimensions") end
-    local width, height = output:match("(%d+)x(%d+)")
-    result = { width = tonumber(width), height = tonumber(height) }
+    -- can't error() here, it's a libuv callback and escapes the caller's pcall (#370)
+    if code ~= 0 then
+      failed = error_output ~= "" and error_output or "Failed to get dimensions"
+    else
+      local width, height = output:match("(%d+)x(%d+)")
+      result = { width = tonumber(width), height = tonumber(height) }
+    end
   end)
 
   vim.loop.read_start(stdout, function(err, data)
@@ -128,9 +141,10 @@ function MagickCliProcessor.get_dimensions(path)
   end)
 
   local success = vim.wait(5000, function()
-    return result ~= nil
+    return result ~= nil or failed ~= nil
   end, 10)
 
+  if failed then error(failed) end
   if not success then error("identify dimensions timed out") end
 
   return result
