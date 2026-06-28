@@ -280,11 +280,15 @@ handlers.svg = function(file)
   -- isolate the opening <svg ...> tag
   local tag = content:match("<svg[^>]*>") or content
 
-  -- ponytail: treats any unit as px; fine for raster-sized SVGs (badges), off for pt/em/% which we skip below
+  -- CSS absolute units in px (96dpi). em/ex/% are relative -> nil, fall back to viewBox.
+  local units = { px = 1, pt = 96 / 72, pc = 16, ["in"] = 96, cm = 96 / 2.54, mm = 96 / 25.4, Q = 96 / 101.6 }
   local function parse_len(s)
-    if not s or s:find("%%") then return nil end
-    local n = s:match("^%s*([%d%.]+)")
-    return n and tonumber(n)
+    if not s then return nil end
+    local n, unit = s:match("^%s*([%d%.]+)%s*(%a*)%s*$")
+    if not n then return nil end
+    local scale = unit == "" and 1 or units[unit]
+    if not scale then return nil end
+    return tonumber(n) * scale
   end
 
   local w = parse_len(tag:match("width%s*=%s*[\"']([^\"']+)[\"']"))
