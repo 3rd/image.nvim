@@ -3,6 +3,7 @@ local utils = require("image/utils")
 local has_magick = vim.fn.executable("magick") == 1
 local has_convert = vim.fn.executable("convert") == 1
 local has_identify = vim.fn.executable("identify") == 1
+local has_rsvg = vim.fn.executable("rsvg-convert") == 1
 
 -- magick v6 + v7
 local convert_cmd = has_magick and "magick" or "convert"
@@ -242,11 +243,32 @@ local build_transform_args = function(path, request, output_path)
   return args
 end
 
+-- rsvg-convert renders SVGs ImageMagick can't (embedded data: URIs, #370).
+-- NOTE: ignores request.crop; inline SVG badges don't trigger renderer crop. magick-crop the PNG if that changes.
+local build_rsvg_args = function(path, request, output_path)
+  local args = {}
+  if request.target_width and request.target_height then
+    args[#args + 1] = "-w"
+    args[#args + 1] = tostring(request.target_width)
+    args[#args + 1] = "-h"
+    args[#args + 1] = tostring(request.target_height)
+  end
+  args[#args + 1] = "-o"
+  args[#args + 1] = output_path
+  args[#args + 1] = path
+  return args
+end
+
 function MagickCliProcessor.transform(path, request, output_path, callback)
   guard()
   local stderr = vim.loop.new_pipe()
   local error_output = ""
   local handle = nil
+
+  local use_rsvg = has_rsvg and (request.source_format or ""):lower() == "svg"
+  local cmd = use_rsvg and "rsvg-convert" or convert_cmd
+  local args = use_rsvg and build_rsvg_args(path, request, output_path)
+    or build_transform_args(path, request, output_path)
 
   local close_stderr = function()
     if not stderr or stderr:is_closing() then return end
@@ -254,8 +276,8 @@ function MagickCliProcessor.transform(path, request, output_path, callback)
     stderr:close()
   end
 
-  handle = vim.loop.spawn(convert_cmd, {
-    args = build_transform_args(path, request, output_path),
+  handle = vim.loop.spawn(cmd, {
+    args = args,
     stdio = { nil, nil, stderr },
     hide = true,
   }, function(code)
