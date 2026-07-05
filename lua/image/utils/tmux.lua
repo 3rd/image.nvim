@@ -80,8 +80,22 @@ local create_dm_pane_getter = function(name)
   end
 end
 
+-- Number of tmux passthrough envelopes to wrap graphics escapes in. Each tmux the
+-- output crosses strips exactly one envelope, so nested tmux (e.g. a local tmux plus a
+-- remote tmux over SSH) needs one envelope PER layer, otherwise the outer tmux drops the
+-- escape and kitty shows placeholder glyphs instead of the image. Set via the
+-- `tmux_passthrough_layers` option (default 1).
+local passthrough_layers = 1
+
+local set_passthrough_layers = function(n)
+  if type(n) == "number" and n >= 1 then passthrough_layers = math.floor(n) end
+end
+
 local escape = function(sequence)
-  return "\x1bPtmux;" .. sequence:gsub("\x1b", "\x1b\x1b") .. "\x1b\\"
+  for _ = 1, passthrough_layers do
+    sequence = "\x1bPtmux;" .. sequence:gsub("\x1b", "\x1b\x1b") .. "\x1b\\"
+  end
+  return sequence
 end
 
 local get_version = function()
@@ -107,4 +121,5 @@ return {
   get_cursor_y = create_dm_getter("cursor_y"),
   get_version = get_version,
   escape = escape,
+  set_passthrough_layers = set_passthrough_layers,
 }

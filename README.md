@@ -422,6 +422,7 @@ require("image").setup({
   max_height_window_percentage = 50,
   scale_factor = 1.0,
   kitty_direct_chunk_size = 4096, -- chunk size for direct Kitty graphics protocol transmission
+  tmux_passthrough_layers = 1, -- number of tmux layers to wrap the passthrough escape for; set to 2 for a local tmux + a remote tmux over SSH
   window_overlap_clear_enabled = false, -- toggles images when windows are overlapped
   window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "snacks_notif", "scrollview", "scrollview_sign" },
   editor_only_render_when_focused = false, -- auto show/hide images when the editor gains/looses focus

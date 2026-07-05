@@ -56,6 +56,9 @@ local default_options = {
   scale_factor = 1.0,
   kitty_method = "normal",
   kitty_direct_chunk_size = 4096,
+  -- Number of nested tmux layers between nvim and the terminal (each strips one
+  -- passthrough envelope). Bump to 2 for a local tmux + a remote tmux over SSH.
+  tmux_passthrough_layers = 1,
   window_overlap_clear_enabled = false,
   window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "snacks_notif", "scrollview", "scrollview_sign" },
   editor_only_render_when_focused = false,
@@ -114,6 +117,7 @@ end
 api.setup = function(options)
   local opts = vim.tbl_deep_extend("force", default_options, options or {})
   state.options = opts
+  utils.tmux.set_passthrough_layers(opts.tmux_passthrough_layers)
 
   -- setup logger with debug configuration
   if opts.debug then logger.setup(opts.debug) end
