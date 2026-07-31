@@ -11,6 +11,43 @@ if not stdout then error("failed to open stdout") end
 
 local is_SSH = (vim.env.SSH_CLIENT ~= nil) or (vim.env.SSH_TTY ~= nil)
 
+-- A Windows-side terminal (in practice WezTerm) resolves the path we send it for
+-- transmit_medium=file against the Windows filesystem, where /tmp/... does not
+-- exist -- so the transmit silently does nothing. Translate to a UNC path
+-- (\\wsl.localhost\<distro>\tmp\...) so the terminal can find it.
+--
+-- Only when the terminal really is on the Windows side: a Linux-native terminal
+-- under WSLg shares our filesystem and cannot open a UNC path, so translating
+-- there would break a setup that works. Terminals running Linux-side set their
+-- own env vars in our process; a Windows-side one cannot, so their absence is
+-- the signal.
+local is_WSL = (vim.env.WSL_DISTRO_NAME ~= nil) or (vim.env.WSL_INTEROP ~= nil)
+local is_linux_side_terminal = (vim.env.WEZTERM_PANE ~= nil)
+  or (vim.env.WEZTERM_EXECUTABLE ~= nil)
+  or (vim.env.KITTY_WINDOW_ID ~= nil)
+  or (vim.env.KITTY_INSTALLATION_DIR ~= nil)
+  or (vim.env.GHOSTTY_RESOURCES_DIR ~= nil)
+local needs_windows_path = is_WSL and not is_linux_side_terminal
+
+---@type table<string, string>
+local win_path_cache = {}
+
+---@param path string
+---@return string
+local to_terminal_path = function(path)
+  if not needs_windows_path or vim.fn.executable("wslpath") == 0 then return path end
+  local cached = win_path_cache[path]
+  if cached then return cached end
+
+  local out = vim.fn.system({ "wslpath", "-w", path })
+  if vim.v.shell_error ~= 0 then return path end
+  out = vim.fn.trim(out)
+  if out == "" then return path end
+
+  win_path_cache[path] = out
+  return out
+end
+
 -- https://github.com/edluffy/hologram.nvim/blob/main/lua/hologram/terminal.lua#L77
 local DEFAULT_DIRECT_CHUNK_SIZE = 4096
 
@@ -123,6 +160,9 @@ local write_graphics = function(config, data, direct_chunk_size)
       if not ok then error(result) end
       if not close_ok then error(close_err) end
       data = result
+    else
+      -- transmit_medium=file: `data` is a path the terminal will open itself.
+      data = to_terminal_path(data)
     end
     data = vim.base64.encode(data):gsub("%-", "/")
     local chunks = get_chunked(data, direct_chunk_size)
