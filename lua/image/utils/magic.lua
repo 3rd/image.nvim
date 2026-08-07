@@ -24,15 +24,6 @@ local function read_file_header(file, num_bytes)
   return content and { content:byte(1, #content) } or nil
 end
 
-local function has_jpeg_end_signature(file)
-  if not file then return false end
-  local size = file:seek("end")
-  if size < 2 then return false end
-  file:seek("set", size - 2)
-  local end_signature = file:read(2)
-  return end_signature == "\xFF\xD9", nil
-end
-
 local function check_signature_match(header, format, signature)
   local bytes = { signature:byte(1, #signature) }
   local match = true
@@ -70,14 +61,8 @@ M.detect_format = function(path)
 
   for format, signature in pairs(image_signatures) do
     if check_signature_match(header, format, signature) then
-      if format == "jpeg" then
-        local is_jpeg = has_jpeg_end_signature(file)
-        file:close()
-        return is_jpeg and format or nil
-      else
-        file:close()
-        return format
-      end
+      file:close()
+      return format
     end
   end
 
