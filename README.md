@@ -64,10 +64,13 @@ For the `magick_cli` processor (default) you need a regular installation of Imag
 \
 For the `magick_rock` processor you need to install the development version of ImageMagick.
 
+Rendering PDF files also requires Ghostscript because ImageMagick uses it to decode and rasterize PDF content.
+
 <details>
 <summary>NixOS</summary>
 
 NixOS users need to install the `imagemagick` package.
+To render PDF files, add `ghostscript` to Neovim's `PATH`.
 For `magick_rock` you need to install `luajitPackages.magick` as well ([thanks](https://github.com/NixOS/nixpkgs/pull/243687) to [@donovanglover](https://github.com/donovanglover)).
 
 - <details>
@@ -82,7 +85,10 @@ For `magick_rock` you need to install `luajitPackages.magick` as well ([thanks](
     programs.neovim = {
         enable = true;
         extraLuaPackages = ps: [ ps.magick ];
-        extraPackages = [ pkgs.imagemagick ];
+        extraPackages = [
+          pkgs.imagemagick
+          pkgs.ghostscript # Required only when rendering PDF files
+        ];
         # ... other config
     };
   }
@@ -100,7 +106,10 @@ For `magick_rock` you need to install `luajitPackages.magick` as well ([thanks](
   let
   config = pkgs.neovimUtils.makeNeovimConfig {
     extraLuaPackages = p: [ p.magick ];
-    extraPackages = p: [ p.imagemagick ];
+    extraPackages = p: [
+      p.imagemagick
+      p.ghostscript # Required only when rendering PDF files
+    ];
     # ... other config
   };
   in {
@@ -196,6 +205,7 @@ NixOS users need to install the `ueberzugpp` package.
         extraPackages = [
           pkgs.ueberzugpp
           pkgs.imagemagick
+          pkgs.ghostscript # Required only when rendering PDF files
         ];
         # ... other config
     };
@@ -215,6 +225,7 @@ NixOS users need to install the `ueberzugpp` package.
     extraPackages = p: [
       p.ueberzugpp
       p.imagemagick
+      p.ghostscript # Required only when rendering PDF files
     ];
     # ... other config
   };
