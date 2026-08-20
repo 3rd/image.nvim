@@ -51,6 +51,7 @@
 ---@field scale_factor? number
 ---@field kitty_method "normal"|"unicode-placeholders"
 ---@field kitty_direct_chunk_size? number
+---@field cell_size? string|{ width: number, height: number }
 ---@field window_overlap_clear_enabled? boolean
 ---@field window_overlap_clear_ft_ignore? string[]
 ---@field editor_only_render_when_focused? boolean
