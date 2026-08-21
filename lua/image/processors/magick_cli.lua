@@ -3,6 +3,7 @@ local utils = require("image/utils")
 local has_magick = vim.fn.executable("magick") == 1
 local has_convert = vim.fn.executable("convert") == 1
 local has_identify = vim.fn.executable("identify") == 1
+local has_rsvg = vim.fn.executable("rsvg-convert") == 1
 
 -- magick v6 + v7
 local convert_cmd = has_magick and "magick" or "convert"
@@ -28,13 +29,19 @@ function MagickCliProcessor.get_format(path)
   local output = ""
   local error_output = ""
 
+  local failed = nil
+
   vim.loop.spawn(has_magick and "magick" or "identify", {
     args = has_magick and { "identify", "-format", "%m", path } or { "-format", "%m", path },
     stdio = { nil, stdout, stderr },
     hide = true,
   }, function(code)
-    if code ~= 0 then error(error_output ~= "" and error_output or "Failed to get format") end
-    result = output:lower():gsub("%s+$", "")
+    -- can't error() here, it's a libuv callback and escapes the caller's pcall (#370)
+    if code ~= 0 then
+      failed = error_output ~= "" and error_output or "Failed to get format"
+    else
+      result = output:lower():gsub("%s+$", "")
+    end
   end)
 
   vim.loop.read_start(stdout, function(err, data)
@@ -48,8 +55,9 @@ function MagickCliProcessor.get_format(path)
   end)
 
   local success = vim.wait(5000, function()
-    return result ~= nil
+    return result ~= nil or failed ~= nil
   end, 10)
+  if failed then error(failed) end
   if not success then error("identify format detection timed out") end
   return result
 end
@@ -107,14 +115,20 @@ function MagickCliProcessor.get_dimensions(path)
   -- GIF
   if actual_format == "gif" then path = path .. "[0]" end
 
+  local failed = nil
+
   vim.loop.spawn(has_magick and "magick" or "identify", {
     args = has_magick and { "identify", "-format", "%wx%h", path } or { "-format", "%wx%h", path },
     stdio = { nil, stdout, stderr },
     hide = true,
   }, function(code)
-    if code ~= 0 then error(error_output ~= "" and error_output or "Failed to get dimensions") end
-    local width, height = output:match("(%d+)x(%d+)")
-    result = { width = tonumber(width), height = tonumber(height) }
+    -- can't error() here, it's a libuv callback and escapes the caller's pcall (#370)
+    if code ~= 0 then
+      failed = error_output ~= "" and error_output or "Failed to get dimensions"
+    else
+      local width, height = output:match("(%d+)x(%d+)")
+      result = { width = tonumber(width), height = tonumber(height) }
+    end
   end)
 
   vim.loop.read_start(stdout, function(err, data)
@@ -128,9 +142,10 @@ function MagickCliProcessor.get_dimensions(path)
   end)
 
   local success = vim.wait(5000, function()
-    return result ~= nil
+    return result ~= nil or failed ~= nil
   end, 10)
 
+  if failed then error(failed) end
   if not success then error("identify dimensions timed out") end
 
   return result
@@ -228,11 +243,32 @@ local build_transform_args = function(path, request, output_path)
   return args
 end
 
+-- rsvg-convert renders SVGs ImageMagick can't (embedded data: URIs, #370).
+-- NOTE: ignores request.crop; inline SVG badges don't trigger renderer crop. magick-crop the PNG if that changes.
+local build_rsvg_args = function(path, request, output_path)
+  local args = {}
+  if request.target_width and request.target_height then
+    args[#args + 1] = "-w"
+    args[#args + 1] = tostring(request.target_width)
+    args[#args + 1] = "-h"
+    args[#args + 1] = tostring(request.target_height)
+  end
+  args[#args + 1] = "-o"
+  args[#args + 1] = output_path
+  args[#args + 1] = path
+  return args
+end
+
 function MagickCliProcessor.transform(path, request, output_path, callback)
   guard()
   local stderr = vim.loop.new_pipe()
   local error_output = ""
   local handle = nil
+
+  local use_rsvg = has_rsvg and (request.source_format or ""):lower() == "svg"
+  local cmd = use_rsvg and "rsvg-convert" or convert_cmd
+  local args = use_rsvg and build_rsvg_args(path, request, output_path)
+    or build_transform_args(path, request, output_path)
 
   local close_stderr = function()
     if not stderr or stderr:is_closing() then return end
@@ -240,8 +276,8 @@ function MagickCliProcessor.transform(path, request, output_path, callback)
     stderr:close()
   end
 
-  handle = vim.loop.spawn(convert_cmd, {
-    args = build_transform_args(path, request, output_path),
+  handle = vim.loop.spawn(cmd, {
+    args = args,
     stdio = { nil, nil, stderr },
     hide = true,
   }, function(code)

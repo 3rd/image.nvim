@@ -185,6 +185,7 @@ This plugin will always have first class support for Tmux, to make it work make 
 #### Other
 
 - [cURL](https://github.com/curl/curl) for remote image support
+- [librsvg](https://gitlab.gnome.org/GNOME/librsvg) for embedded SVG support
 
 #### Extra: Installing Überzug++
 <details>
