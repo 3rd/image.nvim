@@ -273,6 +273,45 @@ handlers.heic = function(file)
   return read_isobmff_dimensions(file)
 end
 
+handlers.svg = function(file)
+  local content = file:read(4096)
+  if not content then return nil end
+
+  -- isolate the opening <svg ...> tag
+  local tag = content:match("<svg[^>]*>") or content
+
+  -- CSS absolute units in px (96dpi). em/ex/% are relative -> nil, fall back to viewBox.
+  local units = { px = 1, pt = 96 / 72, pc = 16, ["in"] = 96, cm = 96 / 2.54, mm = 96 / 25.4, Q = 96 / 101.6 }
+  local function parse_len(s)
+    if not s then return nil end
+    local n, unit = s:match("^%s*([%d%.]+)%s*(%a*)%s*$")
+    if not n then return nil end
+    local scale = unit == "" and 1 or units[unit]
+    if not scale then return nil end
+    return tonumber(n) * scale
+  end
+
+  local w = parse_len(tag:match("width%s*=%s*[\"']([^\"']+)[\"']"))
+  local h = parse_len(tag:match("height%s*=%s*[\"']([^\"']+)[\"']"))
+
+  if not (w and h) then
+    local vb = tag:match("viewBox%s*=%s*[\"']([^\"']+)[\"']")
+    if vb then
+      local nums = {}
+      for n in vb:gmatch("[%-%d%.]+") do
+        nums[#nums + 1] = tonumber(n)
+      end
+      if #nums == 4 then
+        w = w or nums[3]
+        h = h or nums[4]
+      end
+    end
+  end
+
+  if not (w and h) then return nil end
+  return { width = math.floor(w + 0.5), height = math.floor(h + 0.5) }
+end
+
 handlers.xpm = function(file)
   local content = file:read(1024) -- Read enough to get past the header
   if not content then return nil end
@@ -296,8 +335,8 @@ M.get_dimensions = function(path)
   local format = magic.detect_format(path)
   if not format then return nil end
 
-  -- Skip SVG/XML/PDF as they require more complex parsing
-  if format == "svg" or format == "xml" or format == "pdf" then return nil end
+  -- Skip XML/PDF as they require more complex parsing (SVG is handled below)
+  if format == "xml" or format == "pdf" then return nil end
 
   local file = io.open(path, "rb")
   if not file then return nil end
