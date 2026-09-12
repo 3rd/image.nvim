@@ -2,6 +2,59 @@
 local cached_size = nil
 local size_warned = false
 
+-- Used when the pty reports no pixel geometry and nothing better is configured.
+-- Historical value; mainly keeps cell_width/cell_height non-zero so the crop
+-- math downstream can't divide by zero.
+local FALLBACK_CELL_WIDTH = 8
+local FALLBACK_CELL_HEIGHT = 16
+
+---@type { width: number, height: number }|nil
+local configured_cell_size = nil
+
+---@param value string
+---@param source string
+---@return { width: number, height: number }|nil
+local parse_cell_size = function(value, source)
+  local w, h = value:match("^(%d+)[xX](%d+)$")
+  if w and tonumber(w) > 0 and tonumber(h) > 0 then
+    return { width = tonumber(w), height = tonumber(h) }
+  end
+  vim.notify(
+    ("image.nvim: ignoring malformed %s=%s (expected e.g. 14x32)"):format(source, value),
+    vim.log.levels.WARN
+  )
+  return nil
+end
+
+--- Accepts "WxH" or { width = W, height = H }.
+---@param value string|{ width: number, height: number }
+---@param source string
+---@return { width: number, height: number }|nil
+local normalize_cell_size = function(value, source)
+  if type(value) == "string" then return parse_cell_size(value, source) end
+  if type(value) == "table" then
+    local w, h = tonumber(value.width), tonumber(value.height)
+    if w and h and w > 0 and h > 0 then return { width = w, height = h } end
+  end
+  vim.notify(
+    ('image.nvim: ignoring invalid %s (expected "14x32" or { width = 14, height = 32 })'):format(source),
+    vim.log.levels.WARN
+  )
+  return nil
+end
+
+--- Resolve the cell size to assume when the pty reports no pixel geometry.
+--- The option wins; IMAGE_NVIM_CELL_SIZE is the fallback, for when the value has
+--- to come from outside Neovim (see set_cell_size).
+---@param option string|{ width: number, height: number }|nil
+---@return { width: number, height: number }|nil
+local resolve_cell_size = function(option)
+  if option ~= nil then return normalize_cell_size(option, "cell_size") end
+  local env = vim.env.IMAGE_NVIM_CELL_SIZE
+  if env then return parse_cell_size(env, "IMAGE_NVIM_CELL_SIZE") end
+  return nil
+end
+
 -- https://github.com/edluffy/hologram.nvim/blob/main/lua/hologram/state.lua#L15
 local update_size = function()
   local ffi = require("ffi")
@@ -45,14 +98,14 @@ local update_size = function()
   local xpixel = sz.xpixel
   local ypixel = sz.ypixel
 
-  -- Fallback when pixel dimensions are unavailable (common over SSH)
-  -- TIOCGWINSZ returns xpixel=0, ypixel=0 in SSH sessions because the
-  -- SSH protocol does not propagate client pixel dimensions. Without this
-  -- fallback, cell_width/cell_height become 0, causing integer overflow
-  -- in image geometry calculations (width becomes INT64_MIN).
+  -- Some ptys report cells but no pixels: WSL2 always, and often SSH. Cell size
+  -- scales every crop rectangle, so guessing wrong samples the wrong region of
+  -- the source image -- prefer a configured size over the fallback.
   if xpixel == 0 or ypixel == 0 then
-    xpixel = sz.col * 8
-    ypixel = sz.row * 16
+    local cw = configured_cell_size and configured_cell_size.width or FALLBACK_CELL_WIDTH
+    local ch = configured_cell_size and configured_cell_size.height or FALLBACK_CELL_HEIGHT
+    xpixel = sz.col * cw
+    ypixel = sz.row * ch
   end
 
   cached_size = {
@@ -65,9 +118,32 @@ local update_size = function()
   }
 end
 
+--- Set the assumed cell size and recompute. Called from setup().
+---
+--- This module is required before setup() runs, so the size computed at load time
+--- uses the fallback; this recomputes it once the option is known.
+---
+--- Neovim cannot ask the terminal itself -- TermResponse never fires for the
+--- CSI 16 t reply, and a child process gets no /dev/tty -- so on a pty without
+--- pixel geometry the value has to be supplied. Either pass `cell_size` here, or
+--- export IMAGE_NVIM_CELL_SIZE from the shell that does own the tty:
+---
+---   printf '\033[16t'   # reply: CSI 6 ; height ; width t
+---
+---@param option string|{ width: number, height: number }|nil
+local set_cell_size = function(option)
+  configured_cell_size = resolve_cell_size(option)
+  update_size()
+end
+
+configured_cell_size = resolve_cell_size(nil)
 update_size()
+
 vim.api.nvim_create_autocmd("VimResized", {
-  callback = update_size,
+  callback = function()
+    -- A resize can also mean a font-size change, so recompute rather than reuse.
+    update_size()
+  end,
 })
 
 local get_tty = function()
@@ -85,4 +161,5 @@ return {
     return cached_size
   end,
   get_tty = get_tty,
+  set_cell_size = set_cell_size,
 }

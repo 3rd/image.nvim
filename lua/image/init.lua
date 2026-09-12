@@ -56,6 +56,9 @@ local default_options = {
   scale_factor = 1.0,
   kitty_method = "normal",
   kitty_direct_chunk_size = 4096,
+  -- cell_size: "WxH" or { width, height }, assumed only when the pty reports no
+  -- pixel geometry (WSL2, often SSH). Defaults to IMAGE_NVIM_CELL_SIZE, else 8x16.
+  cell_size = nil,
   window_overlap_clear_enabled = false,
   window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "snacks_notif", "scrollview", "scrollview_sign" },
   editor_only_render_when_focused = false,
@@ -117,6 +120,10 @@ api.setup = function(options)
 
   -- setup logger with debug configuration
   if opts.debug then logger.setup(opts.debug) end
+
+  -- term.lua is required (and sized) before setup() runs, so re-resolve now that
+  -- the option is known.
+  utils.term.set_cell_size(opts.cell_size)
 
   if opts.processor == "magick_rock" then
     vim.schedule(function()
