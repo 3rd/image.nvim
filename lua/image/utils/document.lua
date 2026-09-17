@@ -141,13 +141,21 @@ local create_document_integration = function(config)
 
     local term_size = utils.term.get_size()
     if not term_size then return end
+
+    -- Cap at the image's natural width, not an unconditional screen_cols/2 --
+    -- otherwise a 78x20 badge also gets a half-screen window.
+    local natural_cols = math.ceil(image.image_width / term_size.cell_width)
+    local requested_cols = math.min(natural_cols, math.floor(term_size.screen_cols / 2))
     local width, height = utils.math.adjust_to_aspect_ratio(
       term_size,
       image.image_width,
       image.image_height,
-      math.floor(term_size.screen_cols / 2),
+      math.max(1, requested_cols),
       0
     )
+
+    -- Aspect-ratio fitting can still overshoot vertically on a tall image.
+    height = math.min(height, math.max(1, term_size.screen_rows - 4))
     local win_config = {
       relative = "cursor",
       row = 1,
