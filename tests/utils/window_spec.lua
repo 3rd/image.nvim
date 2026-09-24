@@ -77,4 +77,19 @@ describe("window metadata", function()
     assert.are.same(1, calls)
     assert.are.same(5, scrolled_windows[1].scroll_y)
   end)
+
+  it("does not take the statusline off a normal window's rect", function()
+    stub_single_window()
+    local laststatus = vim.o.laststatus
+
+    -- nvim_win_get_height() already excludes the window's own statusline
+    for _, value in ipairs({ 0, 2, 3 }) do
+      vim.o.laststatus = value
+      unload_window()
+      local rect = require("image/utils/window").get_windows({ normal = true })[1].rect
+      assert.are.same(20, rect.bottom, "laststatus=" .. value)
+    end
+
+    vim.o.laststatus = laststatus
+  end)
 end)

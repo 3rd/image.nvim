@@ -582,9 +582,8 @@ local render = function(image)
   end
 
   -- clear out of bounds images
-  local laststatus_offset = (vim.o.laststatus == 2 and 1 or 0)
   local is_above = absolute_y + height <= bounds.top
-  local is_below = absolute_y > bounds.bottom + laststatus_offset
+  local is_below = absolute_y > bounds.bottom
   local is_left = absolute_x + width <= bounds.left
   local is_right = absolute_x >= bounds.right
 
