@@ -80,7 +80,7 @@ local get_windows = function(opts)
       rect = {
         top = rect_top,
         right = rect_left + content_width,
-        bottom = rect_top + content_height - (config.relative == "" and vim.o.laststatus == 2 and 1 or 0),
+        bottom = rect_top + content_height,
         left = rect_left,
       },
       masks = {},
