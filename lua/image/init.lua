@@ -295,7 +295,7 @@ api.setup = function(options)
   -- auto-clear on buffer / window close
   vim.api.nvim_create_autocmd({ "BufLeave", "WinClosed", "TabEnter" }, {
     group = group,
-    callback = function() -- auto-clear images when windows and buffers change
+    callback = function(event) -- auto-clear images when windows and buffers change
       -- bail if not enabled
       if not state.enabled then return end
 
@@ -313,26 +313,33 @@ api.setup = function(options)
             local window_ok, is_valid_window = pcall(vim.api.nvim_win_is_valid, current_image.window)
             if not window_ok or not is_valid_window then
               current_image:clear()
-              return
+              goto continue
             end
 
             local is_window_in_current_tab = windows_in_current_tab_map[current_image.window]
             if not is_window_in_current_tab then
-              current_image:clear()
-              return
+              -- The window still exists: hide its images without forgetting them.
+              current_image:clear(true)
+              goto continue
             end
 
             if current_image.buffer then
               local buf_ok, is_valid_buffer = pcall(vim.api.nvim_buf_is_valid, current_image.buffer)
               if not buf_ok or not is_valid_buffer then
                 current_image:clear()
-                return
+                goto continue
               end
 
               local is_buffer_in_window = vim.api.nvim_win_get_buf(current_image.window) == current_image.buffer
-              if not is_buffer_in_window then current_image:clear() end
+              if not is_buffer_in_window then
+                current_image:clear()
+                goto continue
+              end
             end
+
+            if event.event == "TabEnter" then current_image:render() end
           end
+          ::continue::
         end
       end)
     end,
