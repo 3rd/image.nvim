@@ -355,10 +355,10 @@ local render = function(image)
     end
 
     -- check if image is in fold
-    local current_win = vim.api.nvim_get_current_win()
-    vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. image.window .. ")")
-    local is_folded = vim.fn.foldclosed(original_y + 1) ~= -1
-    vim.api.nvim_command("noautocmd call nvim_set_current_win(" .. current_win .. ")")
+    -- nvim_set_current_win() would end Visual mode when the image is in another buffer's window
+    local is_folded = vim.api.nvim_win_call(image.window, function()
+      return vim.fn.foldclosed(original_y + 1) ~= -1
+    end)
 
     -- bail if it is
     if image.buffer and is_folded then
