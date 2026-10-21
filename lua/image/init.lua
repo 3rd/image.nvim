@@ -36,6 +36,9 @@ local default_options = {
     neorg = {
       enabled = true,
     },
+    rst = {
+      enabled = true,
+    },
     syslang = {
       enabled = true,
     },
