@@ -76,6 +76,7 @@ local state = {
   remote_cache = {},
   tmp_dir = vim.fn.tempname(),
   disable_decorator_handling = false,
+  rendering_paused = false,
   hijacked_win_buf_images = {},
   enabled = true,
 }
@@ -384,22 +385,27 @@ api.setup = function(options)
     or (state.options.tmux_show_only_in_active_window and utils.tmux.is_tmux)
   then
     local images_to_restore_on_focus = {}
+    local focus_event_generation = 0
     local initial_tmux_window_id = utils.tmux.get_window_id()
     local initial_tmux_session = utils.tmux.get_current_session()
 
     vim.api.nvim_create_autocmd("FocusLost", {
       group = group,
       callback = function() -- auto-clear images when windows and buffers change
-        -- bail if not enabled
+        focus_event_generation = focus_event_generation + 1
+        local generation = focus_event_generation
+        if state.options.editor_only_render_when_focused then state.rendering_paused = true end
         if not state.enabled then return end
 
         vim.schedule(function()
+          if generation ~= focus_event_generation then return end
           log.debug("FocusLost")
           if
             state.options.editor_only_render_when_focused
             or (utils.tmux.is_tmux and utils.tmux.get_window_id() ~= initial_tmux_window_id)
             or (utils.tmux.is_tmux and utils.tmux.get_current_session() ~= initial_tmux_session)
           then
+            state.rendering_paused = true
             state.disable_decorator_handling = true
 
             local images = api.get_images()
@@ -417,12 +423,13 @@ api.setup = function(options)
     vim.api.nvim_create_autocmd("FocusGained", {
       group = group,
       callback = function() -- auto-clear images when windows and buffers change
-        -- bail if not enabled
+        focus_event_generation = focus_event_generation + 1
+        local was_rendering_paused = state.rendering_paused
+        state.rendering_paused = false
+        state.disable_decorator_handling = false
         if not state.enabled then return end
 
         log.debug("FocusGained")
-
-        state.disable_decorator_handling = false
 
         vim.schedule_wrap(function()
           -- force rerender
@@ -431,12 +438,14 @@ api.setup = function(options)
             if current_image.is_rendered then
               current_image:clear()
               current_image:render()
+            elseif was_rendering_paused then
+              current_image:render()
             end
           end
 
           -- render images cleared on focus loss
           for _, current_image in ipairs(images_to_restore_on_focus) do
-            current_image:render()
+            if not current_image.is_rendered then current_image:render() end
           end
           images_to_restore_on_focus = {}
         end)()

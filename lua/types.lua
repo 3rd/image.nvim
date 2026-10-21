@@ -20,6 +20,7 @@
 ---@field remote_cache { [string]: string }
 ---@field tmp_dir string
 ---@field disable_decorator_handling boolean
+---@field rendering_paused boolean
 ---@field hijacked_win_buf_images { [string]: Image }
 ---@field processor ImageProcessor
 
