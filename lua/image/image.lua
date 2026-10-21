@@ -1,5 +1,6 @@
 local log = require("image/utils/logger").within("image")
 local renderer = require("image/renderer")
+local transform_cache = require("image/utils/transform_cache")
 local utils = require("image/utils")
 
 -- { ["buf:row:col"]: { id, height } }
@@ -11,6 +12,12 @@ local Image = {
   next_internal_id = 1,
 }
 Image.__index = Image
+
+local get_source_signature = function(path)
+  local source = transform_cache.source_identity(path)
+  if not source then return nil end
+  return table.concat({ source.path, source.mtime, tostring(source.size) }, "\0")
+end
 
 ---@param template Image
 ---@param global_state State
@@ -54,11 +61,12 @@ function Image:render(geometry)
   -- be left in place
   if vim.fn.getcmdwintype() ~= "" then return end
 
-  -- track last_modified and wipe cache
-  local current_last_modified = vim.fn.getftime(self.original_path)
-  log.debug(("timestamp: %s, last_modified: %s"):format(current_last_modified, self.last_modified))
-  if self.last_modified ~= current_last_modified then
-    self.last_modified = current_last_modified
+  -- track source changes and wipe cache
+  local current_source_signature = get_source_signature(self.original_path)
+  local source_changed = self.source_signature ~= current_source_signature
+  log.debug("source changed", { changed = source_changed })
+  if source_changed then
+    self.source_signature = current_source_signature
     self.resize_hash = nil
     self.crop_hash = nil
     self.transform_key = nil
@@ -277,9 +285,11 @@ local from_file = function(path, options, state)
     return nil
   end
 
-  -- bypass processing if already processed
+  local current_source_signature = get_source_signature(absolute_original_path)
+
+  -- bypass processing if an unchanged source was already processed
   for _, instance in pairs(state.images) do
-    if instance.original_path == absolute_original_path then
+    if instance.original_path == absolute_original_path and instance.source_signature == current_source_signature then
       local clone = createImage({
         id = opts.id or utils.random.id(),
         path = instance.path,
@@ -287,6 +297,7 @@ local from_file = function(path, options, state)
         cropped_path = instance.path,
         original_path = instance.original_path,
         source_format = instance.source_format,
+        source_signature = current_source_signature,
         image_width = instance.image_width,
         image_height = instance.image_height,
         max_width_window_percentage = instance.max_width_window_percentage,
@@ -313,7 +324,6 @@ local from_file = function(path, options, state)
         crop_hash = nil,
         resize_hash = nil,
         namespace = opts.namespace or nil,
-        last_modified = vim.fn.getftime(absolute_original_path),
       }, state)
       log.debug(("cloned image %s from %s"):format(clone.id, instance.id))
       return clone
@@ -335,6 +345,7 @@ local from_file = function(path, options, state)
     cropped_path = source_path,
     original_path = absolute_original_path,
     source_format = source_format,
+    source_signature = current_source_signature,
     image_width = dimensions.width,
     image_height = dimensions.height,
     max_width_window_percentage = opts.max_width_window_percentage,
@@ -361,7 +372,6 @@ local from_file = function(path, options, state)
     crop_hash = nil,
     resize_hash = nil,
     namespace = opts.namespace or nil,
-    last_modified = vim.fn.getftime(absolute_original_path),
   }, state)
 
   return instance

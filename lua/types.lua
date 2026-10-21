@@ -146,7 +146,7 @@
 ---@field hue fun(self: Image, hue: number)
 ---@field namespace? string
 ---@field extmark? { id: number, row: number, col: number }
----@field last_modified? number
+---@field source_signature? string
 ---@field has_extmark_moved fun (self:Image): (boolean, number?, number?)
 ---@field ignore_global_max_size? boolean
 ---@field render_offset_top? number
