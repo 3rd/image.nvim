@@ -52,6 +52,23 @@ describe("magic", function()
     end)
   end
 
+  it("detects JPEG XL codestream and container signatures", function()
+    local signatures = {
+      "\xFF\x0A",
+      "\x00\x00\x00\x0CJXL \x0D\x0A\x87\x0A",
+    }
+
+    for _, signature in ipairs(signatures) do
+      local path = vim.fn.tempname()
+      local file = assert(io.open(path, "wb"))
+      file:write(signature)
+      file:close()
+      assert.are.same("jxl", detect_format(path))
+      assert.is_true(require("image/utils/magic").is_image(path))
+      vim.fn.delete(path)
+    end
+  end)
+
   it("returns nil for non-existent files", function()
     assert.is_nil(detect_format("tests/test_data/nonexistent.png"))
   end)

@@ -15,6 +15,11 @@ local image_signatures = {
   pdf = "%PDF",
 }
 
+local jxl_signatures = {
+  "\xFF\x0A",
+  "\x00\x00\x00\x0CJXL \x0D\x0A\x87\x0A",
+}
+
 local function read_file_header(file, num_bytes)
   if not file then return nil end
   local current_pos = file:seek()
@@ -66,6 +71,13 @@ M.detect_format = function(path)
   if not header then
     file:close()
     return nil
+  end
+
+  for _, signature in ipairs(jxl_signatures) do
+    if check_signature_match(header, "jxl", signature) then
+      file:close()
+      return "jxl"
+    end
   end
 
   for format, signature in pairs(image_signatures) do
