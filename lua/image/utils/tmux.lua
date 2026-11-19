@@ -4,9 +4,14 @@ local pane_position = nil
 local pane_position_clear_scheduled = false
 
 local has_passthrough = false
+local has_native_sixel = false
 if is_tmux then
   local ok, result = pcall(vim.fn.system, { "tmux", "show", "-Apv", "allow-passthrough" })
   if ok and (result:sub(-3) == "on\n" or result:sub(-4) == "all\n") then has_passthrough = true end
+  local features_ok, features = pcall(vim.fn.system, { "tmux", "display-message", "-p", "#{client_termfeatures}" })
+  if features_ok and vim.v.shell_error == 0 then
+    has_native_sixel = ("," .. vim.trim(features) .. ","):find(",sixel,", 1, true) ~= nil
+  end
 end
 
 local create_dm_getter = function(name)
@@ -91,6 +96,7 @@ end
 
 return {
   is_tmux = is_tmux,
+  has_native_sixel = has_native_sixel,
   has_passthrough = has_passthrough,
   get_pid = create_dm_getter("pid"),
   get_socket_path = create_dm_getter("socket_path"),

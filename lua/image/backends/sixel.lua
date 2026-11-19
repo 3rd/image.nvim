@@ -129,9 +129,7 @@ local send_sixel = function(sixel_data, x, y)
   if not has_st_end then wrapped_data = wrapped_data .. "\27\\" end
 
   -- tmux passthrough: wrap DCS sequence so tmux forwards it to the terminal
-  if utils.tmux.is_tmux then
-    wrapped_data = utils.tmux.escape(wrapped_data)
-  end
+  if utils.tmux.is_tmux and not utils.tmux.has_native_sixel then wrapped_data = utils.tmux.escape(wrapped_data) end
 
   -- build sequence
   local sequence = ""
@@ -259,7 +257,7 @@ function backend.setup(state)
   end
 
   -- tmux check
-  if utils.tmux.is_tmux and not utils.tmux.has_passthrough then
+  if utils.tmux.is_tmux and not utils.tmux.has_native_sixel and not utils.tmux.has_passthrough then
     log.warn("tmux detected but passthrough may not be enabled for sixel")
   end
 
